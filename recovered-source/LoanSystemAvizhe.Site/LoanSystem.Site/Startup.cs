@@ -66,14 +66,14 @@ public class Startup
 
 	public Startup(IWebHostEnvironment env)
 	{
-		IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().SetBasePath(env.ContentRootPath).AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
+		IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().SetBasePath(env.ContentRootPath).AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
 			.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
 			.AddEnvironmentVariables();
 		Configuration = configurationBuilder.Build();
 		_tokenValidationParameters = new TokenValidationParameters
 		{
 			ValidateIssuerSigningKey = true,
-			IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration.AsEnumerable().FirstOrDefault((KeyValuePair<string, string> x) => x.Key == "AppConfig:JwtSecretKey").Value)),
+			IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(GetRequiredJwtSecret(Configuration))),
 			ValidateIssuer = true,
 			ValidIssuer = "http://xxx.com",
 			ValidateAudience = true,
@@ -93,6 +93,16 @@ public class Startup
 				httpClient.PostAsync("/Site/KeepAlive", null);
 			});
 		}
+	}
+
+	private static string GetRequiredJwtSecret(IConfiguration configuration)
+	{
+		string secret = configuration["AppConfig:JwtSecretKey"];
+		if (string.IsNullOrWhiteSpace(secret) || secret.Length < 32)
+		{
+			throw new InvalidOperationException("Configure AppConfig__JwtSecretKey as an environment variable with at least 32 characters.");
+		}
+		return secret;
 	}
 
 	public void ConfigureServices(IServiceCollection services)
