@@ -15,7 +15,9 @@ uploads/
 *.trn
 *.dacpac
 *.bacpac
-*.sql
+*_backup.sql
+*_dump.sql
+*.dump.sql
 *.sqlite
 *.db
 *.zip
