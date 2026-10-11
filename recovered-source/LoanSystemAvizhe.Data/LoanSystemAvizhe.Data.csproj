@@ -14,19 +14,19 @@
   <ItemGroup />
   <ItemGroup>
     <Reference Include="Microsoft.EntityFrameworkCore">
-      <HintPath>Microsoft.EntityFrameworkCore.dll</HintPath>
+      <HintPath>../../Microsoft.EntityFrameworkCore.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore">
-      <HintPath>Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll</HintPath>
+      <HintPath>../../Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll</HintPath>
     </Reference>
     <Reference Include="LoanSystemAvizhe.Core">
-      <HintPath>LoanSystemAvizhe.Core.dll</HintPath>
+      <HintPath>../../LoanSystemAvizhe.Core.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.EntityFrameworkCore.Relational">
-      <HintPath>Microsoft.EntityFrameworkCore.Relational.dll</HintPath>
+      <HintPath>../../Microsoft.EntityFrameworkCore.Relational.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.EntityFrameworkCore.SqlServer">
-      <HintPath>Microsoft.EntityFrameworkCore.SqlServer.dll</HintPath>
+      <HintPath>../../Microsoft.EntityFrameworkCore.SqlServer.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
