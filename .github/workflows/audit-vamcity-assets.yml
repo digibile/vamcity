@@ -1,0 +1,78 @@
+name: Audit VamCity assets and feature files
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/audit-vamcity-assets.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Read-only asset, routes and upload audit on Roofixo
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/key"
+          chmod 600 "$RUNNER_TEMP/key"
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -T 10 -p "$PORT" "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i "$RUNNER_TEMP/key" -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set +e
+          BASE=/home/roofixo/domains/roofixo.ir/vamcity-app
+          ROOT=/home/roofixo/domains/roofixo.ir
+          RELEASE="$(readlink -f "$BASE/current" 2>/dev/null)"
+          [ -n "$RELEASE" ] || RELEASE="$(find "$BASE/releases" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)"
+          echo "=== ACTIVE RELEASE ==="
+          echo "RELEASE=$RELEASE"
+          echo "=== FILE COUNTS / MISSING DEPLOYMENT DIRECTORIES ==="
+          for d in "$RELEASE/wwwroot/ui" "$RELEASE/wwwroot" "$RELEASE/uploads" "$BASE/private/uploads" "$BASE/private/backup"; do
+            if [ -d "$d" ]; then
+              printf 'DIR=%s FILES=' "$d"; find "$d" -type f | wc -l
+              du -sh "$d" 2>/dev/null
+            else echo "MISSING_DIR=$d"; fi
+          done
+          echo "=== ZIP CONTENTS: ORIGINAL APP AND DB ARCHIVES (NAMES ONLY) ==="
+          for z in "$ROOT/public_html/vamcity.zip" "$ROOT/public_html/vamcityc_aqayevamdb_2026-10-11_15-51-44.zip"; do
+            if [ -f "$z" ]; then
+              stat -c 'ARCHIVE=%n SIZE=%s' "$z"
+              unzip -Z1 "$z" 2>/dev/null | head -80
+            else echo "ARCHIVE_MISSING=$z"; fi
+          done
+          echo "=== PUBLIC HTML ASSET REFERENCES AND LOCAL RESPONSES ==="
+          HTML=/tmp/vamcity-assets-audit.html
+          curl -fsS --max-time 15 http://127.0.0.1:5187/cl/plans/ -o "$HTML"
+          grep -Eo '(src|href)="[^"]+\.(js|css)(\?[^"]*)?"' "$HTML" | head -40
+          for u in $(grep -Eo '(src|href)="[^"]+\.(js|css)(\?[^"]*)?"' "$HTML" | sed -E 's/^(src|href)="([^"]+)"$/\2/' | head -40); do
+            case "$u" in http*) url="$u";; /*) url="http://127.0.0.1:5187$u";; *) url="http://127.0.0.1:5187/$u";; esac
+            printf 'ASSET=%s ' "$u"
+            curl -sS -o /dev/null --max-time 8 -w 'HTTP=%{http_code} TYPE=%{content_type} BYTES=%{size_download}\n' "$url"
+          done
+          echo "=== COMMON FEATURE ROUTES ==="
+          for p in / /cl/plans/ /cl/plan/ /cl/login/ /cl/register/ /Account/Login /Member /Admin /swagger /health; do
+            printf 'ROUTE=%s ' "$p"
+            curl -sS -o /tmp/vamcity-route-body --max-time 8 -w 'HTTP=%{http_code} TYPE=%{content_type} BYTES=%{size_download}\n' "http://127.0.0.1:5187$p"
+          done
+          echo "=== UPLOAD / IMAGE REFERENCES IN FRONTEND ==="
+          grep -RhoE '(/uploads/|/up/site/|/images/|/img/)[A-Za-z0-9_./?=&%-]+' "$RELEASE/wwwroot/ui" 2>/dev/null | sort -u | head -60
+          echo "=== RECENT APP ERRORS ==="
+          docker logs --since 30m vamcity-stage-app 2>&1 | grep -Ei 'error|exception|404|not found|failed|denied' | tail -80
+          echo "=== DB TABLE COUNTS ONLY ==="
+          SQL_PASSWORD="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' "$BASE/private/sql.env" | head -1)"
+          SQLCMD="$(docker exec vamcity-stage-sql bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' 2>/dev/null | tail -1)"
+          if [ -n "$SQLCMD" ] && [ -n "$SQL_PASSWORD" ]; then
+            docker exec vamcity-stage-sql "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -W -Q "SET NOCOUNT ON; SELECT name,state_desc FROM sys.databases WHERE name=N'vamcity_stage'; SELECT COUNT(*) AS table_count FROM [vamcity_stage].sys.tables; SELECT COUNT(*) AS loan_rows FROM [vamcity_stage].dbo.Loans; SELECT COUNT(*) AS active_loan_rows FROM [vamcity_stage].dbo.Loans WHERE Disable=0;" 2>&1
+          fi
+          echo "=== AUDIT COMPLETE ==="
+          REMOTE
