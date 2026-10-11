@@ -124,7 +124,7 @@ public class MemberController : BaseAdminController
 			if (!query.All)
 			{
 				List<long> memberIdsWithActiveLoan = await (from x in _userLoanService.GetAllAsQueryable().AsNoTracking()
-					where x.IsCheckouted == (bool?)null || (!((byte)x.IsCheckouted != 0) && x.User.CustomerId == _currentUserService.CustomerId)
+					where x.IsCheckouted == null || (x.IsCheckouted == false && x.User.CustomerId == _currentUserService.CustomerId)
 					select x.UserId).ToListAsync();
 				countActives = memberIdsWithActiveLoan.Distinct().Count();
 				memberQuery = memberQuery.Where((User x) => memberIdsWithActiveLoan.Contains(x.Id));
