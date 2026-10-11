@@ -54,7 +54,10 @@ jobs:
           echo "=== PAGE TITLE ==="
           TITLE="$(grep -oE '<title>[^<]*</title>' "$TMP/home.html" | head -1 || true)"
           echo "LIVE_PAGE_TITLE=$TITLE"
-          test -n "$TITLE"
+          echo "LIVE_HTML_BYTES=$(wc -c < "$TMP/home.html")"
+          if [ -z "$TITLE" ]; then echo "LIVE_HTML_PREFIX=$(head -c 500 "$TMP/home.html" | tr "\\n" " " | cut -c1-500)"; fi
+          echo "=== CONTENT TYPE ==="
+          curl -k -sSI --max-time 10 https://roofixo.ir/ | grep -iE "^(HTTP/|content-type:|content-length:|server:)" | head -6 || true
           echo "=== FIRST JAVASCRIPT ASSET ==="
           ASSET="$(grep -oE '(src|href)="[^"]+\.js([?][^"]*)?"' "$TMP/home.html" | head -1 | sed -E 's/^(src|href)="([^"]+)"$/\2/' || true)"
           if [ -n "$ASSET" ]; then
