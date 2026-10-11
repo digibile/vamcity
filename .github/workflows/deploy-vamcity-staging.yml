@@ -37,6 +37,8 @@ jobs:
           cp -a wwwroot/ui recovered-source/LoanSystemAvizhe.Site/wwwroot/
           dotnet publish recovered-source/LoanSystemAvizhe.Site/LoanSystemAvizhe.Site.csproj \
             --configuration Release --output ./artifacts/vamcity --verbosity minimal
+          cp deployment/linux-postgresql/nlog.staging.config ./artifacts/vamcity/nlog.config
+          test -f ./artifacts/vamcity/nlog.config
           test -f ./artifacts/vamcity/LoanSystemAvizhe.Site.dll
           test -f ./artifacts/vamcity/LoanSystemAvizhe.Site.runtimeconfig.json
           tar -czf ./artifacts/vamcity-publish.tar.gz -C ./artifacts/vamcity .
@@ -96,8 +98,8 @@ jobs:
           chmod 700 "$BASE" "$PRIVATE" "$PRIVATE/backup" "$PRIVATE/sql-data" "$PRIVATE/uploads"
           tar -xzf "/tmp/vamcity-publish-$SHA.tar.gz" -C "$RELEASE"
           rm -f "/tmp/vamcity-publish-$SHA.tar.gz"
-          mkdir -p "$RELEASE/uploads"
-          chmod 700 "$RELEASE"
+          mkdir -p "$RELEASE/uploads" "$RELEASE/logs/nlog"
+          chmod 700 "$RELEASE" "$RELEASE/logs" "$RELEASE/logs/nlog"
 
           if [ ! -s "$PRIVATE/backup/source.bak" ]; then
             ENTRY="$(unzip -Z1 "$ZIP" | grep -v '/$' | head -1)"
