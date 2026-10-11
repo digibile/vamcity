@@ -208,7 +208,7 @@ jobs:
 
           APP_SECRET="$(openssl rand -hex 32)"
           umask 077
-          printf 'ASPNETCORE_URLS=http://+:8080\nASPNETCORE_ENVIRONMENT=Production\nConnectionStrings__DefaultConnection=Server=%s,1433;Database=%s;User Id=sa;Password=%s;Encrypt=False;TrustServerCertificate=True;\nAppConfig__JwtSecretKey=%s\nAppConfig__BaseUrl=http://127.0.0.1:8080\nAppConfig__FrontUrl=http://127.0.0.1:8080\n' \
+          printf 'ASPNETCORE_URLS=http://+:8080\nASPNETCORE_ENVIRONMENT=Production\nConnectionStrings__DefaultConnection=Server=%s,1433;Database=%s;User Id=sa;Password=%s;Encrypt=False;TrustServerCertificate=True;\nAppConfig__JwtSecretKey=%s\nAppConfig__BaseUrl=https://roofixo.ir\nAppConfig__FrontUrl=https://roofixo.ir\n' \
             "$SQL_CONTAINER" "$DB_NAME" "$SQL_PASSWORD" "$APP_SECRET" > "$PRIVATE/app.env"
           chmod 600 "$PRIVATE/app.env"
 
