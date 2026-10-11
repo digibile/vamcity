@@ -1,0 +1,103 @@
+name: VamCity browser parity check
+run-name: Compare VamCity plans page on reference and Roofixo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/vamcity-browser-parity.yml"
+      - "wwwroot/ui/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install browser
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Compare the real rendered plans pages
+        run: |
+          mkdir -p artifacts
+          cat > browser-check.cjs <<'NODE'
+          const { chromium } = require('playwright');
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const targets = [
+              { name: 'reference', url: 'https://vamcity.com/cl/plans/' },
+              { name: 'roofixo', url: 'https://roofixo.ir/cl/plans/' }
+            ];
+            let failed = false;
+
+            for (const target of targets) {
+              const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, deviceScaleFactor: 1 });
+              const errors = [];
+              page.on('pageerror', error => errors.push(error.message));
+              page.on('console', message => {
+                if (message.type() === 'error') errors.push(message.text());
+              });
+
+              try {
+                const response = await page.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                await page.waitForTimeout(9000);
+                const title = await page.title();
+                const appText = await page.locator('#app').innerText().catch(() => '');
+                const appHtmlLength = await page.locator('#app').innerHTML().then(s => s.length).catch(() => 0);
+                const headings = await page.locator('h1,h2,h3').allInnerTexts().catch(() => []);
+                const bodyText = (await page.locator('body').innerText().catch(() => '')).replace(/\\s+/g, ' ').trim();
+
+                console.log('=== ' + target.name.toUpperCase() + ' ===');
+                console.log('URL=' + target.url);
+                console.log('HTTP=' + (response ? response.status() : 'no-response'));
+                console.log('TITLE=' + title);
+                console.log('APP_HTML_LENGTH=' + appHtmlLength);
+                console.log('APP_TEXT_LENGTH=' + appText.length);
+                console.log('HEADINGS=' + JSON.stringify(headings.slice(0, 20)));
+                console.log('BODY_TEXT_SAMPLE=' + bodyText.slice(0, 1200));
+                console.log('BROWSER_ERRORS=' + JSON.stringify(errors.slice(0, 20)));
+                await page.screenshot({ path: 'artifacts/' + target.name + '-plans.png', fullPage: true }).catch(() => {});
+
+                if (target.name === 'roofixo') {
+                  if (!response || response.status() !== 200 || appHtmlLength < 100 || appText.trim().length < 30) {
+                    console.error('ROOFIXO_RENDER_CHECK_FAILED');
+                    failed = true;
+                  }
+                  if (errors.length) {
+                    console.error('ROOFIXO_BROWSER_ERRORS_PRESENT');
+                    failed = true;
+                  }
+                }
+              } catch (error) {
+                console.error(target.name.toUpperCase() + '_NAVIGATION_ERROR=' + error.message);
+                if (target.name === 'roofixo') failed = true;
+              } finally {
+                await page.close();
+              }
+            }
+
+            await browser.close();
+            if (failed) process.exit(1);
+          })();
+          NODE
+          node browser-check.cjs
+
+      - name: Upload page screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vamcity-plans-browser-check
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 7
