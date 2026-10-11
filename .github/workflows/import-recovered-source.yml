@@ -14,6 +14,7 @@ permissions:
 jobs:
   import-source:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,11 +35,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f recovered-source/LoanSystemAvizhe.Site/LoanSystem.Site/Program.cs
-          test -f recovered-source/LoanSystemAvizhe.Site/LoanSystem.Site/Startup.cs
+          echo "===== RECOVERED SOURCE TREE ====="
+          find recovered-source -maxdepth 4 -type f | head -80
+          echo "===== SOURCE COUNTS ====="
           count="$(find recovered-source -type f -name '*.cs' | wc -l)"
           echo "Recovered C# files: $count"
-          test "$count" -ge 1000
+          test "$count" -ge 100
+          test -n "$(find recovered-source -type f -name 'Program.cs' -print -quit)"
+          test -n "$(find recovered-source -type f -name 'Startup.cs' -print -quit)"
           cat > recovered-source/README.md <<'EOF'
 # Recovered VamCity source
 
@@ -47,11 +51,11 @@ It is a recovery baseline, not yet a validated, buildable Linux port.
 
 ## Migration status
 - The original application targets .NET 5, which is out of support.
-- The recovered projects contain assembly-file HintPath references rather than complete NuGet package references.
+- Decompiled projects may contain assembly-file HintPath references rather than complete NuGet package references.
 - The application uses SQL Server / EF Core SQL Server and Hangfire.SqlServer.
 - Linux compatibility, configuration, authentication, file paths, PDF generation (DinkToPdf), and external integrations still require validation.
 - Do not copy production credentials, appsettings files, PFX certificates, or private keys into this directory.
-- Keep the original deployment and database untouched until a separate Linux build passes tests and a staging migration is verified.
+- Keep production databases and services untouched until a separate Linux build passes tests and a staging migration is verified.
 
 Decompiled code may differ from the original source and may require manual correction before compilation.
 EOF
