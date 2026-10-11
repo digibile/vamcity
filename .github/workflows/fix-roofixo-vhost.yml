@@ -105,7 +105,7 @@ jobs:
 
           echo "=== ENABLE SSL VHOST ==="
           if grep -q '^ssl=' "$DOMAIN_CONF"; then sed -i 's/^ssl=.*/ssl=ON/' "$DOMAIN_CONF"; else printf 'ssl=ON\n' >> "$DOMAIN_CONF"; fi
-          sed -i '/^nginx=/d' "$DOMAIN_CONF"
+          if grep -q '^nginx=' "$DOMAIN_CONF"; then sed -i 's/^nginx=.*/nginx=1/' "$DOMAIN_CONF"; else printf 'nginx=1\n' >> "$DOMAIN_CONF"; fi
           rm -f "$CUSTOM" "$POST_HTTP" "$POST_HTTPS"
           mkdir -p /var/www/html/.well-known/acme-challenge
           chmod 755 /var/www/html/.well-known /var/www/html/.well-known/acme-challenge
