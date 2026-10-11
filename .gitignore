@@ -7,3 +7,20 @@ logs/
 uploads/
 .env
 .env.*
+
+# Local and production database exports must never be committed to this public repository
+*.bak
+*.mdf
+*.ldf
+*.trn
+*.dacpac
+*.bacpac
+*.sql
+*.sqlite
+*.db
+*.zip
+*.7z
+*aqayevamdb*
+private/
+backup/
+backups/
