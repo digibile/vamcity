@@ -30,5 +30,19 @@ jobs:
       - name: Show SDK
         run: dotnet --info
 
-      - name: Build recovered web application
-        run: dotnet build recovered-source/LoanSystemAvizhe.Site/LoanSystemAvizhe.Site.csproj --configuration Release --verbosity minimal
+      - name: Publish Linux application
+        run: dotnet publish recovered-source/LoanSystemAvizhe.Site/LoanSystemAvizhe.Site.csproj --configuration Release --output ./artifacts/vamcity --verbosity minimal
+
+      - name: Verify publish output
+        run: |
+          test -f ./artifacts/vamcity/LoanSystemAvizhe.Site.dll
+          test -f ./artifacts/vamcity/LoanSystemAvizhe.Site.runtimeconfig.json
+          cat ./artifacts/vamcity/LoanSystemAvizhe.Site.runtimeconfig.json
+
+      - name: Upload Linux publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vamcity-linux-publish
+          path: ./artifacts/vamcity/
+          if-no-files-found: error
+          retention-days: 7
