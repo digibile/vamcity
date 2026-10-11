@@ -71,7 +71,9 @@ jobs:
           echo "=== CUSTOM FILE INCLUDE REFERENCES ==="
           grep -R -nF 'roofixo.ir.cust_nginx' /usr/local/directadmin/data/users/roofixo /etc/nginx 2>/dev/null | head -30 || true
           echo "=== CUSTOMBUILD WEB SERVER MODE ==="
-          grep -E '^(webserver|nginx|nginx_proxy|letsencrypt)=' /usr/local/directadmin/custombuild/options.conf /usr/local/directadmin/conf/directadmin.conf 2>/dev/null | sed -E 's#^([^=]+)=.*#\1=<set>#' || true
+          grep -E '^(webserver|nginx|nginx_proxy|letsencrypt|custom_httpd)=' /usr/local/directadmin/custombuild/options.conf /usr/local/directadmin/conf/directadmin.conf 2>/dev/null || true
+          echo "=== CUSTOM TEMPLATE FILES ==="
+          ls -l /usr/local/directadmin/data/templates/custom/nginx_server.conf /usr/local/directadmin/data/templates/custom/nginx_server_secure.conf /usr/local/directadmin/data/templates/custom/nginx_server.conf.CUSTOM.4.post /usr/local/directadmin/data/templates/custom/nginx_server_secure.conf.CUSTOM.4.post 2>/dev/null || true
           echo "=== NGINX SERVER TEMPLATE BODY ==="
           sed -n '1,90p' /usr/local/directadmin/data/templates/nginx_server.conf 2>/dev/null || true
           echo "=== NGINX TEMPLATE CUSTOM INSERTIONS ==="
