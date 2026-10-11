@@ -1,0 +1,46 @@
+name: Diagnose restored VamCity source database
+run-name: Inspect restored VamCity database branding and plan data
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-restored-vamcity-db.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Inspect DB metadata without changing data
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/key"
+          chmod 600 "$RUNNER_TEMP/key"
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -T 10 -p "$PORT" "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i "$RUNNER_TEMP/key" -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          SQL_CONTAINER=vamcity-stage-sql
+          SQL_PASSWORD="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' /home/roofixo/domains/roofixo.ir/vamcity-app/private/sql.env | head -1)"
+          SQLCMD="$(docker exec "$SQL_CONTAINER" bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' | tail -1)"
+          echo "=== DATABASE AND TABLES ==="
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; SELECT DB_NAME() AS connected_db; SELECT name FROM [vamcity_stage].sys.tables ORDER BY name;"
+          echo "=== CANDIDATE CONFIG AND PLAN TABLE COLUMNS ==="
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; SELECT TABLE_NAME,COLUMN_NAME,DATA_TYPE FROM [vamcity_stage].INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME LIKE '%AppSetting%' OR TABLE_NAME LIKE '%Plan%' OR TABLE_NAME LIKE '%Loan%' OR TABLE_NAME LIKE '%Site%' ORDER BY TABLE_NAME,ORDINAL_POSITION;"
+          echo "=== CONFIG TABLE SAMPLE ==="
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; IF OBJECT_ID('[vamcity_stage].dbo.AppSettings') IS NOT NULL SELECT TOP 1 * FROM [vamcity_stage].dbo.AppSettings; ELSE SELECT 'No dbo.AppSettings table' AS note;"
+          echo "=== PLAN TABLE COUNTS ==="
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; SELECT s.name AS schema_name,t.name AS table_name,p.rows AS row_count FROM [vamcity_stage].sys.tables t JOIN [vamcity_stage].sys.schemas s ON t.schema_id=s.schema_id JOIN [vamcity_stage].sys.partitions p ON p.object_id=t.object_id AND p.index_id IN (0,1) WHERE t.name LIKE '%Plan%' OR t.name LIKE '%Loan%' OR t.name LIKE '%Setting%' GROUP BY s.name,t.name,p.rows ORDER BY t.name;"
+          REMOTE
