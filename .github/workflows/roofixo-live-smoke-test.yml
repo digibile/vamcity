@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/roofixo-live-smoke-test.yml"
+      - "wwwroot/ui/myStyle.css"
   workflow_dispatch:
 
 permissions:
