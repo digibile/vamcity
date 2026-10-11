@@ -509,7 +509,7 @@ public class ReportService : BaseService, IReportService
 		try
 		{
 			List<Assurance> list = await source.ToListAsync();
-			List<object> list2 = new List<object>();
+			List<dynamic> list2 = new List<dynamic>();
 			foreach (Assurance item in list)
 			{
 				if (item.AssuranceType == AssuranceType.Cheque)
