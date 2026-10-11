@@ -25,9 +25,6 @@
     <Reference Include="System.IdentityModel.Tokens.Jwt">
       <HintPath>../../System.IdentityModel.Tokens.Jwt.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.EntityFrameworkCore">
-      <HintPath>../../Microsoft.EntityFrameworkCore.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.AspNetCore.Authentication.JwtBearer">
       <HintPath>../../Microsoft.AspNetCore.Authentication.JwtBearer.dll</HintPath>
     </Reference>
@@ -58,20 +55,11 @@
     <Reference Include="NLog">
       <HintPath>../../NLog.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.EntityFrameworkCore.Relational">
-      <HintPath>../../Microsoft.EntityFrameworkCore.Relational.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore">
-      <HintPath>../../Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll</HintPath>
-    </Reference>
     <Reference Include="Hangfire.NetCore">
       <HintPath>../../Hangfire.NetCore.dll</HintPath>
     </Reference>
     <Reference Include="Swashbuckle.AspNetCore.Swagger">
       <HintPath>../../Swashbuckle.AspNetCore.Swagger.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.EntityFrameworkCore.SqlServer">
-      <HintPath>../../Microsoft.EntityFrameworkCore.SqlServer.dll</HintPath>
     </Reference>
     <Reference Include="Hangfire.SqlServer">
       <HintPath>../../Hangfire.SqlServer.dll</HintPath>
@@ -88,5 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
   </ItemGroup>
 </Project>
