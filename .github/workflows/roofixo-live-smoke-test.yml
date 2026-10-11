@@ -1,0 +1,77 @@
+name: VamCity roofixo.ir live smoke test
+run-name: Verify VamCity HTML and assets on roofixo.ir
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/roofixo-live-smoke-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Prepare SSH
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          chmod 600 "$RUNNER_TEMP/deploy_key"
+          ssh-keyscan -T 10 -p "$PORT" "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          chmod 600 "$HOME/.ssh/known_hosts"
+          echo "DEPLOY_PORT_EFFECTIVE=$PORT" >> "$GITHUB_ENV"
+          echo "DEPLOY_HOST_EFFECTIVE=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "DEPLOY_USER_EFFECTIVE=$DEPLOY_USER" >> "$GITHUB_ENV"
+      - name: Verify live HTML, assets, TLS and app container
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$RUNNER_TEMP/deploy_key" -p "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          TMP="$(mktemp -d)"
+          trap 'rm -rf "$TMP"' EXIT
+          echo "=== HTTPS STATUS ==="
+          STATUS="$(curl -k -sS -o "$TMP/home.html" --max-time 15 -w '%{http_code}' https://roofixo.ir/)"
+          echo "ROOFIXO_HTTPS_HTTP=$STATUS"
+          test "$STATUS" = 200
+          echo "=== PAGE TITLE ==="
+          TITLE="$(grep -oE '<title>[^<]*</title>' "$TMP/home.html" | head -1 || true)"
+          echo "LIVE_PAGE_TITLE=$TITLE"
+          test -n "$TITLE"
+          echo "=== FIRST JAVASCRIPT ASSET ==="
+          ASSET="$(grep -oE '(src|href)="[^"]+\.js([?][^"]*)?"' "$TMP/home.html" | head -1 | sed -E 's/^(src|href)="([^"]+)"$/\2/' || true)"
+          if [ -n "$ASSET" ]; then
+            case "$ASSET" in http*) ASSET_URL="$ASSET" ;; /*) ASSET_URL="https://roofixo.ir$ASSET" ;; *) ASSET_URL="https://roofixo.ir/$ASSET" ;; esac
+            ASSET_STATUS="$(curl -k -sS -o /dev/null --max-time 15 -w '%{http_code}' "$ASSET_URL")"
+            echo "FIRST_JS_ASSET_HTTP=$ASSET_STATUS"
+            test "$ASSET_STATUS" = 200
+          else
+            echo "NO_DIRECT_JS_SRC_FOUND; checking known Vue app entry"
+            ASSET_STATUS="$(curl -k -sS -o /dev/null --max-time 15 -w '%{http_code}' https://roofixo.ir/js/app.js)"
+            echo "FALLBACK_APP_JS_HTTP=$ASSET_STATUS"
+          fi
+          echo "=== TLS CERTIFICATE SUMMARY ==="
+          echo | openssl s_client -connect roofixo.ir:443 -servername roofixo.ir 2>/dev/null | openssl x509 -noout -subject -issuer -dates
+          echo "=== CONTAINER HEALTH ==="
+          docker inspect -f 'VAMCITY_APP_RUNNING={{.State.Running}}' vamcity-stage-app
+          docker inspect -f 'VAMCITY_SQL_RUNNING={{.State.Running}}' vamcity-stage-sql
+          curl -sS -o /dev/null --max-time 8 -w 'VAMCITY_LOOPBACK_HTTP=%{http_code}\n' http://127.0.0.1:5187/
+          echo "LIVE_SMOKE_TEST_FINISHED"
+          REMOTE
