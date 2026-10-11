@@ -72,7 +72,7 @@ jobs:
                 await page.screenshot({ path: 'artifacts/' + target.name + '-plans.png', fullPage: true }).catch(() => {});
 
                 if (target.name === 'roofixo') {
-                  if (!response || response.status() !== 200 || appHtmlLength < 100 || appText.trim().length < 30) {
+                  if (!response || response.status() !== 200 || bodyText.length < 300 || !bodyText.includes('وام سیتی')) {
                     console.error('ROOFIXO_RENDER_CHECK_FAILED');
                     failed = true;
                   }
