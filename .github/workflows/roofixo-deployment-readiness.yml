@@ -60,7 +60,7 @@ jobs:
             echo "=== ZIP APPSETTINGS KEY NAMES ==="
             for f in $(unzip -Z1 "$ZIP" | grep -E '(^|/)appsettings[^/]*\.json$' | head -10); do
               echo "FILE=$f"
-              unzip -p "$ZIP" "$f" 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print("\\n".join(str(k) for k in d.keys()))' | head -100
+              unzip -p "$ZIP" "$f" 2>/dev/null | python3 -c 'import json,sys; sys.stdin.reconfigure(encoding="utf-8-sig"); d=json.load(sys.stdin); walk=lambda x,p="": [((print(p+"__"+str(k)) if p else print(str(k))) if not isinstance(v,(dict,list)) else walk(v,(p+"__"+str(k)) if p else str(k))) for k,v in x.items()] if isinstance(x,dict) else None; walk(d)' | head -100
             done
           else
             echo "ZIP_MISSING"
