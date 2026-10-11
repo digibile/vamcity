@@ -1,0 +1,37 @@
+namespace LoanSystemAvizhe.Data.Enums;
+
+public enum UserPermissionClaims
+{
+	Delete_Installmet = 1,
+	Chackout_Loan,
+	Delete_Loan,
+	Set_Permission,
+	Dashboard_Stats,
+	ManualWalletTransaction,
+	AppSettings_TotalSettingsTab,
+	AppSettings_FinancialTab,
+	AppSettings_FinotechTab,
+	AppSettings_IranValidityTab,
+	AppSettings_LandingPageTab,
+	BackupRestore,
+	Loans,
+	Members,
+	PaymentRequests,
+	Sms,
+	LoanRequests,
+	Agents,
+	Contacts,
+	Marketers,
+	Reports,
+	Users,
+	ExportExcel,
+	Tickets,
+	Email,
+	CustomerOrders,
+	AppSettings_RefahBetaTab,
+	Cancel_Loan,
+	Inquiry,
+	Sponsors,
+	CheckoutAmount2,
+	AppSettings_EmzameTab
+}

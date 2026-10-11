@@ -1,0 +1,77 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <AssemblyName>LoanSystemAvizhe.Services</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>14.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="LoanSystemAvizhe.Data">
+      <HintPath>LoanSystemAvizhe.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="LoanSystemAvizhe.Core">
+      <HintPath>LoanSystemAvizhe.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.EntityFrameworkCore">
+      <HintPath>Microsoft.EntityFrameworkCore.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ServiceModel.Primitives">
+      <HintPath>System.ServiceModel.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ServiceModel.Http">
+      <HintPath>System.ServiceModel.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="RestSharp">
+      <HintPath>RestSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="mpNuget">
+      <HintPath>mpNuget.dll</HintPath>
+    </Reference>
+    <Reference Include="Kavenegar">
+      <HintPath>Kavenegar.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Drawing.Common">
+      <HintPath>System.Drawing.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="DinkToPdf">
+      <HintPath>DinkToPdf.dll</HintPath>
+    </Reference>
+    <Reference Include="MimeKit">
+      <HintPath>MimeKit.dll</HintPath>
+    </Reference>
+    <Reference Include="MailKit">
+      <HintPath>MailKit.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Data.SqlClient">
+      <HintPath>Microsoft.Data.SqlClient.dll</HintPath>
+    </Reference>
+    <Reference Include="ExcelDataReader">
+      <HintPath>ExcelDataReader.dll</HintPath>
+    </Reference>
+    <Reference Include="UAParser">
+      <HintPath>UAParser.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.EntityFrameworkCore.Relational">
+      <HintPath>Microsoft.EntityFrameworkCore.Relational.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpCompress">
+      <HintPath>SharpCompress.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore">
+      <HintPath>Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll</HintPath>
+    </Reference>
+    <Reference Include="Hangfire.Core">
+      <HintPath>Hangfire.Core.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
