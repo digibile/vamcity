@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/vamcity-browser-parity.yml"
       - "wwwroot/ui/**"
+      - ".github/workflows/restore-vamcity-source-database.yml"
   workflow_dispatch:
 
 permissions:
