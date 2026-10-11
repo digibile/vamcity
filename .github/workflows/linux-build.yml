@@ -1,0 +1,34 @@
+name: Linux build validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "recovered-source/**"
+      - ".github/workflows/linux-build.yml"
+  pull_request:
+    paths:
+      - "recovered-source/**"
+      - ".github/workflows/linux-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Show SDK
+        run: dotnet --info
+
+      - name: Build recovered web application
+        run: dotnet build recovered-source/LoanSystemAvizhe.Site/LoanSystemAvizhe.Site.csproj --configuration Release --verbosity minimal
