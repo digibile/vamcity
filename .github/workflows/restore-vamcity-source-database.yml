@@ -52,6 +52,9 @@ jobs:
           chmod 700 "$PRIVATE/backup"
 
           echo "=== BACK UP CURRENT STAGING DATABASE BEFORE REPLACEMENT ==="
+          docker exec -u 0 "$SQL_CONTAINER" mkdir -p /var/opt/mssql/backup
+          docker exec -u 0 "$SQL_CONTAINER" chown 10001:0 /var/opt/mssql/backup
+          docker exec -u 0 "$SQL_CONTAINER" chmod 770 /var/opt/mssql/backup
           docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "BACKUP DATABASE [$DB_NAME] TO DISK=N'/var/opt/mssql/backup/pre-source-restore-$TS.bak' WITH INIT, COMPRESSION"
           docker cp "$SQL_CONTAINER:/var/opt/mssql/backup/pre-source-restore-$TS.bak" "$PRIVATE/backup/pre-source-restore-$TS.bak"
           chmod 600 "$PRIVATE/backup/pre-source-restore-$TS.bak"
