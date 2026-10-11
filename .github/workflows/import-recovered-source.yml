@@ -1,0 +1,67 @@
+name: Import recovered VamCity source
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  import-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download decompiled source artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vamcity-decompiled-source
+          path: recovered-source
+          repository: digibile/vamcity
+          run-id: 38130713029
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify recovered source and add migration notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f recovered-source/LoanSystemAvizhe.Site/LoanSystem.Site/Program.cs
+          test -f recovered-source/LoanSystemAvizhe.Site/LoanSystem.Site/Startup.cs
+          count="$(find recovered-source -type f -name '*.cs' | wc -l)"
+          echo "Recovered C# files: $count"
+          test "$count" -ge 1000
+          cat > recovered-source/README.md <<'EOF'
+# Recovered VamCity source
+
+This directory contains C# source decompiled from the published VamCity assemblies with ILSpy.
+It is a recovery baseline, not yet a validated, buildable Linux port.
+
+## Migration status
+- The original application targets .NET 5, which is out of support.
+- The recovered projects contain assembly-file HintPath references rather than complete NuGet package references.
+- The application uses SQL Server / EF Core SQL Server and Hangfire.SqlServer.
+- Linux compatibility, configuration, authentication, file paths, PDF generation (DinkToPdf), and external integrations still require validation.
+- Do not copy production credentials, appsettings files, PFX certificates, or private keys into this directory.
+- Keep the original deployment and database untouched until a separate Linux build passes tests and a staging migration is verified.
+
+Decompiled code may differ from the original source and may require manual correction before compilation.
+EOF
+
+      - name: Commit recovered source baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add recovered-source
+          if git diff --cached --quiet; then
+            echo "No recovered source changes to commit."
+            exit 0
+          fi
+          git commit -m "Import recovered VamCity source baseline"
+          git push origin HEAD:main
