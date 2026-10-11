@@ -1,4 +1,5 @@
 name: Diagnose VamCity staging containers
+# Triggered read-only status snapshot for the current staging attempt
 
 on:
   push:
