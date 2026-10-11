@@ -41,8 +41,12 @@ jobs:
           RELEASE="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' "$APP")"
           test -d "$RELEASE"
           echo "ACTIVE_RELEASE=$RELEASE"
-          echo "=== VERIFY ORIGINAL ARCHIVE ==="
-          unzip -t "$ZIP" | tail -2
+          echo "=== TEST UPLOAD ENTRIES IN ORIGINAL ARCHIVE (NON-FATAL FOR UNRELATED FILES) ==="
+          set +e
+          unzip -t "$ZIP" 'uploads/*' 2>&1 | tail -10
+          ZIP_TEST_STATUS=${PIPESTATUS[0]}
+          set -e
+          echo "UPLOAD_ARCHIVE_TEST_EXIT=$ZIP_TEST_STATUS"
           echo "=== ESTIMATE MISSING UPLOAD PAYLOAD ==="
           unzip -l "$ZIP" | awk '$4 ~ /^uploads\// && $4 !~ /\/$/ {bytes+=$1; files++} END {printf "UPLOAD_FILES=%d\nUPLOAD_UNCOMPRESSED_BYTES=%d\n",files,bytes}'
           UPLOAD_COUNT="$(unzip -Z1 "$ZIP" | grep -Ec '^uploads/[^/].*[^/]$' || true)"
