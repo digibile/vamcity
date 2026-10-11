@@ -464,7 +464,7 @@ public class UserPaymentService : BaseService, IUserPaymentService
 				.Include((UserLoanPayment x) => x.UserLoan)
 				.ThenInclude((UserLoan x) => x.User)
 				.AsNoTracking()
-			where x.UserLoan.User.CustomerId == _currentUserService.CustomerId && DateTime.Now.Date >= x.TargetMonth.Date && (!x.UserLoan.IsCheckouted.HasValue || !((byte)x.UserLoan.IsCheckouted != 0)) && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && !x.UserLoan.Loan.HasSponsore
+			where x.UserLoan.User.CustomerId == _currentUserService.CustomerId && DateTime.Now.Date >= x.TargetMonth.Date && x.UserLoan.IsCheckouted != true && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && !x.UserLoan.Loan.HasSponsore
 			orderby x.TargetMonth descending
 			select x).AsSplitQuery().ToListAsync()).Select((UserLoanPayment x) => new LoanPaymentModel(x)).ToList();
 		if (agentId.HasValue)
@@ -500,7 +500,7 @@ public class UserPaymentService : BaseService, IUserPaymentService
 				.Include((UserLoanPayment x) => x.UserLoan)
 				.ThenInclude((UserLoan x) => x.Agent)
 				.AsNoTracking()
-			where x.UserLoan.Loan.IsSmsActive && x.UserLoan.User.CustomerId == _currentUserService.CustomerId && DateTime.Now.Date == x.TargetMonth.Date && (!x.UserLoan.IsCheckouted.HasValue || !((byte)x.UserLoan.IsCheckouted != 0)) && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && !x.SentDueDateSms && !alreadySent.Contains(x.UserLoan.User.Mobile)
+			where x.UserLoan.Loan.IsSmsActive && x.UserLoan.User.CustomerId == _currentUserService.CustomerId && DateTime.Now.Date == x.TargetMonth.Date && x.UserLoan.IsCheckouted != true && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && !x.SentDueDateSms && !alreadySent.Contains(x.UserLoan.User.Mobile)
 			orderby x.TargetMonth descending
 			select x).ToListAsync()).Select((UserLoanPayment x) => new LoanPaymentModel(x)).ToList();
 	}
@@ -516,7 +516,7 @@ public class UserPaymentService : BaseService, IUserPaymentService
 				.Include((UserLoanPayment x) => x.UserLoan)
 				.ThenInclude((UserLoan x) => x.Agent)
 				.AsNoTracking()
-			where x.UserLoan.Loan.IsSmsActive && x.UserLoan.User.CustomerId == _currentUserService.CustomerId && DateTime.Now.Date == x.TargetMonth.Date && (!x.UserLoan.IsCheckouted.HasValue || !((byte)x.UserLoan.IsCheckouted != 0)) && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && x.UserLoan.User.Email != "" && !x.SentDueDateEmail && !alreadySent.Contains(x.UserLoan.User.Email)
+			where x.UserLoan.Loan.IsSmsActive && x.UserLoan.User.CustomerId == _currentUserService.CustomerId && DateTime.Now.Date == x.TargetMonth.Date && x.UserLoan.IsCheckouted != true && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && x.UserLoan.User.Email != "" && !x.SentDueDateEmail && !alreadySent.Contains(x.UserLoan.User.Email)
 			orderby x.TargetMonth descending
 			select x).ToListAsync()).Select((UserLoanPayment x) => new LoanPaymentModel(x)).ToList();
 	}
@@ -532,7 +532,7 @@ public class UserPaymentService : BaseService, IUserPaymentService
 				.Include((UserLoanPayment x) => x.UserLoan)
 				.ThenInclude((UserLoan x) => x.Agent)
 				.AsNoTracking()
-			where x.UserLoan.Loan.IsSmsActive && x.UserLoan.User.CustomerId == _currentUserService.CustomerId && DateTime.Now.Date == x.TargetMonth.AddDays(days * -1).Date && (!x.UserLoan.IsCheckouted.HasValue || !((byte)x.UserLoan.IsCheckouted != 0)) && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && !x.SentBeforeDueDateSms && !alreadySent.Contains(x.UserLoan.User.Mobile)
+			where x.UserLoan.Loan.IsSmsActive && x.UserLoan.User.CustomerId == _currentUserService.CustomerId && DateTime.Now.Date == x.TargetMonth.AddDays(days * -1).Date && x.UserLoan.IsCheckouted != true && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && !x.SentBeforeDueDateSms && !alreadySent.Contains(x.UserLoan.User.Mobile)
 			orderby x.TargetMonth descending
 			select x).ToListAsync()).Select((UserLoanPayment x) => new LoanPaymentModel(x)).ToList();
 	}
@@ -548,7 +548,7 @@ public class UserPaymentService : BaseService, IUserPaymentService
 				.Include((UserLoanPayment x) => x.UserLoan)
 				.ThenInclude((UserLoan x) => x.Agent)
 				.AsNoTracking()
-			where x.UserLoan.Loan.IsSmsActive && x.UserLoan.User.CustomerId == _currentUserService.CustomerId && DateTime.Now.Date == x.TargetMonth.AddDays(days * -1).Date && (!x.UserLoan.IsCheckouted.HasValue || !((byte)x.UserLoan.IsCheckouted != 0)) && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && !x.SentBeforeDueDateEmail && x.UserLoan.User.Email != "" && !alreadySent.Contains(x.UserLoan.User.Email)
+			where x.UserLoan.Loan.IsSmsActive && x.UserLoan.User.CustomerId == _currentUserService.CustomerId && DateTime.Now.Date == x.TargetMonth.AddDays(days * -1).Date && x.UserLoan.IsCheckouted != true && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && !x.SentBeforeDueDateEmail && x.UserLoan.User.Email != "" && !alreadySent.Contains(x.UserLoan.User.Email)
 			orderby x.TargetMonth descending
 			select x).ToListAsync()).Select((UserLoanPayment x) => new LoanPaymentModel(x)).ToList();
 	}
@@ -564,7 +564,7 @@ public class UserPaymentService : BaseService, IUserPaymentService
 				.Include((UserLoanPayment x) => x.UserLoan)
 				.ThenInclude((UserLoan x) => x.Agent)
 				.AsNoTracking()
-			where x.UserLoan.Loan.IsSmsActive && x.UserLoan.User.CustomerId == _currentUserService.CustomerId && x.TargetMonth.Date <= DateTime.Now.AddDays(daysCount * -1).Date && (!x.UserLoan.IsCheckouted.HasValue || !((byte)x.UserLoan.IsCheckouted != 0)) && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && (x.LastOverDueSmsDate == null || (!onlyOnce && x.LastOverDueSmsDate.Value.AddDays(gapPeriod).Date <= DateTime.Now.Date)) && !alreadySent.Contains(x.UserLoan.User.Mobile)
+			where x.UserLoan.Loan.IsSmsActive && x.UserLoan.User.CustomerId == _currentUserService.CustomerId && x.TargetMonth.Date <= DateTime.Now.AddDays(daysCount * -1).Date && x.UserLoan.IsCheckouted != true && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && (x.LastOverDueSmsDate == null || (!onlyOnce && x.LastOverDueSmsDate.Value.AddDays(gapPeriod).Date <= DateTime.Now.Date)) && !alreadySent.Contains(x.UserLoan.User.Mobile)
 			orderby x.TargetMonth descending
 			select x).ToListAsync()).Select((UserLoanPayment x) => new LoanPaymentModel(x)).ToList();
 	}
@@ -580,7 +580,7 @@ public class UserPaymentService : BaseService, IUserPaymentService
 				.Include((UserLoanPayment x) => x.UserLoan)
 				.ThenInclude((UserLoan x) => x.Agent)
 				.AsNoTracking()
-			where x.UserLoan.Loan.IsSmsActive && x.UserLoan.User.CustomerId == _currentUserService.CustomerId && x.TargetMonth.Date <= DateTime.Now.AddDays(daysCount * -1).Date && (!x.UserLoan.IsCheckouted.HasValue || !((byte)x.UserLoan.IsCheckouted != 0)) && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && x.UserLoan.User.Email != "" && (!x.SentOverDueDateEmail || !onlyOnce) && !alreadySent.Contains(x.UserLoan.User.Email)
+			where x.UserLoan.Loan.IsSmsActive && x.UserLoan.User.CustomerId == _currentUserService.CustomerId && x.TargetMonth.Date <= DateTime.Now.AddDays(daysCount * -1).Date && x.UserLoan.IsCheckouted != true && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m) && x.UserLoan.User.Email != "" && (!x.SentOverDueDateEmail || !onlyOnce) && !alreadySent.Contains(x.UserLoan.User.Email)
 			orderby x.TargetMonth descending
 			select x).ToListAsync()).Select((UserLoanPayment x) => new LoanPaymentModel(x)).ToList();
 	}
@@ -596,7 +596,7 @@ public class UserPaymentService : BaseService, IUserPaymentService
 	{
 		byte percent = (await GetAppSettings())?.PercentOfConsideringAsPaid ?? 50;
 		return await (from x in _context.UserLoanPayments.Include((UserLoanPayment x) => x.UserLoan).ThenInclude((UserLoan x) => x.User).AsNoTracking()
-			where x.UserLoan.User.CustomerId == _currentUserService.CustomerId && x.TargetMonth.Date >= ((DateTime)startDate).Date && x.TargetMonth.Date <= ((DateTime)endDate).Date && (!x.UserLoan.IsCheckouted.HasValue || !((byte)x.UserLoan.IsCheckouted != 0)) && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m)
+			where x.UserLoan.User.CustomerId == _currentUserService.CustomerId && x.TargetMonth.Date >= ((DateTime)startDate).Date && x.TargetMonth.Date <= ((DateTime)endDate).Date && x.UserLoan.IsCheckouted != true && (x.SumAmount == 0m || x.SumAmount < x.InstallmentAmount * (decimal)percent / 100m)
 			select x).CountAsync();
 	}
 
