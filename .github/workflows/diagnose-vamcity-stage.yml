@@ -45,5 +45,23 @@ jobs:
           free -h 2>&1
           echo "=== HOST / DOMAIN STATUS ==="
           curl -sS -o /dev/null --max-time 5 -w 'ROOFIXO_HTTPS=%{http_code}\n' https://roofixo.ir || true
+          echo "=== DATABASE HEALTH SUMMARY ==="
+          SQL_PASSWORD="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' /home/roofixo/domains/roofixo.ir/vamcity-app/private/sql.env | head -1)"
+          SQLCMD="$(docker exec vamcity-stage-sql bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' 2>/dev/null | tail -1)"
+          if [ -n "$SQLCMD" ] && [ -n "$SQL_PASSWORD" ]; then
+            docker exec vamcity-stage-sql "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -h -1 -W -Q "SET NOCOUNT ON; SELECT name,state_desc FROM sys.databases WHERE name=N'vamcity_stage'; SELECT COUNT(*) AS user_tables FROM [vamcity_stage].sys.tables;" 2>&1
+          fi
+          echo "=== ONE-SHOT APP DIAGNOSTIC (isolated network, no host port) ==="
+          BASE=/home/roofixo/domains/roofixo.ir/vamcity-app
+          PRIVATE="$BASE/private"
+          RELEASE="$(find "$BASE/releases" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)"
+          echo "RELEASE_DIR=$RELEASE"
+          if [ -n "$RELEASE" ] && [ -f "$RELEASE/LoanSystemAvizhe.Site.dll" ]; then
+            timeout 25 docker run --rm --network vamcity-stage-net --memory=1g \
+              --env-file "$PRIVATE/app.env" \
+              -v "$RELEASE:/app" -v "$PRIVATE/uploads:/app/uploads" \
+              -w /app --entrypoint dotnet \
+              mcr.microsoft.com/dotnet/aspnet:10.0 LoanSystemAvizhe.Site.dll 2>&1 || true
+          fi
           echo "=== END DIAGNOSTICS ==="
           REMOTE
