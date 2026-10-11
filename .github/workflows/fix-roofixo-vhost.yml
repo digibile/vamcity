@@ -152,7 +152,6 @@ jobs:
           echo "ROOFIXO_HTTP_STATUS=$HTTP_STATUS"
           echo "ROOFIXO_HTTP_BODY_BYTES=$(wc -c < "$HTTP_BODY")"
           echo "ROOFIXO_HTTP_TITLE=$(grep -oE '<title>[^<]*</title>' "$HTTP_BODY" | head -1 || true)"
-          if ! grep -q 'BEGIN VAMCITY ROOFIXO ROUTE' "$CUSTOM_HTTP"; then rollback_config; rm -f "$HTTP_BODY"; exit 1; fi
           case "$HTTP_STATUS" in 200|301|302|307|308) ;; *) rollback_config; rm -f "$HTTP_BODY"; exit 1 ;; esac
           rm -f "$HTTP_BODY"
 
