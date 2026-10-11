@@ -354,5 +354,34 @@ jobs:
             200|301|302|307|308) echo "ROOFIXO_PRIMARY_DOMAIN_PROXY_OK" ;;
             *) echo "WARNING: Nginx config applied but local HTTPS host check returned $DOMAIN_HTTP; inspect certificate/vhost and app logs" ;;
           esac
+          echo "=== PUBLIC DNS AND ROUTING DIAGNOSTICS ==="
+          echo "SERVER_RESOLVES_ROOFIXO_IR:"
+          getent ahostsv4 roofixo.ir | awk '!seen[$1]++ {print $1}' || true
+          echo "SERVER_PUBLIC_IPS:"
+          curl -4 -fsS --max-time 8 https://api.ipify.org || true
+          echo
+          echo "PUBLIC_DNS_LOOKUP:"
+          if command -v dig >/dev/null 2>&1; then
+            dig +short A roofixo.ir
+            dig +short AAAA roofixo.ir
+          fi
+          echo "PUBLIC_HTTPS_RESPONSE:"
+          curl -4 -k -sS --max-time 15 -D /tmp/roofixo-public-headers.txt -o /tmp/roofixo-public-body.html -w 'PUBLIC_ROOFIXO_HTTP=%{http_code} REMOTE_IP=%{remote_ip} FINAL_URL=%{url_effective}\n' https://roofixo.ir/ || true
+          sed -n '1,12p' /tmp/roofixo-public-headers.txt 2>/dev/null || true
+          grep -Eio '<title>[^<]*|404 Not Found|nginx' /tmp/roofixo-public-body.html 2>/dev/null | head -8 || true
           echo "VAMCITY_DEPLOYMENT_OK; roofixo.ir configured as primary domain; app bound only to 127.0.0.1:5187"
           REMOTE
+
+      - name: Verify public Roofixo URL from GitHub runner
+        run: |
+          set +e
+          echo "=== PUBLIC DNS FROM OUTSIDE SERVER ==="
+          getent ahostsv4 roofixo.ir | awk '!seen[$1]++ {print $1}'
+          getent ahostsv4 www.roofixo.ir | awk '!seen[$1]++ {print $1}'
+          echo "=== PUBLIC HTTPS RESPONSE ==="
+          curl -4 -k -sS --max-time 20 -D /tmp/roofixo-headers.txt -o /tmp/roofixo-body.html -w 'PUBLIC_ROOFIXO_HTTP=%{http_code} REMOTE_IP=%{remote_ip} FINAL_URL=%{url_effective}\n' https://roofixo.ir/
+          sed -n '1,12p' /tmp/roofixo-headers.txt
+          grep -Eio '<title>[^<]*|404 Not Found|nginx' /tmp/roofixo-body.html | head -8
+          echo "=== WWW HTTPS RESPONSE ==="
+          curl -4 -k -sS --max-time 20 -D /tmp/roofixo-www-headers.txt -o /tmp/roofixo-www-body.html -w 'PUBLIC_WWW_HTTP=%{http_code} REMOTE_IP=%{remote_ip} FINAL_URL=%{url_effective}\n' https://www.roofixo.ir/
+          sed -n '1,8p' /tmp/roofixo-www-headers.txt
