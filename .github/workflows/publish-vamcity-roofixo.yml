@@ -118,6 +118,18 @@ jobs:
           done
           case "$APP_HEALTH" in 200|301|302|307|308) ;; *) docker logs --tail 80 vamcity-stage-app || true; rollback; exit 1 ;; esac
 
+          echo "=== ENABLE DOMAIN NGINX AND SSL VHOSTS ==="
+          DOMAIN_CONF=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf
+          if grep -q '^ssl=' "$DOMAIN_CONF"; then
+            sed -i 's/^ssl=.*/ssl=ON/' "$DOMAIN_CONF"
+          else
+            printf 'ssl=ON\n' >> "$DOMAIN_CONF"
+          fi
+          if grep -q '^nginx=' "$DOMAIN_CONF"; then
+            sed -i 's/^nginx=.*/nginx=1/' "$DOMAIN_CONF"
+          else
+            printf 'nginx=1\n' >> "$DOMAIN_CONF"
+          fi
           echo "=== APPLY REVERSIBLE DIRECTADMIN CUSTOM NGINX RULE ==="
           cat > "$CUSTOM" <<'NGINX'
           location / {
@@ -144,9 +156,29 @@ jobs:
             rollback
             exit 1
           fi
+          if ! grep -q 'proxy_pass http://127.0.0.1:5187' "$GENERATED"; then
+            echo "DIRECTADMIN_DID_NOT_INSERT_CUSTOM_NGINX; rolling back domain flags and custom route"
+            rollback
+            exit 1
+          fi
           if ! systemctl reload nginx; then
             rollback
             exit 1
+          fi
+
+          echo "=== REQUEST LET'S ENCRYPT CERTIFICATE ==="
+          if [ -x /usr/local/directadmin/scripts/letsencrypt.sh ]; then
+            if /usr/local/directadmin/scripts/letsencrypt.sh request roofixo.ir 4096; then
+              echo "LETSENCRYPT_REQUEST_RESULT=success"
+              /usr/local/directadmin/custombuild/build rewrite_confs >/dev/null
+              nginx -t
+              systemctl reload nginx
+            else
+              echo "LETSENCRYPT_REQUEST_RESULT=failed; inspect DirectAdmin ACME logs"
+              find /usr/local/directadmin/data/users/roofixo/domains/acme_provider_cert_logs -maxdepth 1 -type f -name 'roofixo.ir.log' -exec tail -n 30 {} \; 2>/dev/null || true
+            fi
+          else
+            echo "LETSENCRYPT_SCRIPT_NOT_AVAILABLE"
           fi
 
           echo "=== VERIFY DOMAIN ROUTING LOCALLY THROUGH TLS VHOST ==="
