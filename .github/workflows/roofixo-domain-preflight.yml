@@ -1,0 +1,81 @@
+name: Roofixo domain routing preflight
+run-name: Read-only Roofixo domain routing inspection
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/roofixo-domain-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Prepare SSH
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          chmod 600 "$RUNNER_TEMP/deploy_key"
+          ssh-keyscan -T 10 -p "$PORT" "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          chmod 600 "$HOME/.ssh/known_hosts"
+          echo "DEPLOY_PORT_EFFECTIVE=$PORT" >> "$GITHUB_ENV"
+          echo "DEPLOY_HOST_EFFECTIVE=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "DEPLOY_USER_EFFECTIVE=$DEPLOY_USER" >> "$GITHUB_ENV"
+      - name: Inspect domain, app and DirectAdmin routing without changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$RUNNER_TEMP/deploy_key" -p "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE" 'bash -s' <<'REMOTE'
+          set +e
+          echo "=== HOST AND DOMAIN FILES ==="
+          printf 'HOST='; hostname
+          printf 'USER='; id -un
+          for p in \
+            /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf \
+            /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx \
+            /usr/local/directadmin/data/users/roofixo/nginx.conf \
+            /etc/nginx/nginx.conf \
+            /home/roofixo/domains/roofixo.ir/public_html/index.php \
+            /home/roofixo/domains/roofixo.ir/public_html/index.html; do
+            if [ -e "$p" ]; then echo "EXISTS=$p"; else echo "MISSING=$p"; fi
+          done
+          echo "=== CUSTOM NGINX ROUTING DIRECTIVES ==="
+          for p in \
+            /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx \
+            /usr/local/directadmin/data/users/roofixo/nginx.conf; do
+            if [ -f "$p" ]; then
+              echo "FILE=$p"
+              grep -nE 'server_name|location[[:space:]]|proxy_pass|root[[:space:]]|ssl_certificate|include' "$p" | head -100
+            fi
+          done
+          echo "=== NGINX VALIDATION ==="
+          nginx -t 2>&1
+          echo "=== APP LOCAL HEALTH ==="
+          curl -sS -o /dev/null --max-time 8 -w 'VAMCITY_LOOPBACK_HTTP=%{http_code}\n' http://127.0.0.1:5187/ 2>&1
+          echo "=== PUBLIC DOMAIN HEALTH FROM SERVER ==="
+          curl -k -sS -o /dev/null --max-time 12 -w 'ROOFIXO_HTTPS_HTTP=%{http_code}\n' https://roofixo.ir/ 2>&1
+          curl -sS -o /dev/null --max-time 12 -w 'ROOFIXO_HTTP_HTTP=%{http_code}\n' http://roofixo.ir/ 2>&1
+          echo "=== ACTIVE DIRECTADMIN CERTIFICATE FILES ==="
+          find /usr/local/directadmin/data/users/roofixo/domains -maxdepth 1 -type f \
+            \( -name 'roofixo.ir.cert' -o -name 'roofixo.ir.key' -o -name 'roofixo.ir.ca' \) \
+            -printf '%f present\n' 2>/dev/null
+          echo "=== END READ ONLY INSPECTION ==="
+          REMOTE
