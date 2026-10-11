@@ -18,12 +18,6 @@
     <Reference Include="Microsoft.EntityFrameworkCore">
       <HintPath>../../Microsoft.EntityFrameworkCore.dll</HintPath>
     </Reference>
-    <Reference Include="System.ServiceModel.Primitives">
-      <HintPath>../../System.ServiceModel.Primitives.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ServiceModel.Http">
-      <HintPath>../../System.ServiceModel.Http.dll</HintPath>
-    </Reference>
     <Reference Include="RestSharp">
       <HintPath>../../RestSharp.dll</HintPath>
     </Reference>
@@ -69,5 +63,7 @@
     <Reference Include="Hangfire.Core">
       <HintPath>../../Hangfire.Core.dll</HintPath>
     </Reference>
+    <PackageReference Include="System.ServiceModel.Primitives" Version="10.0.0" />
+    <PackageReference Include="System.ServiceModel.Http" Version="10.0.0" />
   </ItemGroup>
 </Project>
