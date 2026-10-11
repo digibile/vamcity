@@ -36,7 +36,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "===== RECOVERED SOURCE TREE ====="
-          find recovered-source -maxdepth 4 -type f | head -80
+          find recovered-source -maxdepth 4 -type f -print | sed -n '1,80p'
           echo "===== SOURCE COUNTS ====="
           count="$(find recovered-source -type f -name '*.cs' | wc -l)"
           echo "Recovered C# files: $count"
