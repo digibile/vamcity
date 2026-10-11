@@ -124,8 +124,27 @@ jobs:
           ln -sfn "$RELEASE" "$BASE/current"
 
           echo "=== EXTRACT CURRENT SOURCE DATABASE BACKUP PRIVATELY ==="
-          DB_ENTRY="$(unzip -Z1 "$DB_ZIP" | grep -v '/
-
+          DB_ENTRY="$(unzip -Z1 "$DB_ZIP" | grep -v '/ | head -1)" | head -1)"
+          test -n "$DB_ENTRY"
+          unzip -p "$DB_ZIP" "$DB_ENTRY" > "$PRIVATE/backup/source.new.bak"
+          test -s "$PRIVATE/backup/source.new.bak"
+          chmod 600 "$PRIVATE/backup/source.new.bak"
+          NEW_DB_SHA="$(sha256sum "$PRIVATE/backup/source.new.bak" | awk '{print $1}')"
+          OLD_DB_SHA=""
+          if [ -s "$PRIVATE/backup/source.bak" ]; then OLD_DB_SHA="$(sha256sum "$PRIVATE/backup/source.bak" | awk '{print $1}')"; fi
+          DB_BACKUP_CHANGED=0
+          if [ "$NEW_DB_SHA" != "$OLD_DB_SHA" ]; then
+            if [ -s "$PRIVATE/backup/source.bak" ]; then
+              cp -p "$PRIVATE/backup/source.bak" "$PRIVATE/backup/source.previous.bak"
+              chmod 600 "$PRIVATE/backup/source.previous.bak"
+            fi
+            mv "$PRIVATE/backup/source.new.bak" "$PRIVATE/backup/source.bak"
+            DB_BACKUP_CHANGED=1
+          else
+            rm -f "$PRIVATE/backup/source.new.bak"
+          fi
+          echo "SOURCE_DATABASE_BACKUP_CHANGED=$DB_BACKUP_CHANGED"
+          echo "SOURCE_DATABASE_BACKUP_SHA256=$NEW_DB_SHA"
           if [ ! -s "$PRIVATE/sql.env" ]; then
             SQL_PASSWORD="$(openssl rand -hex 24)Aa1!"
             umask 077
