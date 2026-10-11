@@ -341,8 +341,51 @@ jobs:
             rollback_domain_config
             exit 1
           fi
+          # DirectAdmin on this host does not inject *.cust_nginx into the generated vhost.
+          # Install the proxy location into the generated Roofixo vhosts after each rewrite.
+          GENERATED="/usr/local/directadmin/data/users/$DA_USER/nginx.conf"
+          GENERATED_BACKUP="$GENERATED.before-vamcity-$(date -u +%Y%m%dT%H%M%SZ)"
+          cp -a "$GENERATED" "$GENERATED_BACKUP"
+          if ! python3 - "$GENERATED" <<'PY'
+          import pathlib, sys
+          p = pathlib.Path(sys.argv[1])
+          s = p.read_text()
+          begin = "\t# BEGIN VAMCITY REVERSE PROXY"
+          end = "\t# END VAMCITY REVERSE PROXY"
+          while begin in s and end in s:
+              a = s.index(begin)
+              b = s.index(end, a) + len(end)
+              s = s[:a] + s[b:]
+          needle = "\tinclude /usr/local/directadmin/data/users/roofixo/nginx_php.conf;"
+          if s.count(needle) < 2:
+              print("ERROR: expected both generated Roofixo HTTP/HTTPS vhost insertion points")
+              raise SystemExit(2)
+          block = """\n\t# BEGIN VAMCITY REVERSE PROXY
+          \tlocation / {
+          \t\tproxy_pass http://127.0.0.1:5187;
+          \t\tproxy_http_version 1.1;
+          \t\tproxy_set_header Host $host;
+          \t\tproxy_set_header X-Real-IP $remote_addr;
+          \t\tproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          \t\tproxy_set_header X-Forwarded-Proto $scheme;
+          \t\tproxy_set_header Upgrade $http_upgrade;
+          \t\tproxy_set_header Connection "upgrade";
+          \t\tproxy_read_timeout 300s;
+          \t\tproxy_send_timeout 300s;
+          \t}
+          \t# END VAMCITY REVERSE PROXY"""
+          s = s.replace(needle, needle + block)
+          p.write_text(s)
+          print("VAMCITY_PROXY_INSERTED_IN_GENERATED_VHOSTS=2")
+          PY
+          then
+            cp -a "$GENERATED_BACKUP" "$GENERATED"
+            rollback_domain_config
+            exit 1
+          fi
           if ! nginx -t; then
-            echo "NGINX_TEST_FAILED; restoring previous domain configuration"
+            echo "NGINX_TEST_FAILED; restoring previous generated and domain configuration"
+            cp -a "$GENERATED_BACKUP" "$GENERATED"
             rollback_domain_config
             nginx -t || true
             exit 1
