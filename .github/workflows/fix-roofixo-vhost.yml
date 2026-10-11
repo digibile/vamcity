@@ -153,7 +153,7 @@ jobs:
 
           echo "=== VERIFY HTTP VHOST BODY ==="
           HTTP_BODY="$(mktemp)"
-          HTTP_STATUS="$(curl --resolve "roofixo.ir:80:$DOMAIN_IP" -sS -o "$HTTP_BODY" --max-time 15 -w '%{http_code}' http://roofixo.ir/ || true)"
+          HTTP_STATUS="$(curl -L --resolve "roofixo.ir:80:$DOMAIN_IP" -sS -o "$HTTP_BODY" --max-time 15 -w '%{http_code}' http://roofixo.ir/ || true)"
           echo "ROOFIXO_HTTP_STATUS=$HTTP_STATUS"
           echo "ROOFIXO_HTTP_BODY_BYTES=$(wc -c < "$HTTP_BODY")"
           echo "ROOFIXO_HTTP_TITLE=$(grep -oE '<title>[^<]*</title>' "$HTTP_BODY" | head -1 || true)"
@@ -178,7 +178,7 @@ jobs:
           CERT_SUMMARY="$(echo | openssl s_client -connect "$DOMAIN_IP:443" -servername roofixo.ir 2>/dev/null | openssl x509 -noout -subject -issuer -dates -ext subjectAltName 2>&1 || true)"
           printf '%s\n' "$CERT_SUMMARY"
           HTTPS_BODY="$(mktemp)"
-          HTTPS_STATUS="$(curl --resolve "roofixo.ir:443:$DOMAIN_IP" -sS -o "$HTTPS_BODY" --max-time 15 -w '%{http_code}' https://roofixo.ir/ || true)"
+          HTTPS_STATUS="$(curl -L --resolve "roofixo.ir:443:$DOMAIN_IP" -sS -o "$HTTPS_BODY" --max-time 15 -w '%{http_code}' https://roofixo.ir/ || true)"
           echo "ROOFIXO_HTTPS_STATUS=$HTTPS_STATUS"
           echo "ROOFIXO_HTTPS_BODY_BYTES=$(wc -c < "$HTTPS_BODY")"
           echo "ROOFIXO_HTTPS_TITLE=$(grep -oE '<title>[^<]*</title>' "$HTTPS_BODY" | head -1 || true)"
