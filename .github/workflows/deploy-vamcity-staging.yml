@@ -351,12 +351,21 @@ jobs:
           echo "=== NGINX LISTENING ADDRESSES AND ROOFIXO VHOST ==="
           ip -br -4 address 2>/dev/null || ip -4 address 2>/dev/null || true
           echo "=== SOCKET LISTENERS ==="
-          ss -ltnp 2>/dev/null | grep -E ':(80|443|5187)\\b' || true
+          ss -ltnp 2>/dev/null | grep -E ':(80|443|5187)([[:space:]]|$)' || true
           echo "=== ALL GENERATED ROOFIXO VHOST LINES ==="
-          nginx -T 2>&1 | grep -n -B 18 -A 35 -E 'server_name[[:space:]]+[^;]*(roofixo\\.ir|www\\.roofixo\\.ir)|roofixo\\.ir\\.cust_nginx' || true
+          nginx -T 2>&1 | grep -n -i -B 8 -A 20 'roofixo' | head -180 || true
+          echo "=== NGINX VHOST DEFAULT SERVER LINES ==="
+          nginx -T 2>&1 | grep -n -E 'listen .*default_server|server_name _|listen .*:443|listen .*:80' | head -100 || true
           echo "=== DIRECTADMIN ROOFIXO DOMAIN METADATA ==="
           ls -l /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir* 2>/dev/null || true
           grep -n -E '^(ip|domain|ssl|nginx|php|private_html|force_ssl)=' /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf 2>/dev/null || true
+          echo "=== DOMAIN IP MAPPING COMPARISON (NO IP VALUES) ==="
+          ETH0_IP="$(ip -o -4 addr show dev eth0 2>/dev/null | awk '{split($4,a,"/"); print a[1]; exit}')"
+          DOMAIN_IP="$(sed -n 's/^ip=//p' /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf 2>/dev/null | head -1)"
+          echo "DOMAIN_IP_MATCHES_ETH0=$([ -n "$ETH0_IP" ] && [ "$ETH0_IP" = "$DOMAIN_IP" ] && echo yes || echo no)"
+          echo "DOMAIN_IP_IS_LISTED_IN_DA_IPS=$([ -n "$DOMAIN_IP" ] && grep -Fqx "$DOMAIN_IP" /usr/local/directadmin/data/admin/ip.list 2>/dev/null && echo yes || echo no)"
+          echo "DOMAIN_IP_LIST_FILE:"
+          cat /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.ip_list 2>/dev/null || true
           SERVER_INTERFACE_IP="$(ip route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
           echo "SERVER_INTERFACE_IP=$SERVER_INTERFACE_IP"
           echo "=== TEST HOSTNAME AGAINST EACH LOCAL IPV4 ADDRESS ==="
