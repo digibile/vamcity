@@ -50,6 +50,14 @@ jobs:
               unzip -Z1 "$z" 2>/dev/null | head -80
             else echo "ARCHIVE_MISSING=$z"; fi
           done
+          echo "=== APP CONTAINER MOUNT SOURCE ==="
+          docker inspect -f '{{range .Mounts}}{{.Source}} -> {{.Destination}}; {{end}}' vamcity-stage-app
+          echo "=== ORIGINAL PACKAGE STATIC FILE INVENTORY ==="
+          unzip -Z1 "$ROOT/public_html/vamcity.zip" 2>/dev/null | grep -E '^(wwwroot/|Content/|Images/|uploads/|up/|App_Data/)' | head -160
+          echo "=== ORIGINAL PACKAGE WWWROOT FILE COUNTS ==="
+          unzip -Z1 "$ROOT/public_html/vamcity.zip" 2>/dev/null | awk -F/ '$1=="wwwroot" {count++; if ($2!="") dirs[$2]++} END {print "WWWROOT_FILES="count; for (d in dirs) print d,dirs[d]}' | sort
+          echo "=== ORIGINAL PACKAGE LARGE UPLOAD/IMAGE FOLDERS ==="
+          unzip -Z1 "$ROOT/public_html/vamcity.zip" 2>/dev/null | grep -Ei '(^|/)(uploads?|images?|img|up|files|documents?)/' | head -100
           echo "=== PUBLIC HTML ASSET REFERENCES AND LOCAL RESPONSES ==="
           HTML=/tmp/vamcity-assets-audit.html
           curl -fsS --max-time 15 http://127.0.0.1:5187/cl/plans/ -o "$HTML"
