@@ -102,6 +102,25 @@ jobs:
           mkdir -p "$RELEASE/uploads" "$RELEASE/logs/nlog"
           chmod 700 "$RELEASE" "$RELEASE/logs" "$RELEASE/logs/nlog"
 
+          echo "=== RESTORE ORIGINAL UPLOADS AND CERTIFICATE WHEN MISSING ==="
+          UPLOAD_FILES="$(find "$PRIVATE/uploads" -type f | wc -l)"
+          if [ "$UPLOAD_FILES" -eq 0 ]; then
+            unzip -n -q "$ZIP" 'uploads/*' -d "$PRIVATE"
+            UPLOAD_FILES="$(find "$PRIVATE/uploads" -type f | wc -l)"
+          fi
+          echo "ORIGINAL_UPLOAD_FILES=$UPLOAD_FILES"
+          test "$UPLOAD_FILES" -gt 0
+          mkdir -p "$RELEASE/App_Data/certs"
+          if [ ! -s "$RELEASE/App_Data/certs/orgCertificate.pfx" ]; then
+            unzip -p "$ZIP" 'App_Data/certs/orgCertificate.pfx' > "$RELEASE/App_Data/certs/orgCertificate.pfx"
+          fi
+          test -s "$RELEASE/App_Data/certs/orgCertificate.pfx"
+          chmod 600 "$RELEASE/App_Data/certs/orgCertificate.pfx"
+          if [ -e "$BASE/current" ] && [ ! -L "$BASE/current" ]; then
+            mv "$BASE/current" "$BASE/current.pre-symlink-$(date -u +%Y%m%dT%H%M%SZ)"
+          fi
+          ln -sfn "$RELEASE" "$BASE/current"
+
           if [ ! -s "$PRIVATE/backup/source.bak" ]; then
             ENTRY="$(unzip -Z1 "$ZIP" | grep -v '/$' | head -1)"
             test -n "$ENTRY"
