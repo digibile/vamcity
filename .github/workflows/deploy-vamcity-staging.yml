@@ -124,7 +124,7 @@ jobs:
           ln -sfn "$RELEASE" "$BASE/current"
 
           echo "=== EXTRACT CURRENT SOURCE DATABASE BACKUP PRIVATELY ==="
-          DB_ENTRY="$(unzip -Z1 "$DB_ZIP" | grep -v '/ | head -1)" | head -1)"
+          DB_ENTRY="$(unzip -Z1 "$DB_ZIP" | head -1)"
           test -n "$DB_ENTRY"
           unzip -p "$DB_ZIP" "$DB_ENTRY" > "$PRIVATE/backup/source.new.bak"
           test -s "$PRIVATE/backup/source.new.bak"
