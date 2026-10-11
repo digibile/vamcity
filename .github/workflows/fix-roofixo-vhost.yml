@@ -110,14 +110,8 @@ jobs:
           mkdir -p /var/www/html/.well-known/acme-challenge
           chmod 755 /var/www/html/.well-known /var/www/html/.well-known/acme-challenge
 
-          echo "=== CREATE CUSTOM TEMPLATES THAT ONLY AFFECT ROOFIXO.IR ==="
-          [ -f "$CUSTOM_HTTP" ] || cp -a "$HTTP_BASE" "$CUSTOM_HTTP"
-          [ -f "$CUSTOM_HTTPS" ] || cp -a "$HTTPS_BASE" "$CUSTOM_HTTPS"
-          python3 - "$CUSTOM_HTTP" "$CUSTOM_HTTPS" <<'PY'
-          import pathlib, sys
-          route = r'''
-          # BEGIN VAMCITY ROOFIXO ROUTE
-          |*if DOMAIN="roofixo.ir"|
+          echo "=== WRITE DIRECTADMIN PER-DOMAIN NGINX CONFIG ==="
+          cat > "$CUSTOM" <<'NGINX'
           location ^~ /.well-known/acme-challenge/ {
               alias /var/www/html/.well-known/acme-challenge/;
               default_type text/plain;
@@ -135,26 +129,18 @@ jobs:
               proxy_read_timeout 120s;
               proxy_redirect off;
           }
-          |*endif|
-          # END VAMCITY ROOFIXO ROUTE
-          '''
-          for name in sys.argv[1:]:
-              p = pathlib.Path(name)
-              s = p.read_text()
-              if "BEGIN VAMCITY ROOFIXO ROUTE" not in s:
-                  marker = "|CUSTOM4|"
-                  if marker not in s:
-                      raise SystemExit(f"CUSTOM4_TOKEN_MISSING:{p}")
-                  s = s.replace(marker, marker + "\n" + route, 1)
-                  p.write_text(s)
-          PY
-          chmod 600 "$CUSTOM_HTTP" "$CUSTOM_HTTPS"
+          NGINX
+          chown roofixo:roofixo "$CUSTOM"
+          chmod 644 "$CUSTOM"
+          rm -f "$POST_HTTP" "$POST_HTTPS" "$CUSTOM_HTTP" "$CUSTOM_HTTPS"
 
-          echo "=== REWRITE DIRECTADMIN CONFIGS ==="
-          if ! /usr/local/directadmin/custombuild/build rewrite_confs; then rollback_config; exit 1; fi
+          echo "=== REWRITE THIS DIRECTADMIN USER VHOST ==="
+          printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
+          /usr/local/directadmin/dataskq d
           if ! nginx -t; then rollback_config; exit 1; fi
           if ! grep -q 'proxy_pass http://127.0.0.1:5187' "$GENERATED"; then
-            echo "PERSISTENT_VAMCITY_PROXY_NOT_PRESENT_IN_GENERATED_CONFIG"
+            echo "PER_DOMAIN_CUST_NGINX_NOT_INSERTED_IN_GENERATED_CONFIG"
+            echo "CUSTOM_FILE_OWNER=$(stat -c '%U:%G %a' "$CUSTOM")"
             rollback_config
             exit 1
           fi
