@@ -9,6 +9,7 @@ on:
       - ".github/workflows/vamcity-browser-parity.yml"
       - "wwwroot/ui/**"
       - ".github/workflows/restore-vamcity-source-database.yml"
+      - ".github/workflows/deploy-vamcity-staging.yml"
       - ".github/workflows/apply-vamcity-brand.yml"
   workflow_dispatch:
 
