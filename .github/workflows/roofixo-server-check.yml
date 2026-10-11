@@ -1,0 +1,74 @@
+name: Check Roofixo server connection
+run-name: Read-only Roofixo server preflight
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/roofixo-server-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate deployment secrets are available
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          for key in DEPLOY_HOST DEPLOY_USER DEPLOY_PORT DEPLOY_SSH_KEY; do
+            if [ -z "${!key:-}" ]; then
+              echo "::error::Required repository/organization Actions secret is missing: $key"
+              exit 2
+            fi
+          done
+          echo "DEPLOY_SECRETS_PRESENT=true"
+      - name: Prepare SSH
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          ssh-keyscan -T 10 -p "$DEPLOY_PORT" "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+      - name: Read-only server and Roofixo checks
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          ssh -i "$RUNNER_TEMP/deploy_key" -p "$DEPLOY_PORT" \
+            -o BatchMode=yes -o ConnectTimeout=15 \
+            "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -u
+          echo "SSH_CONNECTION_OK"
+          echo "HOST=$(hostname)"
+          echo "USER=$(id -un)"
+          echo "ROOFIXO_HOME_EXISTS=$([ -d /home/roofixo/domains/roofixo.ir ] && echo yes || echo no)"
+          echo "ROOFIXO_PUBLIC_HTML_EXISTS=$([ -d /home/roofixo/domains/roofixo.ir/public_html ] && echo yes || echo no)"
+          echo "VAMCITY_ZIP_EXISTS=$([ -f /home/roofixo/domains/roofixo.ir/public_html/vamcity.zip ] && echo yes || echo no)"
+          echo "DIRECTADMIN_DOMAIN_CONFIG_EXISTS=$([ -f /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf ] && echo yes || echo no)"
+          echo "DIRECTADMIN_CUSTOM_NGINX_EXISTS=$([ -f /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx ] && echo yes || echo no)"
+          if command -v dotnet >/dev/null 2>&1; then dotnet --list-runtimes; else echo "DOTNET_NOT_INSTALLED"; fi
+          if command -v nginx >/dev/null 2>&1; then nginx -t 2>&1 || true; else echo "NGINX_NOT_INSTALLED"; fi
+          echo "RUNNING_VAMCITY_PROCESSES:"
+          pgrep -af 'LoanSystemAvizhe.Site|LoanSystem.Site.dll|vamcity' || true
+          echo "READ_ONLY_PREFLIGHT_FINISHED"
+          REMOTE
