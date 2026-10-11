@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/diagnose-restored-vamcity-db.yml"
+      - ".github/workflows/deploy-vamcity-staging.yml"
   workflow_dispatch:
 
 permissions:
@@ -39,4 +40,6 @@ jobs:
           SQL_PASSWORD="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' /home/roofixo/domains/roofixo.ir/vamcity-app/private/sql.env | head -1)"
           SQLCMD="$(docker exec "$SQL_CONTAINER" bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' | tail -1)"
           docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; SELECT name,state_desc FROM sys.databases WHERE name=N'vamcity_stage'; SELECT COUNT(*) AS table_count FROM [vamcity_stage].sys.tables; SELECT COUNT(*) AS active_plan_count FROM [vamcity_stage].dbo.Loans WHERE Disable=0;" 
+          echo "=== BRAND HITS BY TABLE/COLUMN ONLY ==="
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -W -Q "USE [vamcity_stage]; SET NOCOUNT ON; DECLARE @q nvarchar(max)=N''; SELECT @q=@q+N'IF EXISTS(SELECT 1 FROM '+QUOTENAME(s.name)+N'.'+QUOTENAME(t.name)+N' WHERE TRY_CONVERT(nvarchar(max),'+QUOTENAME(c.name)+N') LIKE N''%آقای وام%'') PRINT N''HIT '+s.name+N'.'+t.name+N'.'+c.name+N'''; ' FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id JOIN sys.columns c ON c.object_id=t.object_id JOIN sys.types ty ON ty.user_type_id=c.user_type_id WHERE ty.name IN(N'nvarchar',N'varchar',N'nchar',N'char',N'text',N'ntext'); EXEC sp_executesql @q;"
           REMOTE
