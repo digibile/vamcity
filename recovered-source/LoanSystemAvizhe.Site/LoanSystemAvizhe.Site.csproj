@@ -14,82 +14,82 @@
   <ItemGroup />
   <ItemGroup>
     <Reference Include="LoanSystemAvizhe.Services">
-      <HintPath>LoanSystemAvizhe.Services.dll</HintPath>
+      <HintPath>../../LoanSystemAvizhe.Services.dll</HintPath>
     </Reference>
     <Reference Include="LoanSystemAvizhe.Core">
-      <HintPath>LoanSystemAvizhe.Core.dll</HintPath>
+      <HintPath>../../LoanSystemAvizhe.Core.dll</HintPath>
     </Reference>
     <Reference Include="LoanSystemAvizhe.Data">
-      <HintPath>LoanSystemAvizhe.Data.dll</HintPath>
+      <HintPath>../../LoanSystemAvizhe.Data.dll</HintPath>
     </Reference>
     <Reference Include="Hangfire.Core">
-      <HintPath>Hangfire.Core.dll</HintPath>
+      <HintPath>../../Hangfire.Core.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.IdentityModel.Tokens">
-      <HintPath>Microsoft.IdentityModel.Tokens.dll</HintPath>
+      <HintPath>../../Microsoft.IdentityModel.Tokens.dll</HintPath>
     </Reference>
     <Reference Include="System.IdentityModel.Tokens.Jwt">
-      <HintPath>System.IdentityModel.Tokens.Jwt.dll</HintPath>
+      <HintPath>../../System.IdentityModel.Tokens.Jwt.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.EntityFrameworkCore">
-      <HintPath>Microsoft.EntityFrameworkCore.dll</HintPath>
+      <HintPath>../../Microsoft.EntityFrameworkCore.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.AspNetCore.Authentication.JwtBearer">
-      <HintPath>Microsoft.AspNetCore.Authentication.JwtBearer.dll</HintPath>
+      <HintPath>../../Microsoft.AspNetCore.Authentication.JwtBearer.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.AspNetCore.SpaServices.Extensions">
-      <HintPath>Microsoft.AspNetCore.SpaServices.Extensions.dll</HintPath>
+      <HintPath>../../Microsoft.AspNetCore.SpaServices.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="Swashbuckle.AspNetCore.SwaggerGen">
-      <HintPath>Swashbuckle.AspNetCore.SwaggerGen.dll</HintPath>
+      <HintPath>../../Swashbuckle.AspNetCore.SwaggerGen.dll</HintPath>
     </Reference>
     <Reference Include="Swashbuckle.AspNetCore.SwaggerUI">
-      <HintPath>Swashbuckle.AspNetCore.SwaggerUI.dll</HintPath>
+      <HintPath>../../Swashbuckle.AspNetCore.SwaggerUI.dll</HintPath>
     </Reference>
     <Reference Include="System.Data.SqlClient">
-      <HintPath>System.Data.SqlClient.dll</HintPath>
+      <HintPath>../../System.Data.SqlClient.dll</HintPath>
     </Reference>
     <Reference Include="HtmlSanitizer">
-      <HintPath>HtmlSanitizer.dll</HintPath>
+      <HintPath>../../HtmlSanitizer.dll</HintPath>
     </Reference>
     <Reference Include="UAParser">
-      <HintPath>UAParser.dll</HintPath>
+      <HintPath>../../UAParser.dll</HintPath>
     </Reference>
     <Reference Include="Hangfire.AspNetCore">
-      <HintPath>Hangfire.AspNetCore.dll</HintPath>
+      <HintPath>../../Hangfire.AspNetCore.dll</HintPath>
     </Reference>
     <Reference Include="NLog.Web.AspNetCore">
-      <HintPath>NLog.Web.AspNetCore.dll</HintPath>
+      <HintPath>../../NLog.Web.AspNetCore.dll</HintPath>
     </Reference>
     <Reference Include="NLog">
-      <HintPath>NLog.dll</HintPath>
+      <HintPath>../../NLog.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.EntityFrameworkCore.Relational">
-      <HintPath>Microsoft.EntityFrameworkCore.Relational.dll</HintPath>
+      <HintPath>../../Microsoft.EntityFrameworkCore.Relational.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore">
-      <HintPath>Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll</HintPath>
+      <HintPath>../../Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll</HintPath>
     </Reference>
     <Reference Include="Hangfire.NetCore">
-      <HintPath>Hangfire.NetCore.dll</HintPath>
+      <HintPath>../../Hangfire.NetCore.dll</HintPath>
     </Reference>
     <Reference Include="Swashbuckle.AspNetCore.Swagger">
-      <HintPath>Swashbuckle.AspNetCore.Swagger.dll</HintPath>
+      <HintPath>../../Swashbuckle.AspNetCore.Swagger.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.EntityFrameworkCore.SqlServer">
-      <HintPath>Microsoft.EntityFrameworkCore.SqlServer.dll</HintPath>
+      <HintPath>../../Microsoft.EntityFrameworkCore.SqlServer.dll</HintPath>
     </Reference>
     <Reference Include="Hangfire.SqlServer">
-      <HintPath>Hangfire.SqlServer.dll</HintPath>
+      <HintPath>../../Hangfire.SqlServer.dll</HintPath>
     </Reference>
     <Reference Include="DinkToPdf">
-      <HintPath>DinkToPdf.dll</HintPath>
+      <HintPath>../../DinkToPdf.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.OpenApi">
-      <HintPath>Microsoft.OpenApi.dll</HintPath>
+      <HintPath>../../Microsoft.OpenApi.dll</HintPath>
     </Reference>
     <Reference Include="AngleSharp">
-      <HintPath>AngleSharp.dll</HintPath>
+      <HintPath>../../AngleSharp.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
