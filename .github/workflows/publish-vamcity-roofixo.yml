@@ -55,6 +55,9 @@ jobs:
           PRIVATE="$BASE/private"
           CUSTOM=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx
           GENERATED=/usr/local/directadmin/data/users/roofixo/nginx.conf
+          TEMPLATE_DIR=/usr/local/directadmin/data/templates/custom
+          TEMPLATE_HTTP=nginx_server.conf.CUSTOM.4.post
+          TEMPLATE_HTTPS=nginx_server_secure.conf.CUSTOM.4.post
           TS="$(date -u +%Y%m%dT%H%M%SZ)"
           BACKUP="$PRIVATE/rollback/roofixo-domain-$TS"
           mkdir -p "$BACKUP"
@@ -81,6 +84,15 @@ jobs:
             echo absent > "$BACKUP/custom-config-state"
           fi
           cp -a "$PRIVATE/app.env" "$BACKUP/app.env.before"
+          mkdir -p "$TEMPLATE_DIR"
+          for t in "$TEMPLATE_HTTP" "$TEMPLATE_HTTPS"; do
+            if [ -f "$TEMPLATE_DIR/$t" ]; then
+              cp -a "$TEMPLATE_DIR/$t" "$BACKUP/$t.before"
+              echo existing > "$BACKUP/$t.state"
+            else
+              echo absent > "$BACKUP/$t.state"
+            fi
+          done
           printf '%s\n' "$BACKUP" > "$PRIVATE/last-domain-rollback-path"
           chmod 600 "$PRIVATE/last-domain-rollback-path"
 
@@ -118,20 +130,30 @@ jobs:
           done
           case "$APP_HEALTH" in 200|301|302|307|308) ;; *) docker logs --tail 80 vamcity-stage-app || true; rollback; exit 1 ;; esac
 
-          echo "=== ENABLE DOMAIN NGINX AND SSL VHOSTS ==="
+          echo "=== ENABLE SSL AND INSTALL PERSISTENT DOMAIN-ONLY NGINX ROUTE ==="
           DOMAIN_CONF=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf
           if grep -q '^ssl=' "$DOMAIN_CONF"; then
             sed -i 's/^ssl=.*/ssl=ON/' "$DOMAIN_CONF"
           else
             printf 'ssl=ON\n' >> "$DOMAIN_CONF"
           fi
-          if grep -q '^nginx=' "$DOMAIN_CONF"; then
-            sed -i 's/^nginx=.*/nginx=1/' "$DOMAIN_CONF"
-          else
-            printf 'nginx=1\n' >> "$DOMAIN_CONF"
-          fi
-          echo "=== APPLY REVERSIBLE DIRECTADMIN CUSTOM NGINX RULE ==="
-          cat > "$CUSTOM" <<'NGINX'
+          # This server is already using Nginx-only processing. Do not force a per-domain mode switch.
+          sed -i '/^nginx=/d' "$DOMAIN_CONF"
+          rm -f "$CUSTOM"
+          mkdir -p "$TEMPLATE_DIR" /var/www/html/.well-known/acme-challenge
+          chmod 755 /var/www/html/.well-known /var/www/html/.well-known/acme-challenge
+
+          for t in "$TEMPLATE_HTTP" "$TEMPLATE_HTTPS"; do
+            TARGET="$TEMPLATE_DIR/$t"
+            if [ ! -f "$TARGET" ]; then : > "$TARGET"; fi
+            if ! grep -q 'BEGIN VAMCITY ROOFIXO ROUTE' "$TARGET"; then
+              cat >> "$TARGET" <<'NGINX'
+          # BEGIN VAMCITY ROOFIXO ROUTE
+          |*if DOMAIN="roofixo.ir"|
+          location ^~ /.well-known/acme-challenge/ {
+              alias /var/www/html/.well-known/acme-challenge/;
+              default_type text/plain;
+          }
           location / {
               proxy_pass http://127.0.0.1:5187;
               proxy_http_version 1.1;
@@ -145,8 +167,12 @@ jobs:
               proxy_read_timeout 120s;
               proxy_redirect off;
           }
+          |*endif|
+          # END VAMCITY ROOFIXO ROUTE
           NGINX
-          chmod 600 "$CUSTOM"
+            fi
+            chmod 600 "$TARGET"
+          done
 
           if ! /usr/local/directadmin/custombuild/build rewrite_confs; then
             rollback
