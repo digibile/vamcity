@@ -380,9 +380,14 @@ jobs:
             dig +short AAAA roofixo.ir
           fi
           echo "PUBLIC_HTTPS_RESPONSE:"
-          curl -4 -k -sS --max-time 15 -D /tmp/roofixo-public-headers.txt -o /tmp/roofixo-public-body.html -w 'PUBLIC_ROOFIXO_HTTP=%{http_code} REMOTE_IP=%{remote_ip} FINAL_URL=%{url_effective}\n' https://roofixo.ir/ || true
+          PUBLIC_HTTP="$(curl -4 -k -sS --max-time 15 -D /tmp/roofixo-public-headers.txt -o /tmp/roofixo-public-body.html -w '%{http_code}' https://roofixo.ir/ || true)"
+          echo "PUBLIC_ROOFIXO_HTTP=$PUBLIC_HTTP"
           sed -n '1,12p' /tmp/roofixo-public-headers.txt 2>/dev/null || true
           grep -Eio '<title>[^<]*|404 Not Found|nginx' /tmp/roofixo-public-body.html 2>/dev/null | head -8 || true
+          case "$PUBLIC_HTTP" in
+            200|301|302|307|308) echo "ROOFIXO_PUBLIC_HTTP_OK" ;;
+            *) echo "ROOFIXO_PUBLIC_HTTP_FAILED=$PUBLIC_HTTP; deployment must not report success"; exit 1 ;;
+          esac
           echo "VAMCITY_DEPLOYMENT_OK; roofixo.ir configured as primary domain; app bound only to 127.0.0.1:5187"
           REMOTE
 
@@ -397,9 +402,14 @@ jobs:
           getent ahostsv4 roofixo.ir | awk '!seen[$1]++ {print $1}'
           getent ahostsv4 www.roofixo.ir | awk '!seen[$1]++ {print $1}'
           echo "=== PUBLIC HTTPS RESPONSE ==="
-          curl -4 -k -sS --max-time 20 -D /tmp/roofixo-headers.txt -o /tmp/roofixo-body.html -w 'PUBLIC_ROOFIXO_HTTP=%{http_code} REMOTE_IP=%{remote_ip} FINAL_URL=%{url_effective}\n' https://roofixo.ir/
+          PUBLIC_HTTP="$(curl -4 -k -sS --max-time 20 -D /tmp/roofixo-headers.txt -o /tmp/roofixo-body.html -w '%{http_code}' https://roofixo.ir/)"
+          echo "PUBLIC_ROOFIXO_HTTP=$PUBLIC_HTTP"
           sed -n '1,12p' /tmp/roofixo-headers.txt
-          grep -Eio '<title>[^<]*|404 Not Found|nginx' /tmp/roofixo-body.html | head -8
+          grep -Eio '<title>[^<]*|404 Not Found|nginx' /tmp/roofixo-body.html | head -8 || true
+          case "$PUBLIC_HTTP" in
+            200|301|302|307|308) echo "PUBLIC_ROOFIXO_CHECK_OK" ;;
+            *) echo "PUBLIC_ROOFIXO_CHECK_FAILED=$PUBLIC_HTTP"; exit 1 ;;
+          esac
           echo "=== WWW HTTPS RESPONSE ==="
           curl -4 -k -sS --max-time 20 -D /tmp/roofixo-www-headers.txt -o /tmp/roofixo-www-body.html -w 'PUBLIC_WWW_HTTP=%{http_code} REMOTE_IP=%{remote_ip} FINAL_URL=%{url_effective}\n' https://www.roofixo.ir/
           sed -n '1,8p' /tmp/roofixo-www-headers.txt
