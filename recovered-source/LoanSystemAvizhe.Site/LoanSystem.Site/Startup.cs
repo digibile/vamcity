@@ -37,6 +37,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
@@ -107,6 +108,14 @@ public class Startup
 
 	public void ConfigureServices(IServiceCollection services)
 	{
+		services.Configure<ForwardedHeadersOptions>(options =>
+		{
+			options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
+				Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto |
+				Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedHost;
+			options.KnownNetworks.Clear();
+			options.KnownProxies.Clear();
+		});
 		services.Configure((AppConfig options) =>
 		{
 			Configuration.GetSection("AppConfig").Bind(options);
@@ -192,8 +201,23 @@ public class Startup
 		{
 			options.AddPolicy("VueCorsPolicy", (CorsPolicyBuilder builder) =>
 			{
+				var configuredBaseUrl = Configuration.GetSection("AppConfig:BaseUrl").Value;
+				var allowedOrigins = new List<string>
+				{
+					"https://roofixo.ir",
+					"http://roofixo.ir",
+					"https://vamcity.com",
+					"https://www.vamcity.com",
+					"https://agayevam.com",
+					"https://www.agayevam.com"
+				};
+				if (Uri.TryCreate(configuredBaseUrl, UriKind.Absolute, out var configuredOrigin) &&
+					(configuredOrigin.Scheme == Uri.UriSchemeHttp || configuredOrigin.Scheme == Uri.UriSchemeHttps))
+				{
+					allowedOrigins.Add(configuredOrigin.GetLeftPart(UriPartial.Authority));
+				}
 				builder.AllowAnyHeader().AllowAnyMethod().AllowCredentials()
-					.WithOrigins(Configuration.GetSection("AppConfig:BaseUrl").Value);
+					.WithOrigins(allowedOrigins.Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
 			});
 		});
 		services.AddSwaggerGen((SwaggerGenOptions c) =>
@@ -252,6 +276,7 @@ public class Startup
 			app.UseExceptionHandler("/home/error");
 			app.UseStatusCodePagesWithReExecute("/home/error/{0}");
 		}
+		app.UseForwardedHeaders();
 		app.UseStaticFiles();
 		app.UseStaticFiles(new StaticFileOptions
 		{
@@ -270,8 +295,8 @@ public class Startup
 		});
 		app.UseHttpsRedirection();
 		app.UseMiddleware<VisitorMiddleware>(Array.Empty<object>());
-		app.UseCors("VueCorsPolicy");
 		app.UseRouting();
+		app.UseCors("VueCorsPolicy");
 		UseAthentication(app);
 		app.UseAuthorization();
 		app.UseMvc();
