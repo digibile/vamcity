@@ -1,0 +1,171 @@
+name: Publish VamCity on roofixo.ir
+run-name: Configure roofixo.ir reverse proxy for VamCity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-vamcity-roofixo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vamcity-roofixo-domain-publish
+  cancel-in-progress: false
+
+jobs:
+  publish-domain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Prepare SSH
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          chmod 600 "$RUNNER_TEMP/deploy_key"
+          ssh-keyscan -T 10 -p "$PORT" "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          chmod 600 "$HOME/.ssh/known_hosts"
+          echo "DEPLOY_PORT_EFFECTIVE=$PORT" >> "$GITHUB_ENV"
+          echo "DEPLOY_HOST_EFFECTIVE=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "DEPLOY_USER_EFFECTIVE=$DEPLOY_USER" >> "$GITHUB_ENV"
+
+      - name: Back up settings and route roofixo.ir to VamCity
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$RUNNER_TEMP/deploy_key" -p "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE" 'bash -s' <<'REMOTE'
+          set -Eeuo pipefail
+          DOMAIN_ROOT=/home/roofixo/domains/roofixo.ir
+          BASE="$DOMAIN_ROOT/vamcity-app"
+          PRIVATE="$BASE/private"
+          CUSTOM=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx
+          GENERATED=/usr/local/directadmin/data/users/roofixo/nginx.conf
+          TS="$(date -u +%Y%m%dT%H%M%SZ)"
+          BACKUP="$PRIVATE/rollback/roofixo-domain-$TS"
+          mkdir -p "$BACKUP"
+          chmod 700 "$PRIVATE" "$PRIVATE/rollback" "$BACKUP"
+
+          echo "=== PRECHECKS ==="
+          test -d "$DOMAIN_ROOT/public_html"
+          test -s "$PRIVATE/app.env"
+          docker container inspect vamcity-stage-app >/dev/null
+          docker container inspect vamcity-stage-sql >/dev/null
+          docker inspect -f '{{.State.Running}}' vamcity-stage-app | grep -qx true
+          docker inspect -f '{{.State.Running}}' vamcity-stage-sql | grep -qx true
+          HEALTH="$(curl -sS -o /dev/null --max-time 8 -w '%{http_code}' http://127.0.0.1:5187/ || true)"
+          case "$HEALTH" in 200|301|302|307|308) ;; *) echo "VAMCITY_PRECHECK_FAILED=$HEALTH"; exit 1 ;; esac
+          nginx -t
+
+          echo "=== BACKUP ACTIVE DOMAIN SETTINGS ==="
+          cp -a "$GENERATED" "$BACKUP/nginx.conf.before"
+          cp -a /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf "$BACKUP/roofixo.ir.conf.before"
+          if [ -f "$CUSTOM" ]; then
+            cp -a "$CUSTOM" "$BACKUP/roofixo.ir.cust_nginx.before"
+            echo existing > "$BACKUP/custom-config-state"
+          else
+            echo absent > "$BACKUP/custom-config-state"
+          fi
+          cp -a "$PRIVATE/app.env" "$BACKUP/app.env.before"
+          printf '%s\n' "$BACKUP" > "$PRIVATE/last-domain-rollback-path"
+          chmod 600 "$PRIVATE/last-domain-rollback-path"
+
+          rollback() {
+            echo "DOMAIN_PUBLISH_FAILED; restoring previous custom nginx and app environment"
+            cp -a "$BACKUP/app.env.before" "$PRIVATE/app.env"
+            if [ "$(cat "$BACKUP/custom-config-state")" = existing ]; then
+              cp -a "$BACKUP/roofixo.ir.cust_nginx.before" "$CUSTOM"
+            else
+              rm -f "$CUSTOM"
+            fi
+            /usr/local/directadmin/custombuild/build rewrite_confs >/dev/null 2>&1 || true
+            nginx -t && systemctl reload nginx || true
+            docker restart vamcity-stage-app >/dev/null 2>&1 || true
+          }
+
+          echo "=== SET PUBLIC BASE URL ==="
+          if grep -q '^AppConfig__BaseUrl=' "$PRIVATE/app.env"; then
+            sed -i 's#^AppConfig__BaseUrl=.*#AppConfig__BaseUrl=https://roofixo.ir#' "$PRIVATE/app.env"
+          else
+            printf 'AppConfig__BaseUrl=https://roofixo.ir\n' >> "$PRIVATE/app.env"
+          fi
+          if grep -q '^AppConfig__FrontUrl=' "$PRIVATE/app.env"; then
+            sed -i 's#^AppConfig__FrontUrl=.*#AppConfig__FrontUrl=https://roofixo.ir#' "$PRIVATE/app.env"
+          else
+            printf 'AppConfig__FrontUrl=https://roofixo.ir\n' >> "$PRIVATE/app.env"
+          fi
+          chmod 600 "$PRIVATE/app.env"
+          docker restart vamcity-stage-app >/dev/null
+          APP_HEALTH=000
+          for i in $(seq 1 24); do
+            APP_HEALTH="$(curl -sS -o /dev/null --max-time 4 -w '%{http_code}' http://127.0.0.1:5187/ || true)"
+            case "$APP_HEALTH" in 200|301|302|307|308) break ;; esac
+            sleep 3
+          done
+          case "$APP_HEALTH" in 200|301|302|307|308) ;; *) docker logs --tail 80 vamcity-stage-app || true; rollback; exit 1 ;; esac
+
+          echo "=== APPLY REVERSIBLE DIRECTADMIN CUSTOM NGINX RULE ==="
+          cat > "$CUSTOM" <<'NGINX'
+          location / {
+              proxy_pass http://127.0.0.1:5187;
+              proxy_http_version 1.1;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header X-Forwarded-Host $host;
+              proxy_connect_timeout 15s;
+              proxy_send_timeout 120s;
+              proxy_read_timeout 120s;
+              proxy_redirect off;
+          }
+          NGINX
+          chmod 600 "$CUSTOM"
+
+          if ! /usr/local/directadmin/custombuild/build rewrite_confs; then
+            rollback
+            exit 1
+          fi
+          if ! nginx -t; then
+            rollback
+            exit 1
+          fi
+          if ! systemctl reload nginx; then
+            rollback
+            exit 1
+          fi
+
+          echo "=== VERIFY DOMAIN ROUTING LOCALLY THROUGH TLS VHOST ==="
+          PUBLIC_HTTP=000
+          for i in $(seq 1 10); do
+            PUBLIC_HTTP="$(curl --resolve roofixo.ir:443:127.0.0.1 -k -sS -o /dev/null --max-time 8 -w '%{http_code}' https://roofixo.ir/ || true)"
+            case "$PUBLIC_HTTP" in 200|301|302|307|308) break ;; esac
+            sleep 2
+          done
+          case "$PUBLIC_HTTP" in 200|301|302|307|308) ;; *) rollback; exit 1 ;; esac
+
+          echo "=== VERIFY PUBLIC HTTPS ==="
+          EXT_HTTP="$(curl -k -sS -o /dev/null --max-time 12 -w '%{http_code}' https://roofixo.ir/ || true)"
+          case "$EXT_HTTP" in 200|301|302|307|308) ;; *) echo "PUBLIC_HTTPS_CHECK_NOT_CONFIRMED=$EXT_HTTP";; esac
+
+          echo "VAMCITY_APP_LOCAL_HTTP=$APP_HEALTH"
+          echo "ROOFIXO_LOCAL_TLS_HTTP=$PUBLIC_HTTP"
+          echo "ROOFIXO_PUBLIC_HTTPS_HTTP=$EXT_HTTP"
+          echo "DOMAIN_CONFIG_BACKUP=$BACKUP"
+          echo "VAMCITY_PUBLISHED_ON_ROOFIXO_IR=true"
+          echo "NOTE=Existing public_html files were not deleted or overwritten; nginx routing can be rolled back from the saved backup."
+          REMOTE
