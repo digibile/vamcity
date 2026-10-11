@@ -116,6 +116,11 @@ jobs:
               alias /var/www/html/.well-known/acme-challenge/;
               default_type text/plain;
           }
+          # Match the reference VamCity plans page at the domain root.
+          # Exact-match location leaves every other original application route untouched.
+          location = / {
+              return 302 /cl/plans/;
+          }
           location / {
               proxy_pass http://127.0.0.1:5187;
               proxy_http_version 1.1;
