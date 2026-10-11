@@ -348,10 +348,17 @@ jobs:
             exit 1
           fi
           systemctl reload nginx
-          echo "=== NGINX LISTENING ADDRESSES AND DOMAIN VHOSTS ==="
+          echo "=== NGINX LISTENING ADDRESSES AND ROOFIXO VHOST ==="
           ip -br -4 address 2>/dev/null || ip -4 address 2>/dev/null || true
+          echo "=== SOCKET LISTENERS ==="
           ss -ltnp 2>/dev/null | grep -E ':(80|443|5187)\\b' || true
-          nginx -T 2>&1 | grep -n -E -B 3 -A 12 'server_name[^;]*(roofixo\\.ir|www\\.roofixo\\.ir)|listen .*443|listen .*80' | head -180 || true
+          echo "=== ALL GENERATED ROOFIXO VHOST LINES ==="
+          nginx -T 2>&1 | grep -n -B 18 -A 35 -E 'server_name[[:space:]]+[^;]*(roofixo\\.ir|www\\.roofixo\\.ir)|roofixo\\.ir\\.cust_nginx' || true
+          echo "=== DIRECTADMIN ROOFIXO DOMAIN METADATA ==="
+          ls -l /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir* 2>/dev/null || true
+          grep -n -E '^(ip|domain|ssl|nginx|php|private_html|force_ssl)=' /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf 2>/dev/null || true
+          SERVER_INTERFACE_IP="$(ip route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
+          echo "SERVER_INTERFACE_IP=$SERVER_INTERFACE_IP"
           echo "=== TEST HOSTNAME AGAINST EACH LOCAL IPV4 ADDRESS ==="
           for IP in $(ip -o -4 addr show scope global 2>/dev/null | awk '{split($4,a,"/"); print a[1]}'); do
             CODE="$(curl -k -sS --max-time 8 --resolve "roofixo.ir:443:$IP" -o /dev/null -w '%{http_code}' https://roofixo.ir/ || true)"
@@ -364,7 +371,7 @@ jobs:
             *) echo "WARNING: Nginx config applied but local HTTPS host check returned $DOMAIN_HTTP; inspect certificate/vhost and app logs" ;;
           esac
           echo "=== DIRECT PUBLIC-IP VHOST TEST ==="
-          DIRECT_HTTP="$(curl -4 -k -sS --max-time 15 --resolve roofixo.ir:443:185.8.174.167 -o /tmp/roofixo-direct-body.html -D /tmp/roofixo-direct-headers.txt -w '%{http_code}' https://roofixo.ir/ || true)"
+          DIRECT_HTTP="$(curl -4 -k -sS --max-time 15 --resolve "roofixo.ir:443:$SERVER_INTERFACE_IP" -o /tmp/roofixo-direct-body.html -D /tmp/roofixo-direct-headers.txt -w '%{http_code}' https://roofixo.ir/ || true)"
           echo "ROOFIXO_DIRECT_SERVER_IP_HTTP=$DIRECT_HTTP"
           sed -n '1,8p' /tmp/roofixo-direct-headers.txt 2>/dev/null || true
           grep -Eio '<title>[^<]*|404 Not Found|nginx' /tmp/roofixo-direct-body.html 2>/dev/null | head -8 || true
@@ -395,7 +402,9 @@ jobs:
         run: |
           set +e
           echo "=== DIRECT SERVER IP FROM GITHUB RUNNER ==="
-          curl -4 -k -sS --max-time 20 --resolve roofixo.ir:443:185.8.174.167 -D /tmp/roofixo-direct-headers.txt -o /tmp/roofixo-direct-body.html -w 'DIRECT_SERVER_IP_HTTP=%{http_code} REMOTE_IP=%{remote_ip}\n' https://roofixo.ir/ || true
+          DNS_TARGET_IP="$(getent ahostsv4 roofixo.ir | awk 'NR==1 {print $1}')"
+          echo "DNS_TARGET_IP=$DNS_TARGET_IP"
+          curl -4 -k -sS --max-time 20 --resolve "roofixo.ir:443:$DNS_TARGET_IP" -D /tmp/roofixo-direct-headers.txt -o /tmp/roofixo-direct-body.html -w 'DNS_TARGET_VHOST_HTTP=%{http_code} REMOTE_IP=%{remote_ip}\n' https://roofixo.ir/ || true
           sed -n '1,8p' /tmp/roofixo-direct-headers.txt 2>/dev/null || true
           grep -Eio '<title>[^<]*|404 Not Found|nginx' /tmp/roofixo-direct-body.html 2>/dev/null | head -8 || true
           echo "=== PUBLIC DNS FROM OUTSIDE SERVER ==="
