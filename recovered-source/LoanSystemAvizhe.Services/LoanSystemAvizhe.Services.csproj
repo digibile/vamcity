@@ -13,12 +13,8 @@
   <PropertyGroup />
   <ItemGroup />
   <ItemGroup>
-    <Reference Include="LoanSystemAvizhe.Data">
-      <HintPath>../../LoanSystemAvizhe.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="LoanSystemAvizhe.Core">
-      <HintPath>../../LoanSystemAvizhe.Core.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="../LoanSystemAvizhe.Data/LoanSystemAvizhe.Data.csproj" />
+    <ProjectReference Include="../LoanSystemAvizhe.Core/LoanSystemAvizhe.Core.csproj" />
     <Reference Include="Microsoft.EntityFrameworkCore">
       <HintPath>../../Microsoft.EntityFrameworkCore.dll</HintPath>
     </Reference>
