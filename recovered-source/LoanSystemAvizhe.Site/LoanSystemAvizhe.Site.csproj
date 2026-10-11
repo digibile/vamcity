@@ -13,15 +13,9 @@
   <PropertyGroup />
   <ItemGroup />
   <ItemGroup>
-    <Reference Include="LoanSystemAvizhe.Services">
-      <HintPath>../../LoanSystemAvizhe.Services.dll</HintPath>
-    </Reference>
-    <Reference Include="LoanSystemAvizhe.Core">
-      <HintPath>../../LoanSystemAvizhe.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="LoanSystemAvizhe.Data">
-      <HintPath>../../LoanSystemAvizhe.Data.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="../LoanSystemAvizhe.Services/LoanSystemAvizhe.Services.csproj" />
+    <ProjectReference Include="../LoanSystemAvizhe.Core/LoanSystemAvizhe.Core.csproj" />
+    <ProjectReference Include="../LoanSystemAvizhe.Data/LoanSystemAvizhe.Data.csproj" />
     <Reference Include="Hangfire.Core">
       <HintPath>../../Hangfire.Core.dll</HintPath>
     </Reference>
