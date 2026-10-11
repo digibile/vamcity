@@ -2,6 +2,9 @@ name: Recover VamCity source from published assemblies
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/decompile-vamcity.yml"
 
 permissions:
   contents: read
@@ -16,17 +19,25 @@ jobs:
         with:
           dotnet-version: "8.0.x"
       - name: Install ILSpy
-        run: dotnet tool install --global ilspycmd
+        run: |
+          dotnet tool install --global ilspycmd
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
       - name: Decompile assemblies
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/vamcity-recovered"
+          found=0
           for dll in LoanSystemAvizhe.Site.dll LoanSystemAvizhe.Core.dll LoanSystemAvizhe.Data.dll LoanSystemAvizhe.Services.dll; do
             if [[ -f "$dll" ]]; then
+              found=1
               ilspycmd -p -o "$RUNNER_TEMP/vamcity-recovered/${dll%.dll}" "$dll"
             fi
           done
+          if [[ "$found" -ne 1 ]]; then
+            echo "No target assemblies found at repository root." >&2
+            exit 1
+          fi
           test -n "$(find "$RUNNER_TEMP/vamcity-recovered" -type f -print -quit)"
       - uses: actions/upload-artifact@v4
         with:
