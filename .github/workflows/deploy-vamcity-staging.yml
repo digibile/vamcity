@@ -1,5 +1,6 @@
 name: Deploy VamCity Linux staging on Roofixo
 # Rebuild/redeploy current recovered source and frontend after validating the supplied source database; private DB backups stay on the server.
+# Verify generated DirectAdmin vhosts route Roofixo HTTP and HTTPS to the recovered Linux app.
 
 on:
   push:
