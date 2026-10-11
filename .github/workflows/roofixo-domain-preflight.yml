@@ -57,6 +57,13 @@ jobs:
             /home/roofixo/domains/roofixo.ir/public_html/index.html; do
             if [ -e "$p" ]; then echo "EXISTS=$p"; else echo "MISSING=$p"; fi
           done
+          echo "=== DNS / SERVER IP MATCH CHECK ==="
+          DNS_IP="$(getent ahostsv4 roofixo.ir | awk 'NR==1 {print $1}')"
+          DOMAIN_IP="$(awk -F= '$1=="ip" {print $2; exit}' /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf)"
+          EGRESS_IP="$(curl -4 -sS --max-time 8 https://api.ipify.org 2>/dev/null || true)"
+          echo "DNS_POINTS_TO_SERVER_EGRESS=$([ -n "$DNS_IP" ] && [ "$DNS_IP" = "$EGRESS_IP" ] && echo yes || echo no)"
+          echo "DNS_MATCHES_DIRECTADMIN_DOMAIN_IP=$([ -n "$DNS_IP" ] && [ "$DNS_IP" = "$DOMAIN_IP" ] && echo yes || echo no)"
+          echo "DOMAIN_IP_MATCHES_SERVER_EGRESS=$([ -n "$DOMAIN_IP" ] && [ "$DOMAIN_IP" = "$EGRESS_IP" ] && echo yes || echo no)"
           echo "=== DOMAIN CONFIG FLAGS ==="
           grep -nEi 'nginx|ssl|ip=|domain=' /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf | head -50 || true
           echo "=== CUSTOM NGINX FILE STATUS ==="
