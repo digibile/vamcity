@@ -53,16 +53,23 @@ jobs:
           curl -4 -sS --max-time 8 https://api.ipify.org | sed 's/^/SERVER_EGRESS_IP=/' || true
           echo
           echo "=== FORCE LOCAL SERVER VHOST ==="
-          STATUS="$(curl --resolve roofixo.ir:443:127.0.0.1 -k -sS -o "$TMP/home.html" --max-time 15 -w '%{http_code}' https://roofixo.ir/)"
+          STATUS="$(curl -L --resolve roofixo.ir:443:127.0.0.1 -k -sS -o "$TMP/home.html" --max-time 15 -w '%{http_code}' https://roofixo.ir/)"
           echo "ROOFIXO_LOCAL_TLS_HTTP=$STATUS"
           echo "LOCAL_BODY_BYTES=$(wc -c < "$TMP/home.html")"
           echo "LOCAL_BODY_PREFIX=$(head -c 500 "$TMP/home.html" | tr "\n" " " | cut -c1-500)"
           test "$STATUS" = 200
           echo "=== PUBLIC DNS ROUTE ==="
-          PUBLIC_STATUS="$(curl -k -sS -o "$TMP/public.html" --max-time 15 -w '%{http_code}' https://roofixo.ir/)"
+          PUBLIC_STATUS="$(curl -L -k -sS -o "$TMP/public.html" --max-time 15 -w '%{http_code}' https://roofixo.ir/)"
           echo "ROOFIXO_PUBLIC_HTTPS_HTTP=$PUBLIC_STATUS"
           echo "PUBLIC_BODY_BYTES=$(wc -c < "$TMP/public.html")"
           echo "PUBLIC_BODY_PREFIX=$(head -c 500 "$TMP/public.html" | tr "\n" " " | cut -c1-500)"
+          echo "=== REFERENCE PLANS ROUTE ==="
+          PLANS_STATUS="$(curl -k -sS -o "$TMP/plans.html" --max-time 15 -w '%{http_code}' https://roofixo.ir/cl/plans/)"
+          echo "VAMCITY_PLANS_HTTP=$PLANS_STATUS"
+          echo "VAMCITY_PLANS_BODY_BYTES=$(wc -c < "$TMP/plans.html")"
+          echo "VAMCITY_PLANS_TITLE=$(grep -oE '<title>[^<]*</title>' "$TMP/plans.html" | head -1 || true)"
+          test "$PLANS_STATUS" = 200
+          grep -q 'id="app"' "$TMP/plans.html"
           echo "=== PAGE TITLE ==="
           TITLE="$(grep -oE '<title>[^<]*</title>' "$TMP/home.html" | head -1 || true)"
           echo "LIVE_PAGE_TITLE=$TITLE"
