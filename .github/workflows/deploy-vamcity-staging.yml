@@ -207,11 +207,26 @@ jobs:
           docker run -d --name "$APP_CONTAINER" --restart unless-stopped \
             --network "$NETWORK" --memory=1g --memory-swap=1g \
             --env-file "$PRIVATE/app.env" \
-            -p 127.0.0.1:5187:8080 \
+            --publish=127.0.0.1:5187:8080 \
             -v "$RELEASE:/app" -v "$PRIVATE/uploads:/app/uploads" \
             -w /app --entrypoint dotnet \
             mcr.microsoft.com/dotnet/aspnet:10.0 LoanSystemAvizhe.Site.dll >/dev/null
 
+          echo "=== VERIFY EXPLICIT HOST PORT PUBLISHING ==="
+          docker port "$APP_CONTAINER" 8080/tcp || true
+          PORT_BINDING="$(docker inspect -f '{{with index .HostConfig.PortBindings "8080/tcp"}}{{range .}}{{.HostIp}}:{{.HostPort}}{{end}}{{end}}' "$APP_CONTAINER")"
+          if [ "$PORT_BINDING" != "127.0.0.1:5187" ]; then
+            echo "PORT_BINDING_MISSING_OR_WRONG=$PORT_BINDING; recreating app container once"
+            docker rm -f "$APP_CONTAINER" >/dev/null 2>&1 || true
+            docker run -d --name "$APP_CONTAINER" --restart unless-stopped \
+              --network "$NETWORK" --memory=1g --memory-swap=1g \
+              --env-file "$PRIVATE/app.env" \
+              --publish=127.0.0.1:5187:8080 \
+              -v "$RELEASE:/app" -v "$PRIVATE/uploads:/app/uploads" \
+              -w /app --entrypoint dotnet \
+              mcr.microsoft.com/dotnet/aspnet:10.0 LoanSystemAvizhe.Site.dll >/dev/null
+          fi
+          docker port "$APP_CONTAINER" 8080/tcp
           HEALTH=000
           for i in $(seq 1 36); do
             HEALTH="$(curl -sS -o /dev/null --max-time 4 -w '%{http_code}' http://127.0.0.1:5187/ || true)"
