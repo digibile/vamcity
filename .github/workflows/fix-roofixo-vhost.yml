@@ -1,0 +1,203 @@
+name: Repair Roofixo VamCity vhost and SSL
+run-name: Install persistent Roofixo VamCity routing and valid HTTPS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/fix-roofixo-vhost.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vamcity-roofixo-domain-publish
+  cancel-in-progress: false
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Prepare SSH
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          chmod 600 "$RUNNER_TEMP/deploy_key"
+          ssh-keyscan -T 10 -p "$PORT" "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          chmod 600 "$HOME/.ssh/known_hosts"
+          echo "DEPLOY_PORT_EFFECTIVE=$PORT" >> "$GITHUB_ENV"
+          echo "DEPLOY_HOST_EFFECTIVE=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "DEPLOY_USER_EFFECTIVE=$DEPLOY_USER" >> "$GITHUB_ENV"
+      - name: Configure persistent per-domain Nginx template and SSL
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$RUNNER_TEMP/deploy_key" -p "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE" 'bash -s' <<'REMOTE'
+          set -Eeuo pipefail
+          DOMAIN=roofixo.ir
+          DOMAIN_CONF=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf
+          GENERATED=/usr/local/directadmin/data/users/roofixo/nginx.conf
+          TEMPLATE_DIR=/usr/local/directadmin/data/templates/custom
+          HTTP_BASE=/usr/local/directadmin/data/templates/nginx_server.conf
+          HTTPS_BASE=/usr/local/directadmin/data/templates/nginx_server_secure.conf
+          CUSTOM=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx
+          POST_HTTP="$TEMPLATE_DIR/nginx_server.conf.CUSTOM.4.post"
+          POST_HTTPS="$TEMPLATE_DIR/nginx_server_secure.conf.CUSTOM.4.post"
+          CUSTOM_HTTP="$TEMPLATE_DIR/nginx_server.conf"
+          CUSTOM_HTTPS="$TEMPLATE_DIR/nginx_server_secure.conf"
+          BASE=/home/roofixo/domains/roofixo.ir/vamcity-app
+          PRIVATE="$BASE/private"
+          TS="$(date -u +%Y%m%dT%H%M%SZ)"
+          BACKUP="$PRIVATE/rollback/roofixo-vhost-$TS"
+          mkdir -p "$BACKUP" "$TEMPLATE_DIR"
+          chmod 700 "$PRIVATE" "$PRIVATE/rollback" "$BACKUP"
+
+          echo "=== PRECHECKS ==="
+          test -s "$DOMAIN_CONF"
+          docker inspect -f '{{.State.Running}}' vamcity-stage-app | grep -qx true
+          docker inspect -f '{{.State.Running}}' vamcity-stage-sql | grep -qx true
+          APP_HTTP="$(curl -sS -o /dev/null --max-time 8 -w '%{http_code}' http://127.0.0.1:5187/ || true)"
+          case "$APP_HTTP" in 200|301|302|307|308) ;; *) echo "VAMCITY_APP_NOT_HEALTHY=$APP_HTTP"; exit 1 ;; esac
+          DNS_IP="$(getent ahostsv4 roofixo.ir | awk 'NR==1 {print $1}')"
+          DOMAIN_IP="$(awk -F= '$1=="ip" {print $2; exit}' "$DOMAIN_CONF")"
+          EGRESS_IP="$(curl -4 -sS --max-time 8 https://api.ipify.org 2>/dev/null || true)"
+          echo "DNS_POINTS_TO_THIS_SERVER=$([ -n "$DNS_IP" ] && [ "$DNS_IP" = "$EGRESS_IP" ] && echo yes || echo no)"
+          if [ "$DNS_IP" != "$DOMAIN_IP" ] || [ "$DOMAIN_IP" != "$EGRESS_IP" ]; then
+            echo "DNS_IP_MISMATCH; stopping without changing domain"
+            exit 1
+          fi
+          nginx -t
+
+          echo "=== BACKUP CURRENT DOMAIN AND TEMPLATE STATE ==="
+          cp -a "$DOMAIN_CONF" "$BACKUP/domain.conf.before"
+          cp -a "$GENERATED" "$BACKUP/nginx.conf.before"
+          for p in "$CUSTOM" "$POST_HTTP" "$POST_HTTPS" "$CUSTOM_HTTP" "$CUSTOM_HTTPS"; do
+            name="$(basename "$p")"
+            if [ -e "$p" ]; then cp -a "$p" "$BACKUP/$name.before"; echo existing > "$BACKUP/$name.state"; else echo absent > "$BACKUP/$name.state"; fi
+          done
+          printf '%s\n' "$BACKUP" > "$PRIVATE/last-domain-rollback-path"
+          chmod 600 "$PRIVATE/last-domain-rollback-path"
+
+          rollback_config() {
+            echo "ROLLBACK_DOMAIN_AND_CUSTOM_TEMPLATES"
+            cp -a "$BACKUP/domain.conf.before" "$DOMAIN_CONF"
+            for p in "$CUSTOM" "$POST_HTTP" "$POST_HTTPS" "$CUSTOM_HTTP" "$CUSTOM_HTTPS"; do
+              name="$(basename "$p")"
+              if [ "$(cat "$BACKUP/$name.state")" = existing ]; then cp -a "$BACKUP/$name.before" "$p"; else rm -f "$p"; fi
+            done
+            /usr/local/directadmin/custombuild/build rewrite_confs >/dev/null 2>&1 || true
+            nginx -t && systemctl reload nginx || true
+          }
+
+          echo "=== ENABLE SSL VHOST ==="
+          if grep -q '^ssl=' "$DOMAIN_CONF"; then sed -i 's/^ssl=.*/ssl=ON/' "$DOMAIN_CONF"; else printf 'ssl=ON\n' >> "$DOMAIN_CONF"; fi
+          sed -i '/^nginx=/d' "$DOMAIN_CONF"
+          rm -f "$CUSTOM" "$POST_HTTP" "$POST_HTTPS"
+          mkdir -p /var/www/html/.well-known/acme-challenge
+          chmod 755 /var/www/html/.well-known /var/www/html/.well-known/acme-challenge
+
+          echo "=== CREATE CUSTOM TEMPLATES THAT ONLY AFFECT ROOFIXO.IR ==="
+          [ -f "$CUSTOM_HTTP" ] || cp -a "$HTTP_BASE" "$CUSTOM_HTTP"
+          [ -f "$CUSTOM_HTTPS" ] || cp -a "$HTTPS_BASE" "$CUSTOM_HTTPS"
+          python3 - "$CUSTOM_HTTP" "$CUSTOM_HTTPS" <<'PY'
+          import pathlib, sys
+          route = r'''
+          # BEGIN VAMCITY ROOFIXO ROUTE
+          |*if DOMAIN="roofixo.ir"|
+          location ^~ /.well-known/acme-challenge/ {
+              alias /var/www/html/.well-known/acme-challenge/;
+              default_type text/plain;
+          }
+          location / {
+              proxy_pass http://127.0.0.1:5187;
+              proxy_http_version 1.1;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header X-Forwarded-Host $host;
+              proxy_connect_timeout 15s;
+              proxy_send_timeout 120s;
+              proxy_read_timeout 120s;
+              proxy_redirect off;
+          }
+          |*endif|
+          # END VAMCITY ROOFIXO ROUTE
+          '''
+          for name in sys.argv[1:]:
+              p = pathlib.Path(name)
+              s = p.read_text()
+              if "BEGIN VAMCITY ROOFIXO ROUTE" not in s:
+                  marker = "|CUSTOM4|"
+                  if marker not in s:
+                      raise SystemExit(f"CUSTOM4_TOKEN_MISSING:{p}")
+                  s = s.replace(marker, marker + "\n" + route, 1)
+                  p.write_text(s)
+          PY
+          chmod 600 "$CUSTOM_HTTP" "$CUSTOM_HTTPS"
+
+          echo "=== REWRITE DIRECTADMIN CONFIGS ==="
+          if ! /usr/local/directadmin/custombuild/build rewrite_confs; then rollback_config; exit 1; fi
+          if ! nginx -t; then rollback_config; exit 1; fi
+          if ! grep -q 'proxy_pass http://127.0.0.1:5187' "$GENERATED"; then
+            echo "PERSISTENT_VAMCITY_PROXY_NOT_PRESENT_IN_GENERATED_CONFIG"
+            rollback_config
+            exit 1
+          fi
+          if ! systemctl reload nginx; then rollback_config; exit 1; fi
+
+          echo "=== VERIFY HTTP VHOST BODY ==="
+          HTTP_BODY="$(mktemp)"
+          HTTP_STATUS="$(curl --resolve "roofixo.ir:80:$DOMAIN_IP" -sS -o "$HTTP_BODY" --max-time 15 -w '%{http_code}' http://roofixo.ir/ || true)"
+          echo "ROOFIXO_HTTP_STATUS=$HTTP_STATUS"
+          echo "ROOFIXO_HTTP_BODY_BYTES=$(wc -c < "$HTTP_BODY")"
+          echo "ROOFIXO_HTTP_TITLE=$(grep -oE '<title>[^<]*</title>' "$HTTP_BODY" | head -1 || true)"
+          if ! grep -q 'BEGIN VAMCITY ROOFIXO ROUTE' "$CUSTOM_HTTP"; then rollback_config; rm -f "$HTTP_BODY"; exit 1; fi
+          case "$HTTP_STATUS" in 200|301|302|307|308) ;; *) rollback_config; rm -f "$HTTP_BODY"; exit 1 ;; esac
+          rm -f "$HTTP_BODY"
+
+          echo "=== REQUEST LET'S ENCRYPT CERTIFICATE ==="
+          LE_RESULT=failed
+          if [ -x /usr/local/directadmin/scripts/letsencrypt.sh ]; then
+            if timeout 180 /usr/local/directadmin/scripts/letsencrypt.sh request roofixo.ir 4096; then LE_RESULT=success; fi
+          fi
+          echo "LETSENCRYPT_REQUEST_RESULT=$LE_RESULT"
+          if [ "$LE_RESULT" != success ]; then
+            find /usr/local/directadmin/data/users/roofixo/domains/acme_provider_cert_logs -maxdepth 1 -type f -name 'roofixo.ir.log' -exec tail -n 50 {} \; 2>/dev/null || true
+          fi
+
+          /usr/local/directadmin/custombuild/build rewrite_confs >/dev/null
+          nginx -t
+          systemctl reload nginx
+
+          echo "=== FINAL HTTPS CERTIFICATE AND PAGE TEST ==="
+          CERT_SUMMARY="$(echo | openssl s_client -connect "$DOMAIN_IP:443" -servername roofixo.ir 2>/dev/null | openssl x509 -noout -subject -issuer -dates -ext subjectAltName 2>&1 || true)"
+          printf '%s\n' "$CERT_SUMMARY"
+          HTTPS_BODY="$(mktemp)"
+          HTTPS_STATUS="$(curl --resolve "roofixo.ir:443:$DOMAIN_IP" -sS -o "$HTTPS_BODY" --max-time 15 -w '%{http_code}' https://roofixo.ir/ || true)"
+          echo "ROOFIXO_HTTPS_STATUS=$HTTPS_STATUS"
+          echo "ROOFIXO_HTTPS_BODY_BYTES=$(wc -c < "$HTTPS_BODY")"
+          echo "ROOFIXO_HTTPS_TITLE=$(grep -oE '<title>[^<]*</title>' "$HTTPS_BODY" | head -1 || true)"
+          if [ "$LE_RESULT" != success ]; then echo "WARNING=HTTPS certificate issuance did not succeed; domain proxy remains configured for troubleshooting."; fi
+          echo "DOMAIN_CONFIG_BACKUP=$BACKUP"
+          echo "VAMCITY_APP_LOCAL_HTTP=$APP_HTTP"
+          echo "VAMCITY_DOMAIN_PROXY_CONFIGURED=true"
+          rm -f "$HTTPS_BODY"
+          if [ "$LE_RESULT" != success ] || [ "$HTTPS_STATUS" != 200 ]; then exit 1; fi
+          echo "VAMCITY_ROOFIXO_HTTPS_LIVE=true"
+          REMOTE
