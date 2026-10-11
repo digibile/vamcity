@@ -1,0 +1,66 @@
+name: Apply VamCity branding to restored staging database
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/apply-vamcity-brand.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  brand:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Backup database, update brand text, restart and verify
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          BASE=/home/roofixo/domains/roofixo.ir/vamcity-app
+          SQL_CONTAINER=vamcity-stage-sql
+          APP_CONTAINER=vamcity-stage-app
+          SQL_PASSWORD="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' "$BASE/private/sql.env" | head -1)"
+          SQLCMD="$(docker exec "$SQL_CONTAINER" bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' | tail -1)"
+          test -n "$SQL_PASSWORD"
+          test -n "$SQLCMD"
+          mkdir -p "$BASE/private/backup"
+          BACKUP="vamcity-stage-before-brand-$(date -u +%Y%m%dT%H%M%SZ).bak"
+          docker exec -u 0 "$SQL_CONTAINER" mkdir -p /var/opt/mssql/backup
+          docker exec -u 0 "$SQL_CONTAINER" chown 10001:0 /var/opt/mssql/backup
+          docker exec -u 0 "$SQL_CONTAINER" chmod 770 /var/opt/mssql/backup
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "BACKUP DATABASE [vamcity_stage] TO DISK=N'/var/opt/mssql/backup/$BACKUP' WITH COPY_ONLY, INIT, COMPRESSION"
+          docker cp "$SQL_CONTAINER:/var/opt/mssql/backup/$BACKUP" "$BASE/private/backup/$BACKUP"
+          chmod 600 "$BASE/private/backup/$BACKUP"
+          echo "BACKUP_SAVED=$BASE/private/backup/$BACKUP"
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "USE [vamcity_stage]; SET NOCOUNT ON; IF OBJECT_ID(N'dbo.AppSettings',N'U') IS NULL THROW 50001,'AppSettings table missing',1; IF COL_LENGTH(N'dbo.AppSettings',N'BusinessTitle') IS NULL THROW 50002,'BusinessTitle column missing',1; UPDATE dbo.AppSettings SET BusinessTitle=REPLACE(BusinessTitle,N'آقای وام',N'وام سیتی') WHERE BusinessTitle LIKE N'%آقای وام%'; DECLARE @sql nvarchar(max)=N''; SELECT @sql=@sql+N'UPDATE '+QUOTENAME(s.name)+N'.'+QUOTENAME(t.name)+N' SET '+QUOTENAME(c.name)+N'=REPLACE(TRY_CONVERT(nvarchar(max),'+QUOTENAME(c.name)+N'),N''آقای وام'',N''وام سیتی'') WHERE TRY_CONVERT(nvarchar(max),'+QUOTENAME(c.name)+N') LIKE N''%آقای وام%''; ' FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id JOIN sys.columns c ON c.object_id=t.object_id JOIN sys.types ty ON ty.user_type_id=c.user_type_id WHERE t.name=N'Loans' AND ty.name IN(N'nvarchar',N'varchar',N'nchar',N'char',N'text',N'ntext'); IF LEN(@sql)>0 EXEC sp_executesql @sql; SELECT BusinessTitle FROM dbo.AppSettings; SELECT PlanTitle FROM dbo.Loans ORDER BY PlanTitle;"
+          docker restart "$APP_CONTAINER"
+          for i in $(seq 1 30); do
+            if curl -fsS --max-time 5 http://127.0.0.1:5187/cl/plans/ -o /tmp/vamcity-plans.html; then break; fi
+            sleep 2
+          done
+          test -s /tmp/vamcity-plans.html
+          echo "=== HTTP /cl/plans ==="
+          curl -sS -o /dev/null --max-time 10 -w 'LOCAL_HTTP=%{http_code}\n' http://127.0.0.1:5187/cl/plans/
+          echo "=== PUBLIC DOMAIN ==="
+          curl -sS -L -o /dev/null --max-time 15 -w 'PUBLIC_HTTP=%{http_code}\n' https://roofixo.ir/cl/plans/ || true
+          echo "=== DATABASE BRAND / PLAN CHECK ==="
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -W -Q "USE [vamcity_stage]; SELECT BusinessTitle FROM dbo.AppSettings; SELECT PlanTitle FROM dbo.Loans ORDER BY PlanTitle;"
+          echo "=== END ==="
+          REMOTE
