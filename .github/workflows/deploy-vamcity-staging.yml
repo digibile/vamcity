@@ -354,6 +354,11 @@ jobs:
             200|301|302|307|308) echo "ROOFIXO_PRIMARY_DOMAIN_PROXY_OK" ;;
             *) echo "WARNING: Nginx config applied but local HTTPS host check returned $DOMAIN_HTTP; inspect certificate/vhost and app logs" ;;
           esac
+          echo "=== DIRECT PUBLIC-IP VHOST TEST ==="
+          DIRECT_HTTP="$(curl -4 -k -sS --max-time 15 --resolve roofixo.ir:443:185.8.174.167 -o /tmp/roofixo-direct-body.html -D /tmp/roofixo-direct-headers.txt -w '%{http_code}' https://roofixo.ir/ || true)"
+          echo "ROOFIXO_DIRECT_SERVER_IP_HTTP=$DIRECT_HTTP"
+          sed -n '1,8p' /tmp/roofixo-direct-headers.txt 2>/dev/null || true
+          grep -Eio '<title>[^<]*|404 Not Found|nginx' /tmp/roofixo-direct-body.html 2>/dev/null | head -8 || true
           echo "=== PUBLIC DNS AND ROUTING DIAGNOSTICS ==="
           echo "SERVER_RESOLVES_ROOFIXO_IR:"
           getent ahostsv4 roofixo.ir | awk '!seen[$1]++ {print $1}' || true
@@ -375,6 +380,10 @@ jobs:
       - name: Verify public Roofixo URL from GitHub runner
         run: |
           set +e
+          echo "=== DIRECT SERVER IP FROM GITHUB RUNNER ==="
+          curl -4 -k -sS --max-time 20 --resolve roofixo.ir:443:185.8.174.167 -D /tmp/roofixo-direct-headers.txt -o /tmp/roofixo-direct-body.html -w 'DIRECT_SERVER_IP_HTTP=%{http_code} REMOTE_IP=%{remote_ip}\n' https://roofixo.ir/ || true
+          sed -n '1,8p' /tmp/roofixo-direct-headers.txt 2>/dev/null || true
+          grep -Eio '<title>[^<]*|404 Not Found|nginx' /tmp/roofixo-direct-body.html 2>/dev/null | head -8 || true
           echo "=== PUBLIC DNS FROM OUTSIDE SERVER ==="
           getent ahostsv4 roofixo.ir | awk '!seen[$1]++ {print $1}'
           getent ahostsv4 www.roofixo.ir | awk '!seen[$1]++ {print $1}'
