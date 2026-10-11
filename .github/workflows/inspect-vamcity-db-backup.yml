@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/inspect-vamcity-db-backup.yml"
+      - ".github/workflows/diagnose-vamcity-stage.yml"
   workflow_dispatch:
 
 permissions:
