@@ -70,6 +70,12 @@ jobs:
           ls -l /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx 2>/dev/null || true
           echo "=== CUSTOM FILE INCLUDE REFERENCES ==="
           grep -R -nF 'roofixo.ir.cust_nginx' /usr/local/directadmin/data/users/roofixo /etc/nginx 2>/dev/null | head -30 || true
+          echo "=== CUSTOMBUILD WEB SERVER MODE ==="
+          grep -E '^(webserver|nginx|nginx_proxy|letsencrypt)=' /usr/local/directadmin/custombuild/options.conf /usr/local/directadmin/conf/directadmin.conf 2>/dev/null | sed -E 's#^([^=]+)=.*#\1=<set>#' || true
+          echo "=== NGINX TEMPLATE CUSTOM INSERTIONS ==="
+          for p in /usr/local/directadmin/data/templates/nginx_server.conf /usr/local/directadmin/data/templates/nginx_server_secure.conf; do
+            if [ -f "$p" ]; then echo "TEMPLATE=$p"; grep -nE 'CUSTOM|cust_nginx|LOCATION_BLOCKS|server_name|location /' "$p" | head -80; fi
+          done
           echo "=== GENERATED USER NGINX CONFIG ==="
           sed -n '1,120p' /usr/local/directadmin/data/users/roofixo/nginx.conf 2>/dev/null || true
           echo "=== ACTIVE NGINX SERVER BLOCK ==="
