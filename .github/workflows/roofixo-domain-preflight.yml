@@ -57,15 +57,16 @@ jobs:
             /home/roofixo/domains/roofixo.ir/public_html/index.html; do
             if [ -e "$p" ]; then echo "EXISTS=$p"; else echo "MISSING=$p"; fi
           done
-          echo "=== CUSTOM NGINX ROUTING DIRECTIVES ==="
-          for p in \
-            /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx \
-            /usr/local/directadmin/data/users/roofixo/nginx.conf; do
-            if [ -f "$p" ]; then
-              echo "FILE=$p"
-              grep -nE 'server_name|location[[:space:]]|proxy_pass|root[[:space:]]|ssl_certificate|include' "$p" | head -100
-            fi
-          done
+          echo "=== DOMAIN CONFIG FLAGS ==="
+          grep -nEi 'nginx|ssl|ip=|domain=' /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf | head -50 || true
+          echo "=== CUSTOM NGINX FILE STATUS ==="
+          ls -l /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx 2>/dev/null || true
+          echo "=== CUSTOM FILE INCLUDE REFERENCES ==="
+          grep -R -nF 'roofixo.ir.cust_nginx' /usr/local/directadmin/data/users/roofixo /etc/nginx 2>/dev/null | head -30 || true
+          echo "=== GENERATED USER NGINX CONFIG ==="
+          sed -n '1,120p' /usr/local/directadmin/data/users/roofixo/nginx.conf 2>/dev/null || true
+          echo "=== ACTIVE NGINX SERVER BLOCK ==="
+          nginx -T 2>&1 | grep -n -B 8 -A 50 'server_name roofixo.ir' | head -140 || true
           echo "=== NGINX VALIDATION ==="
           nginx -t 2>&1
           echo "=== APP LOCAL HEALTH ==="
