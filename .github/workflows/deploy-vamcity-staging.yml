@@ -348,6 +348,15 @@ jobs:
             exit 1
           fi
           systemctl reload nginx
+          echo "=== NGINX LISTENING ADDRESSES AND DOMAIN VHOSTS ==="
+          ip -br -4 address 2>/dev/null || ip -4 address 2>/dev/null || true
+          ss -ltnp 2>/dev/null | grep -E ':(80|443|5187)\\b' || true
+          nginx -T 2>&1 | grep -n -E -B 3 -A 12 'server_name[^;]*(roofixo\\.ir|www\\.roofixo\\.ir)|listen .*443|listen .*80' | head -180 || true
+          echo "=== TEST HOSTNAME AGAINST EACH LOCAL IPV4 ADDRESS ==="
+          for IP in $(ip -o -4 addr show scope global 2>/dev/null | awk '{split($4,a,"/"); print a[1]}'); do
+            CODE="$(curl -k -sS --max-time 8 --resolve "roofixo.ir:443:$IP" -o /dev/null -w '%{http_code}' https://roofixo.ir/ || true)"
+            echo "LOCAL_INTERFACE_VHOST_TEST_IP=$IP HTTP=$CODE"
+          done
           DOMAIN_HTTP="$(curl -k -sS -o /dev/null --max-time 12 -w '%{http_code}' --resolve roofixo.ir:443:127.0.0.1 https://roofixo.ir/ || true)"
           echo "ROOFIXO_HTTPS_LOCAL_HTTP=$DOMAIN_HTTP"
           case "$DOMAIN_HTTP" in
