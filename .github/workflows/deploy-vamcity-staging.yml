@@ -121,12 +121,16 @@ jobs:
           docker image inspect mcr.microsoft.com/mssql/server:2022-latest >/dev/null 2>&1 || docker pull mcr.microsoft.com/mssql/server:2022-latest
           docker image inspect mcr.microsoft.com/dotnet/aspnet:10.0 >/dev/null 2>&1 || docker pull mcr.microsoft.com/dotnet/aspnet:10.0
 
+          if docker container inspect "$SQL_CONTAINER" >/dev/null 2>&1; then
+            RUNNING="$(docker inspect -f '{{.State.Running}}' "$SQL_CONTAINER" 2>/dev/null || echo false)"
+            if [ "$RUNNING" != "true" ]; then docker rm -f "$SQL_CONTAINER" >/dev/null; fi
+          fi
+          docker volume create vamcity_stage_sql_data >/dev/null
           if ! docker container inspect "$SQL_CONTAINER" >/dev/null 2>&1; then
             docker run -d --name "$SQL_CONTAINER" --restart unless-stopped \
               --network "$NETWORK" --memory=2g --memory-swap=2g \
               --env-file "$PRIVATE/sql.env" \
-              -v "$PRIVATE/sql-data:/var/opt/mssql" \
-              -v "$PRIVATE/backup:/var/opt/mssql/backup:ro" \
+              -v vamcity_stage_sql_data:/var/opt/mssql \
               mcr.microsoft.com/mssql/server:2022-latest >/dev/null
           else
             docker network connect "$NETWORK" "$SQL_CONTAINER" >/dev/null 2>&1 || true
@@ -148,6 +152,13 @@ jobs:
             echo "SQL_SERVER_DID_NOT_BECOME_READY"
             docker logs --tail 100 "$SQL_CONTAINER" || true
             exit 1
+          fi
+
+          docker exec -u 0 "$SQL_CONTAINER" mkdir -p /var/opt/mssql/backup
+          if ! docker exec "$SQL_CONTAINER" test -s /var/opt/mssql/backup/source.bak; then
+            docker cp "$PRIVATE/backup/source.bak" "$SQL_CONTAINER:/var/opt/mssql/backup/source.bak"
+            docker exec -u 0 "$SQL_CONTAINER" chown 10001:0 /var/opt/mssql/backup/source.bak
+            docker exec -u 0 "$SQL_CONTAINER" chmod 640 /var/opt/mssql/backup/source.bak
           fi
 
           DB_EXISTS="$(docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -h -1 -W -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE name = N'$DB_NAME';" | tr -d '[:space:]')"
