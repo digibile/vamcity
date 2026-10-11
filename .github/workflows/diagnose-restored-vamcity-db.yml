@@ -1,5 +1,5 @@
 name: Diagnose restored VamCity source database
-run-name: Inspect restored database branding and plans safely
+run-name: Find available original database backups safely
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Inspect only non-secret brand and plan fields
+      - name: List backup file names and inspect safe database metadata
         shell: bash
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -32,15 +32,11 @@ jobs:
           ssh-keyscan -T 10 -p "$PORT" "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           ssh -i "$RUNNER_TEMP/key" -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
+          echo "=== BACKUP FILE INVENTORY (NAMES AND SIZES ONLY) ==="
+          find /home/roofixo/domains/roofixo.ir -type f \( -iname '*.bak' -o -iname '*.zip' -o -iname '*.sql' -o -iname '*.7z' \) -printf '%TY-%Tm-%Td %TH:%TM %s %p\n' 2>/dev/null | sort -r | head -100
+          echo "=== LIVE DATABASE BRAND AND PLAN TITLES ONLY ==="
           SQL_CONTAINER=vamcity-stage-sql
           SQL_PASSWORD="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' /home/roofixo/domains/roofixo.ir/vamcity-app/private/sql.env | head -1)"
           SQLCMD="$(docker exec "$SQL_CONTAINER" bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' | tail -1)"
-          echo "=== DATABASE STATE ==="
-          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; SELECT name,state_desc FROM sys.databases WHERE name=N'vamcity_stage'; SELECT COUNT(*) AS user_tables FROM [vamcity_stage].sys.tables;"
-          echo "=== BRAND NAME ONLY ==="
-          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; SELECT c.Name AS configured_brand FROM [vamcity_stage].dbo.AppSettings a JOIN [vamcity_stage].dbo.Customers c ON c.Id=a.CustomerId;"
-          echo "=== LOAN TITLES ONLY (NO CREDENTIALS OR CUSTOMER DATA) ==="
-          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; SELECT Title,PlanTitle,IncludePlan,Disable,MaxAmount,MaxMonthGap FROM [vamcity_stage].dbo.Loans ORDER BY Code;"
-          echo "=== PUBLIC SITE CONTENT TITLES ONLY ==="
-          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; SELECT TOP 30 Id,Title FROM [vamcity_stage].dbo.SiteContents ORDER BY Id;"
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; SELECT c.Name AS configured_brand FROM [vamcity_stage].dbo.AppSettings a JOIN [vamcity_stage].dbo.Customers c ON c.Id=a.CustomerId; SELECT Title,PlanTitle,IncludePlan,Disable FROM [vamcity_stage].dbo.Loans ORDER BY Code;"
           REMOTE
