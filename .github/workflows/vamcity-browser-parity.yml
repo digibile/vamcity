@@ -1,5 +1,6 @@
 name: VamCity browser parity check
-run-name: Compare VamCity plans page on reference and Roofixo
+run-name: Verify deployed VamCity page on reference and Roofixo
+# This workflow is rerun after publishing to validate the live release.
 
 on:
   push:
