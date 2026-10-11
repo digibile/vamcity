@@ -44,6 +44,15 @@ jobs:
           docker volume inspect vamcity_stage_sql_data 2>&1
           df -h / /home/roofixo 2>&1
           free -h 2>&1
+          echo "=== APP CONTAINER NETWORK / PORTS ==="
+          docker inspect -f 'PORTS={{json .NetworkSettings.Ports}} NETWORKS={{json .NetworkSettings.Networks}}' vamcity-stage-app 2>&1
+          echo "=== HOST LOOPBACK AND CONTAINER-IP PROBES ==="
+          curl -sv --max-time 5 http://127.0.0.1:5187/ -o /dev/null 2>&1 | tail -25
+          APP_IP="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' vamcity-stage-app 2>/dev/null)"
+          echo "APP_CONTAINER_IP=$APP_IP"
+          if [ -n "$APP_IP" ]; then curl -sv --max-time 5 "http://$APP_IP:8080/" -o /dev/null 2>&1 | tail -25; fi
+          echo "=== APP PROCESS / LISTENER ==="
+          docker exec vamcity-stage-app sh -lc 'ps -ef; (command -v ss >/dev/null && ss -lntp) || true; (command -v netstat >/dev/null && netstat -lntp) || true' 2>&1
           echo "=== HOST / DOMAIN STATUS ==="
           curl -sS -o /dev/null --max-time 5 -w 'ROOFIXO_HTTPS=%{http_code}\n' https://roofixo.ir || true
           echo "=== DATABASE HEALTH SUMMARY ==="
