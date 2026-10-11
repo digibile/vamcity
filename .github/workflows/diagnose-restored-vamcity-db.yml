@@ -34,9 +34,9 @@ jobs:
           set -euo pipefail
           echo "=== BACKUP FILE INVENTORY (NAMES AND SIZES ONLY) ==="
           find /home/roofixo/domains/roofixo.ir -type f \( -iname '*.bak' -o -iname '*.zip' -o -iname '*.sql' -o -iname '*.7z' \) -printf '%TY-%Tm-%Td %TH:%TM %s %p\n' 2>/dev/null | sort -r | head -100
-          echo "=== LIVE DATABASE BRAND AND PLAN TITLES ONLY ==="
+          echo "=== LIVE DATABASE SAFE SUMMARY ONLY ==="
           SQL_CONTAINER=vamcity-stage-sql
           SQL_PASSWORD="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' /home/roofixo/domains/roofixo.ir/vamcity-app/private/sql.env | head -1)"
           SQLCMD="$(docker exec "$SQL_CONTAINER" bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' | tail -1)"
-          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; SELECT c.Name AS configured_brand FROM [vamcity_stage].dbo.AppSettings a JOIN [vamcity_stage].dbo.Customers c ON c.Id=a.CustomerId; SELECT Title,PlanTitle,IncludePlan,Disable FROM [vamcity_stage].dbo.Loans ORDER BY Code; IF OBJECT_ID(N'[vamcity_stage].dbo.AspNetUsers',N'U') IS NOT NULL AND OBJECT_ID(N'[vamcity_stage].dbo.AspNetRoles',N'U') IS NOT NULL AND OBJECT_ID(N'[vamcity_stage].dbo.AspNetUserRoles',N'U') IS NOT NULL SELECT u.Id,u.UserName,u.Email,u.PhoneNumber,u.FirstName,u.LastName,r.Name AS RoleName FROM [vamcity_stage].dbo.AspNetUsers u LEFT JOIN [vamcity_stage].dbo.AspNetUserRoles ur ON ur.UserId=u.Id LEFT JOIN [vamcity_stage].dbo.AspNetRoles r ON r.Id=ur.RoleId WHERE r.Name LIKE '%admin%' OR r.Name LIKE '%super%' OR u.UserName LIKE '%admin%' OR u.Email LIKE '%admin%' ORDER BY r.Name,u.UserName; ELSE SELECT N'Identity tables not found under default names' AS note;"
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; SELECT name,state_desc FROM sys.databases WHERE name=N'vamcity_stage'; SELECT COUNT(*) AS table_count FROM [vamcity_stage].sys.tables; SELECT COUNT(*) AS active_plan_count FROM [vamcity_stage].dbo.Loans WHERE Disable=0;" 
           REMOTE
