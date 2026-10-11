@@ -304,5 +304,55 @@ jobs:
             docker logs --tail 120 "$APP_CONTAINER" || true
             exit 1
           fi
-          echo "STAGING_DEPLOYMENT_OK; app is bound only to 127.0.0.1:5187; no live domain config was changed"
+          echo "=== CONFIGURE ROOFIXO.IR AS VAMCITY PRIMARY DOMAIN ==="
+          DA_USER=roofixo
+          DOMAIN=roofixo.ir
+          CUSTOM="/usr/local/directadmin/data/users/$DA_USER/domains/$DOMAIN.cust_nginx"
+          CUSTOM_DIR="$(dirname "$CUSTOM")"
+          BACKUP="$CUSTOM.before-vamcity-$(date -u +%Y%m%dT%H%M%SZ)"
+          HAD_CUSTOM=0
+          mkdir -p "$CUSTOM_DIR"
+          if [ -f "$CUSTOM" ]; then
+            cp -a "$CUSTOM" "$BACKUP"
+            HAD_CUSTOM=1
+            echo "EXISTING_CUSTOM_NGINX_BACKUP=$BACKUP"
+          fi
+          rollback_domain_config() {
+            if [ "$HAD_CUSTOM" = "1" ]; then cp -a "$BACKUP" "$CUSTOM"; else rm -f "$CUSTOM"; fi
+            /usr/local/directadmin/custombuild/build rewrite_confs >/dev/null 2>&1 || true
+          }
+          cat > "$CUSTOM.tmp" <<'NGINX'
+          location / {
+              proxy_pass http://127.0.0.1:5187;
+              proxy_http_version 1.1;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection "upgrade";
+              proxy_read_timeout 300s;
+              proxy_send_timeout 300s;
+          }
+          NGINX
+          mv "$CUSTOM.tmp" "$CUSTOM"
+          if ! /usr/local/directadmin/custombuild/build rewrite_confs; then
+            echo "DIRECTADMIN_REWRITE_FAILED; restoring previous domain configuration"
+            rollback_domain_config
+            exit 1
+          fi
+          if ! nginx -t; then
+            echo "NGINX_TEST_FAILED; restoring previous domain configuration"
+            rollback_domain_config
+            nginx -t || true
+            exit 1
+          fi
+          systemctl reload nginx
+          DOMAIN_HTTP="$(curl -k -sS -o /dev/null --max-time 12 -w '%{http_code}' --resolve roofixo.ir:443:127.0.0.1 https://roofixo.ir/ || true)"
+          echo "ROOFIXO_HTTPS_LOCAL_HTTP=$DOMAIN_HTTP"
+          case "$DOMAIN_HTTP" in
+            200|301|302|307|308) echo "ROOFIXO_PRIMARY_DOMAIN_PROXY_OK" ;;
+            *) echo "WARNING: Nginx config applied but local HTTPS host check returned $DOMAIN_HTTP; inspect certificate/vhost and app logs" ;;
+          esac
+          echo "VAMCITY_DEPLOYMENT_OK; roofixo.ir configured as primary domain; app bound only to 127.0.0.1:5187"
           REMOTE
