@@ -112,7 +112,8 @@ jobs:
             umask 077
             printf 'ACCEPT_EULA=Y\nMSSQL_PID=Developer\nMSSQL_SA_PASSWORD=%s\nMSSQL_MEMORY_LIMIT_MB=1024\n' "$SQL_PASSWORD" > "$PRIVATE/sql.env"
           fi
-          grep -q '^HOME=' "$PRIVATE/sql.env" || printf 'HOME=/var/opt/mssql\n' >> "$PRIVATE/sql.env"
+          sed -i '/^HOME=/d' "$PRIVATE/sql.env"
+          printf 'HOME=/var/opt/mssql\n' >> "$PRIVATE/sql.env"
           SQL_PASSWORD="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' "$PRIVATE/sql.env" | head -1)"
           test -n "$SQL_PASSWORD"
 
