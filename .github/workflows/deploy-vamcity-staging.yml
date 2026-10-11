@@ -119,8 +119,16 @@ jobs:
           SQL_PASSWORD="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' "$PRIVATE/sql.env" | head -1)"
           test -n "$SQL_PASSWORD"
 
+          if docker network inspect "$NETWORK" >/dev/null 2>&1; then
+            INTERNAL="$(docker network inspect -f '{{.Internal}}' "$NETWORK" 2>/dev/null || echo false)"
+            if [ "$INTERNAL" = "true" ]; then
+              echo "STAGING_NETWORK_WAS_INTERNAL; rebuilding isolated bridge so host loopback publishing can work"
+              docker rm -f "$APP_CONTAINER" "$SQL_CONTAINER" >/dev/null 2>&1 || true
+              docker network rm "$NETWORK" >/dev/null
+            fi
+          fi
           if ! docker network inspect "$NETWORK" >/dev/null 2>&1; then
-            docker network create --internal "$NETWORK" >/dev/null
+            docker network create "$NETWORK" >/dev/null
           fi
           docker image inspect mcr.microsoft.com/mssql/server:2022-latest >/dev/null 2>&1 || docker pull mcr.microsoft.com/mssql/server:2022-latest
           docker image inspect mcr.microsoft.com/dotnet/aspnet:10.0 >/dev/null 2>&1 || docker pull mcr.microsoft.com/dotnet/aspnet:10.0
