@@ -1,0 +1,60 @@
+name: Inspect VamCity SQL Server backup on Roofixo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-vamcity-db-backup.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read-only inspection on Roofixo
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/roofixo_key
+          chmod 600 ~/.ssh/roofixo_key
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/roofixo_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set +e
+          ZIP=/home/roofixo/domains/roofixo.ir/public_html/vamcityc_aqayevamdb_2026-10-11_15-51-44.zip
+          echo "=== BACKUP FILE ==="
+          if [ -f "$ZIP" ]; then
+            stat -c 'PATH=%n SIZE_BYTES=%s MODIFIED=%y' "$ZIP"
+            unzip -t "$ZIP" | tail -2
+            echo "=== ARCHIVE ENTRY METADATA ==="
+            unzip -Z -v "$ZIP" | grep -E 'Central directory entry|^[[:space:]]+(vamcityc_|compressed size:|uncompressed size:|compression method:)' | head -20
+            echo "=== EXTRACTED PAYLOAD TYPE (if already extracted) ==="
+            find /tmp -maxdepth 2 -type f -name 'vamcityc_aqayevamdb_2026-10-11_15-51-44' -exec file {} \; -exec stat -c 'EXTRACTED_SIZE_BYTES=%s' {} \; 2>/dev/null
+          else
+            echo "BACKUP_NOT_FOUND"
+          fi
+          echo "=== AVAILABLE TOOLS ==="
+          for c in docker sqlcmd sqlservr psql pg_restore pg_dump 7z; do
+            printf '%s=' "$c"
+            command -v "$c" || true
+          done
+          echo "=== CONTAINERS (if Docker exists) ==="
+          if command -v docker >/dev/null 2>&1; then
+            docker ps --format 'NAME={{.Names}} IMAGE={{.Image}} STATUS={{.Status}} PORTS={{.Ports}}' 2>&1
+          fi
+          echo "=== DB PORTS ==="
+          ss -lnt 2>/dev/null | grep -E ':(1433|5432|55432)\b' || true
+          echo "=== END READ-ONLY INSPECTION ==="
+          REMOTE
