@@ -1,0 +1,48 @@
+name: Diagnose VamCity staging containers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-vamcity-stage.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read-only container diagnostics
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set +e
+          echo "=== CONTAINER STATES ==="
+          docker ps -a --filter name=vamcity-stage --format 'NAME={{.Names}} STATUS={{.Status}} IMAGE={{.Image}}'
+          for c in vamcity-stage-sql vamcity-stage-app; do
+            echo "=== INSPECT $c ==="
+            docker inspect -f 'STATUS={{.State.Status}} RUNNING={{.State.Running}} EXIT={{.State.ExitCode}} RESTARTS={{.RestartCount}} ERROR={{.State.Error}}' "$c" 2>&1
+            docker inspect -f 'MOUNTS={{range .Mounts}}{{.Name}}:{{.Destination}};{{end}}' "$c" 2>&1
+            echo "=== LAST LOGS $c ==="
+            docker logs --tail 100 "$c" 2>&1
+          done
+          echo "=== VOLUME / DISK / MEMORY ==="
+          docker volume inspect vamcity_stage_sql_data 2>&1
+          df -h / /home/roofixo 2>&1
+          free -h 2>&1
+          echo "=== HOST / DOMAIN STATUS ==="
+          curl -sS -o /dev/null --max-time 5 -w 'ROOFIXO_HTTPS=%{http_code}\n' https://roofixo.ir || true
+          echo "=== END DIAGNOSTICS ==="
+          REMOTE
