@@ -60,19 +60,7 @@ jobs:
             echo "=== ZIP APPSETTINGS KEY NAMES ==="
             for f in $(unzip -Z1 "$ZIP" | grep -E '(^|/)appsettings[^/]*\.json$' | head -10); do
               echo "FILE=$f"
-              unzip -p "$ZIP" "$f" 2>/dev/null | python3 -c 'import json,sys; 
-try:
- d=json.load(sys.stdin)
- def walk(x,p=""):
-  if isinstance(x,dict):
-   for k,v in x.items():
-    q=(p+"__"+k) if p else k
-    if isinstance(v,(dict,list)): walk(v,q)
-    else: print(q+"="+("[configured]" if v not in (None,"") else "[empty]"))
-  elif isinstance(x,list):
-   for v in x: walk(v,p)
- walk(d)
-except Exception: print("[invalid json]")' | sed -E 's/((Password|Pwd|Secret|Token|ApiKey|ConnectionString)[^=]*)=.*/\1=[redacted]/I' | head -100
+              unzip -p "$ZIP" "$f" 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print("\\n".join(str(k) for k in d.keys()))' | head -100
             done
           else
             echo "ZIP_MISSING"
