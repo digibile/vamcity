@@ -30,6 +30,12 @@ jobs:
       - name: Show SDK
         run: dotnet --info
 
+      - name: Copy frontend assets into web project
+        run: |
+          test -f wwwroot/ui/index.html
+          mkdir -p recovered-source/LoanSystemAvizhe.Site/wwwroot
+          cp -a wwwroot/ui recovered-source/LoanSystemAvizhe.Site/wwwroot/
+
       - name: Publish Linux application
         run: dotnet publish recovered-source/LoanSystemAvizhe.Site/LoanSystemAvizhe.Site.csproj --configuration Release --output ./artifacts/vamcity --verbosity minimal
 
