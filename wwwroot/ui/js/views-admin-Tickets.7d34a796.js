@@ -1,0 +1,2 @@
+(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["views-admin-Tickets"],{"1e05":function(e,n,t){"use strict";t.r(n);var i=function(){var e=this,n=e.$createElement,t=e._self._c||n;return t("Tickets",{attrs:{userType:"admin"}})},s=[],r=(t("d3b7"),{name:"AgentTicketView",components:{Tickets:function(){return Promise.resolve().then(t.bind(null,"ae7f"))}},data:function(){return{}}}),c=r,u=t("2877"),a=Object(u["a"])(c,i,s,!1,null,null,null);n["default"]=a.exports}}]);
+//# sourceMappingURL=views-admin-Tickets.7d34a796.js.map

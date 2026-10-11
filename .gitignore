@@ -1,0 +1,9 @@
+appsettings*.json
+*.pfx
+*.p12
+*.key
+*.pem
+logs/
+uploads/
+.env
+.env.*
