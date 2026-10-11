@@ -19,9 +19,7 @@
     <Reference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore">
       <HintPath>../../Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll</HintPath>
     </Reference>
-    <Reference Include="LoanSystemAvizhe.Core">
-      <HintPath>../../LoanSystemAvizhe.Core.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="../LoanSystemAvizhe.Core/LoanSystemAvizhe.Core.csproj" />
     <Reference Include="Microsoft.EntityFrameworkCore.Relational">
       <HintPath>../../Microsoft.EntityFrameworkCore.Relational.dll</HintPath>
     </Reference>
