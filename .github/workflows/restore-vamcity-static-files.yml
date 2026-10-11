@@ -81,7 +81,7 @@ jobs:
           chmod 600 "$RELEASE/App_Data/certs/orgCertificate.pfx"
           echo "CERTIFICATE_PRESENT=true"
           echo "=== VERIFY KEY STATIC FILES AND RESTART ==="
-          find "$PRIVATE/uploads" -type f | head -5
+          find "$PRIVATE/uploads" -type f | sed -n '1,5p'
           docker restart "$APP" >/dev/null
           HEALTH=000
           for i in $(seq 1 36); do
