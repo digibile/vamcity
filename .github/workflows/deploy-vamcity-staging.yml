@@ -257,7 +257,7 @@ jobs:
           fi
 
           echo "=== VALIDATE RESTORED BUSINESS SCHEMA BEFORE STARTING APP ==="
-          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "USE [$DB_NAME]; SET NOCOUNT ON; DECLARE @missing nvarchar(max)=N''; SELECT @missing=@missing+name+N', ' FROM (VALUES (N'Customers'),(N'AppSettings'),(N'AspNetUsers'),(N'AspNetRoles'),(N'Loans'),(N'UserLoans')) AS required(name) WHERE OBJECT_ID(N'dbo.'+name,N'U') IS NULL; IF @missing<>N'' THROW 51001, @missing, 1; SELECT N'Customers' AS Entity, COUNT_BIG(*) AS TotalRows FROM dbo.Customers UNION ALL SELECT N'AppSettings', COUNT_BIG(*) FROM dbo.AppSettings UNION ALL SELECT N'AspNetUsers', COUNT_BIG(*) FROM dbo.AspNetUsers UNION ALL SELECT N'AspNetRoles', COUNT_BIG(*) FROM dbo.AspNetRoles UNION ALL SELECT N'Loans', COUNT_BIG(*) FROM dbo.Loans UNION ALL SELECT N'UserLoans', COUNT_BIG(*) FROM dbo.UserLoans; SELECT N'EF_Migration_History_Rows' AS CheckName, COUNT_BIG(*) AS TotalRows FROM dbo.__EFMigrationsHistory;" 
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "USE [$DB_NAME]; SET NOCOUNT ON; DECLARE @missing nvarchar(max)=N''; SELECT @missing=@missing+name+N', ' FROM (VALUES (N'Customers'),(N'AppSettings'),(N'AspNetUsers'),(N'AspNetRoles'),(N'Loans'),(N'UserLoans')) AS required(name) WHERE OBJECT_ID(N'dbo.'+name,N'U') IS NULL; IF @missing<>N'' THROW 51001, @missing, 1; SELECT N'Customers' AS Entity, COUNT_BIG(*) AS TotalRows FROM dbo.Customers UNION ALL SELECT N'AppSettings', COUNT_BIG(*) FROM dbo.AppSettings UNION ALL SELECT N'AspNetUsers', COUNT_BIG(*) FROM dbo.AspNetUsers UNION ALL SELECT N'AspNetRoles', COUNT_BIG(*) FROM dbo.AspNetRoles UNION ALL SELECT N'Loans', COUNT_BIG(*) FROM dbo.Loans UNION ALL SELECT N'UserLoans', COUNT_BIG(*) FROM dbo.UserLoans UNION ALL SELECT N'CustomerPurchasePlans', COUNT_BIG(*) FROM dbo.CustomerPurchasePlans UNION ALL SELECT N'Purchases', COUNT_BIG(*) FROM dbo.Purchases; SELECT N'EF_Migration_History_Rows' AS CheckName, COUNT_BIG(*) AS TotalRows FROM dbo.__EFMigrationsHistory;" 
 
           # Keep the JWT signing key stable across releases so existing login tokens remain valid.
           APP_SECRET=""
@@ -409,7 +409,7 @@ jobs:
           test -n "$VHOST_TEST_IP" || { echo "ROOFIXO_VHOST_TEST_IP_UNAVAILABLE"; exit 1; }
           echo "ROOFIXO_LOCAL_VHOST_TEST_IP_ASSIGNED=yes"
           echo "=== API TRANSPORT CHECK (local Roofixo vhost; anonymous protected routes should return 401/403) ==="
-          for API_PATH in /superadmin/dashboard/get /admin/appSettings/get; do
+          for API_PATH in /superadmin/dashboard/get /superadmin/customer/list/ /admin/appSettings/get /admin/customerpurchaseplan/list/; do
             API_CODE="000"
             # ASP.NET may still be applying EF migrations immediately after the container starts.
             # Retry transient 000/404/5xx responses instead of racing application startup.
