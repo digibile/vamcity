@@ -331,6 +331,18 @@ jobs:
             docker logs --tail 120 "$APP_CONTAINER" || true
             exit 1
           fi
+
+          echo "=== VERIFY TENANT CONFIG AND PUBLIC PLAN API BEFORE MARKING DEPLOYMENT HEALTHY ==="
+          SITE_CONFIG_JSON="$(curl -fsS --max-time 15 -X POST -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:5187/Site/SiteConfig)"
+          ACTUAL_CUSTOMER_CODE="$(printf '%s' "$SITE_CONFIG_JSON" | python3 -c 'import json,sys; d=json.load(sys.stdin); x=d.get("data",d.get("Data")) or {}; print(x.get("customerCode",x.get("CustomerCode",0)))')"
+          if [ "$ACTUAL_CUSTOMER_CODE" != "$CUSTOMER_CODE" ]; then
+            echo "SITE_CONFIG_CUSTOMER_CODE_MISMATCH expected=$CUSTOMER_CODE actual=$ACTUAL_CUSTOMER_CODE"
+            exit 1
+          fi
+          PLAN_JSON="$(curl -fsS --max-time 20 -H 'Accept: application/json' "http://127.0.0.1:5187/Loan/List/$CUSTOMER_CODE")"
+          printf '%s' "$PLAN_JSON" | python3 -c 'import json,sys; d=json.load(sys.stdin); ok=d.get("success",d.get("Success")); data=d.get("data",d.get("Data")); assert ok is True, "public plan API returned unsuccessful response"; assert isinstance(data,list), "public plan API data is not a list"; print("VAMCITY_PUBLIC_PLAN_API_OK count=%d" % len(data))'
+          echo "VAMCITY_TENANT_CONFIG_OK customer_code=$CUSTOMER_CODE"
+
           echo "=== CONFIGURE ROOFIXO.IR AS VAMCITY PRIMARY DOMAIN ==="
           DA_USER=roofixo
           DOMAIN=roofixo.ir
