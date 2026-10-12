@@ -1,5 +1,5 @@
 name: Diagnose VamCity staging containers
-# Triggered read-only status snapshot for the current staging attempt
+# Triggered read-only status snapshot; validates app runtime, API routes, database schema and role assignments
 # Re-check API transport and role state after guarded SuperAdmin repair
 
 on:
