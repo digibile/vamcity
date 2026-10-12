@@ -253,6 +253,9 @@ jobs:
             echo "SOURCE_DATABASE_UNCHANGED; preserving current staged data"
           fi
 
+          echo "=== VALIDATE RESTORED BUSINESS SCHEMA BEFORE STARTING APP ==="
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "USE [$DB_NAME]; SET NOCOUNT ON; DECLARE @missing nvarchar(max)=N''; SELECT @missing=@missing+name+N', ' FROM (VALUES (N'Customers'),(N'AppSettings'),(N'AspNetUsers'),(N'AspNetRoles'),(N'Loans'),(N'UserLoans')) AS required(name) WHERE OBJECT_ID(N'dbo.'+name,N'U') IS NULL; IF @missing<>N'' THROW 51001, @missing, 1; SELECT N'Customers' AS Entity, COUNT_BIG(*) AS TotalRows FROM dbo.Customers UNION ALL SELECT N'AppSettings', COUNT_BIG(*) FROM dbo.AppSettings UNION ALL SELECT N'AspNetUsers', COUNT_BIG(*) FROM dbo.AspNetUsers UNION ALL SELECT N'AspNetRoles', COUNT_BIG(*) FROM dbo.AspNetRoles UNION ALL SELECT N'Loans', COUNT_BIG(*) FROM dbo.Loans UNION ALL SELECT N'UserLoans', COUNT_BIG(*) FROM dbo.UserLoans; SELECT N'EF_Migration_History_Rows' AS CheckName, COUNT_BIG(*) AS TotalRows FROM dbo.__EFMigrationsHistory;" 
+
           # Keep the JWT signing key stable across releases so existing login tokens remain valid.
           APP_SECRET=""
           if [ -s "$PRIVATE/app.env" ]; then
