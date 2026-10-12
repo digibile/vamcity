@@ -94,10 +94,24 @@ jobs:
             IF @assigned <> 1 THROW 51002, 'Expected exactly one existing SuperAdmin assignment; no change made.', 1;
             IF @active <> 0 THROW 51003, 'A SuperAdmin is already active; no change made.', 1;
             IF @inactive <> 1 THROW 51004, 'The inactive SuperAdmin account is ambiguous; no change made.', 1;
-            UPDATE r SET NormalizedName=UPPER(r.Name)
-              FROM [$DB_NAME].dbo.AspNetRoles r
-              WHERE UPPER(r.Name)=N'SUPERADMIN'
-                AND (r.NormalizedName IS NULL OR r.NormalizedName<>UPPER(r.Name));
+            IF EXISTS (
+              SELECT UPPER(Name) FROM [$DB_NAME].dbo.AspNetRoles
+              WHERE Name IS NOT NULL GROUP BY UPPER(Name) HAVING COUNT_BIG(*) > 1
+            ) THROW 51006, 'Role names collide after normalization; no changes made.', 1;
+            IF EXISTS (
+              SELECT UPPER(UserName) FROM [$DB_NAME].dbo.AspNetUsers
+              WHERE UserName IS NOT NULL GROUP BY UPPER(UserName) HAVING COUNT_BIG(*) > 1
+            ) THROW 51007, 'User names collide after normalization; no changes made.', 1;
+
+            UPDATE [$DB_NAME].dbo.AspNetRoles
+              SET NormalizedName=UPPER(Name)
+              WHERE Name IS NOT NULL AND (NormalizedName IS NULL OR NormalizedName<>UPPER(Name));
+            UPDATE [$DB_NAME].dbo.AspNetUsers
+              SET NormalizedUserName=UPPER(UserName)
+              WHERE UserName IS NOT NULL AND (NormalizedUserName IS NULL OR NormalizedUserName<>UPPER(UserName));
+            UPDATE [$DB_NAME].dbo.AspNetUsers
+              SET NormalizedEmail=UPPER(Email)
+              WHERE Email IS NOT NULL AND (NormalizedEmail IS NULL OR NormalizedEmail<>UPPER(Email));
             UPDATE u SET IsActive=1
               FROM [$DB_NAME].dbo.AspNetUsers u
               JOIN [$DB_NAME].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
