@@ -384,7 +384,7 @@ public class Startup
 				{
 					context.Response.StatusCode = StatusCodes.Status401Unauthorized;
 					context.Response.ContentType = "application/json; charset=utf-8";
-					await context.Response.WriteAsync("{\\"success\\":false,\\"message\\":\\"نشست مدیریت قدیمی است؛ یک‌بار خارج شوید و دوباره وارد شوید.\\",\\"messageType\\":1,\\"data\\":null}");
+					await context.Response.WriteAsync("{\"success\":false,\"message\":\"نشست مدیریت قدیمی است؛ یک‌بار خارج شوید و دوباره وارد شوید.\",\"messageType\":1,\"data\":null}");
 					return;
 				}
 			}
