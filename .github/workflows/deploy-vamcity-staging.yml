@@ -36,7 +36,10 @@ jobs:
           set -euo pipefail
           test -f wwwroot/ui/index.html
           mkdir -p recovered-source/LoanSystemAvizhe.Site/wwwroot
-          cp -a wwwroot/ui recovered-source/LoanSystemAvizhe.Site/wwwroot/
+          # Vue bundle references /js/*, /css/* and /myStyle.css. Put assets at web root, not /ui.
+          cp -a wwwroot/ui/. recovered-source/LoanSystemAvizhe.Site/wwwroot/
+          test -s recovered-source/LoanSystemAvizhe.Site/wwwroot/index.html
+          test -s recovered-source/LoanSystemAvizhe.Site/wwwroot/js/app.1595a00b.js
           dotnet publish recovered-source/LoanSystemAvizhe.Site/LoanSystemAvizhe.Site.csproj \
             --configuration Release --output ./artifacts/vamcity --verbosity minimal
           cp deployment/linux-postgresql/nlog.staging.config ./artifacts/vamcity/nlog.config
