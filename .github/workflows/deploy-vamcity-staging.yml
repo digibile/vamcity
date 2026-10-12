@@ -252,7 +252,12 @@ jobs:
             echo "SOURCE_DATABASE_UNCHANGED; preserving current staged data"
           fi
 
-          APP_SECRET="$(openssl rand -hex 32)"
+          # Keep the JWT signing key stable across releases so existing login tokens remain valid.
+          APP_SECRET=""
+          if [ -s "$PRIVATE/app.env" ]; then
+            APP_SECRET="$(sed -n 's/^AppConfig__JwtSecretKey=//p' "$PRIVATE/app.env" | head -1)"
+          fi
+          if [ -z "$APP_SECRET" ]; then APP_SECRET="$(openssl rand -hex 32)"; fi
           umask 077
           printf 'ASPNETCORE_URLS=http://+:8080\nASPNETCORE_ENVIRONMENT=Production\nConnectionStrings__DefaultConnection=Server=%s,1433;Database=%s;User Id=sa;Password=%s;Encrypt=False;TrustServerCertificate=True;\nAppConfig__JwtSecretKey=%s\nAppConfig__BaseUrl=https://roofixo.ir\nAppConfig__FrontUrl=https://roofixo.ir\n' \
             "$SQL_CONTAINER" "$DB_NAME" "$SQL_PASSWORD" "$APP_SECRET" > "$PRIVATE/app.env"
@@ -330,8 +335,7 @@ jobs:
               proxy_set_header X-Real-IP $remote_addr;
               proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
               proxy_set_header X-Forwarded-Proto $scheme;
-              proxy_set_header Upgrade $http_upgrade;
-              proxy_set_header Connection "upgrade";
+              proxy_set_header X-Forwarded-Host $host;
               proxy_read_timeout 300s;
               proxy_send_timeout 300s;
           }
@@ -369,8 +373,7 @@ jobs:
           \t\tproxy_set_header X-Real-IP $remote_addr;
           \t\tproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
           \t\tproxy_set_header X-Forwarded-Proto $scheme;
-          \t\tproxy_set_header Upgrade $http_upgrade;
-          \t\tproxy_set_header Connection "upgrade";
+          \t\tproxy_set_header X-Forwarded-Host $host;
           \t\tproxy_read_timeout 300s;
           \t\tproxy_send_timeout 300s;
           \t}
@@ -392,6 +395,14 @@ jobs:
             exit 1
           fi
           systemctl reload nginx
+          echo "=== API TRANSPORT CHECK (anonymous requests should reach the application) ==="
+          for API_PATH in /superadmin/dashboard/get /admin/appSettings/get; do
+            API_CODE="$(curl -k -sS --max-time 12 -o /dev/null -w '%{http_code}' "https://roofixo.ir$API_PATH" || true)"
+            echo "API_TRANSPORT path=$API_PATH http=$API_CODE"
+            case "$API_CODE" in
+              000|5??) echo "API_TRANSPORT_FAILED path=$API_PATH"; docker logs --tail 100 "$APP_CONTAINER" || true; exit 1 ;;
+            esac
+          done
           echo "=== NGINX LISTENING ADDRESSES AND ROOFIXO VHOST ==="
           ip -br -4 address 2>/dev/null || ip -4 address 2>/dev/null || true
           echo "=== SOCKET LISTENERS ==="
