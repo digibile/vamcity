@@ -134,6 +134,25 @@ jobs:
           location = /cl/register/ {
               return 302 /login/;
           }
+          # Legacy plans URLs must land on the working plans listing.
+          location = /plans/0 {
+              return 302 /cl/plans/;
+          }
+          location = /plans/0/ {
+              return 302 /cl/plans/;
+          }
+          location = /clplans/0 {
+              return 302 /cl/plans/;
+          }
+          location = /clplans/0/ {
+              return 302 /cl/plans/;
+          }
+          location = /c/lplans/0 {
+              return 302 /cl/plans/;
+          }
+          location = /c/lplans/0/ {
+              return 302 /cl/plans/;
+          }
           location / {
               proxy_pass http://127.0.0.1:5187;
               proxy_http_version 1.1;
