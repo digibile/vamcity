@@ -68,6 +68,10 @@ jobs:
             sed -n '1,4p' /tmp/vamcity-probe-headers 2>/dev/null || true
             grep -Eio '<title>[^<]*|Response.data is undefined|404 Not Found|Unauthorized|Not Found' /tmp/vamcity-probe-body 2>/dev/null | head -3 || true
           done
+          echo "=== NGINX ERROR LOG FOR ROOFIXO (RECENT LINES) ==="
+          tail -n 100 /var/log/nginx/domains/roofixo.ir.error.log 2>/dev/null | tail -80 || true
+          echo "=== NGINX ACCESS LOG FOR VAMCITY ROUTES (RECENT LINES) ==="
+          grep -E 'superadmin/dashboard/get|admin/appSettings/get|superadmin/customer/list' /var/log/nginx/domains/roofixo.ir.log 2>/dev/null | tail -20 || true
           echo "=== DOMAIN DNS VS THIS SERVER ==="
           echo "ROOFIXO_DNS_IPV4:"
           getent ahostsv4 roofixo.ir | awk '!seen[$1]++ {print $1}' || true
