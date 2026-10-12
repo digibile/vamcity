@@ -446,7 +446,7 @@ public class Startup
 					if (user != null)
 					{
 						User user2 = user;
-						user2.UserRoleNames = (await um.GetRolesAsync(user)) as List<string>;
+						user2.UserRoleNames = (await um.GetRolesAsync(user)).ToList();
 						bool flag = await um.CheckPasswordAsync(user, password);
 						if (!flag)
 						{
@@ -460,7 +460,7 @@ public class Startup
 							// tenant-scoped rows, while Admin-only controllers reject the account.
 							// Bind only when this is NOT cloud mode and exactly one tenant exists.
 							bool isCloud = string.Equals(Configuration["AppConfig:IsCloud"], "true", StringComparison.OrdinalIgnoreCase);
-							if (!isCloud && user.UserRoleNames != null && user.UserRoleNames.Contains("SuperAdmin"))
+							if (!isCloud && user.UserRoleNames != null && user.UserRoleNames.Any(roleName => string.Equals(roleName, "SuperAdmin", StringComparison.OrdinalIgnoreCase)))
 							{
 								List<Customer> availableCustomers = await cs.GetAllCustomers();
 								if (availableCustomers.Count == 1)
@@ -496,25 +496,43 @@ public class Startup
 							{
 								user.LastLoginDate = DateTime.Now;
 								await um.UpdateAsync(user);
-								if (!user.UserRoleNames.Any((string x) => x == "SuperAdmin") && user.CustomerId.HasValue)
+								if (!user.UserRoleNames.Any((string x) => string.Equals(x, "SuperAdmin", StringComparison.OrdinalIgnoreCase)) && user.CustomerId.HasValue)
 								{
 									// Login must not fail for global users without a tenant/customer.
-									await sms.TrySendLogin(new LoginRegisterModel
+									// Login must remain available when optional notification providers are
+									// unconfigured or temporarily offline. Record the failure for operators.
+									try
 									{
-										Date = DateTime.Now,
-										Mobile = user.Mobile,
-										User_FullName = user.FullName,
-										User_UserName = user.UserName,
-										User_Id = user.Id
-									}, user.CustomerId.Value);
-									await email.TrySendLogin(new LoginRegisterModel
+										await sms.TrySendLogin(new LoginRegisterModel
+										{
+											Date = DateTime.Now,
+											Mobile = user.Mobile,
+											User_FullName = user.FullName,
+											User_UserName = user.UserName,
+											User_Id = user.Id
+										}, user.CustomerId.Value);
+									}
+									catch (Exception notificationException)
 									{
-										Date = DateTime.Now,
-										Email = user.Email,
-										User_FullName = user.FullName,
-										User_UserName = user.UserName,
-										User_Id = user.Id
-									}, user.CustomerId.Value);
+										serviceScope.ServiceProvider.GetRequiredService<ILogger<Startup>>()
+											.LogWarning(notificationException, "Login SMS notification failed for user ID {UserId}", user.Id);
+									}
+									try
+									{
+										await email.TrySendLogin(new LoginRegisterModel
+										{
+											Date = DateTime.Now,
+											Email = user.Email,
+											User_FullName = user.FullName,
+											User_UserName = user.UserName,
+											User_Id = user.Id
+										}, user.CustomerId.Value);
+									}
+									catch (Exception notificationException)
+									{
+										serviceScope.ServiceProvider.GetRequiredService<ILogger<Startup>>()
+											.LogWarning(notificationException, "Login email notification failed for user ID {UserId}", user.Id);
+									}
 								}
 							}
 							return claimIdentity;
