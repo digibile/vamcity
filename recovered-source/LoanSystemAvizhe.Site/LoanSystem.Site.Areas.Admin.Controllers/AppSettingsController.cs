@@ -59,7 +59,20 @@ public class AppSettingsController : BaseAdminController
 				return Error<AppSettingsModel>(default, "تنظیمات برای مشتری انتخاب‌شده پیدا نشد.");
 			}
 			AppSettingsModel appSettingsModel = new AppSettingsModel(appSettings);
-			List<DashboardSettingsModel> source = JsonSerializer.Deserialize<List<DashboardSettingsModel>>((!string.IsNullOrWhiteSpace(appSettings?.DashboardSettingsJson)) ? appSettings.DashboardSettingsJson : "[]");
+			// Dashboard layout is optional user preference data. A stale or partially
+			// written JSON blob must not break the entire application-settings screen.
+			List<DashboardSettingsModel> source;
+			try
+			{
+				source = JsonSerializer.Deserialize<List<DashboardSettingsModel>>(
+					string.IsNullOrWhiteSpace(appSettings.DashboardSettingsJson) ? "[]" : appSettings.DashboardSettingsJson
+				) ?? new List<DashboardSettingsModel>();
+			}
+			catch (JsonException ex)
+			{
+				Logger.LogWarning(ex, "Ignoring malformed dashboard preferences for customer {CustomerId}", appSettings.CustomerId);
+				source = new List<DashboardSettingsModel>();
+			}
 			appSettingsModel.DashboardSettings = source.FirstOrDefault((DashboardSettingsModel x) => x.UserId == _currentUserService.UserId) ?? new DashboardSettingsModel();
 			return Success(appSettingsModel);
 		});
