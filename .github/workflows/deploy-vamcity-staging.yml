@@ -397,10 +397,10 @@ jobs:
           systemctl reload nginx
           echo "=== API TRANSPORT CHECK (anonymous requests should reach the application) ==="
           for API_PATH in /superadmin/dashboard/get /admin/appSettings/get; do
-            API_CODE="$(curl -k -sS --max-time 12 -o /dev/null -w '%{http_code}' "https://roofixo.ir$API_PATH" || true)"
+            API_CODE="$(curl -k -sS --max-time 12 -H 'Accept: application/json' -o /dev/null -w '%{http_code}' "https://roofixo.ir$API_PATH" || true)"
             echo "API_TRANSPORT path=$API_PATH http=$API_CODE"
             case "$API_CODE" in
-              000|5??) echo "API_TRANSPORT_FAILED path=$API_PATH"; docker logs --tail 100 "$APP_CONTAINER" || true; exit 1 ;;
+              000|404|5??) echo "API_TRANSPORT_FAILED path=$API_PATH"; docker logs --tail 100 "$APP_CONTAINER" || true; exit 1 ;;
             esac
           done
           echo "=== NGINX LISTENING ADDRESSES AND ROOFIXO VHOST ==="
