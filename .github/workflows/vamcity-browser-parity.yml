@@ -51,6 +51,12 @@ jobs:
           fi
           PLANS="$(curl -fsSL --retry 3 --max-time 30 https://roofixo.ir/cl/plans/)"
           printf '%s' "$PLANS" | grep -Fq 'وام سیتی'
+          LEGACY_HEADERS="$(mktemp)"
+          LEGACY_CODE="$(curl -sS -L --max-time 30 -D "$LEGACY_HEADERS" -o /dev/null -w '%{http_code}' https://roofixo.ir/plans/0/)"
+          echo "LEGACY_PLANS_ROUTE_HTTP=$LEGACY_CODE"
+          grep -Eqi '^location: */cl/plans/' "$LEGACY_HEADERS"
+          rm -f "$LEGACY_HEADERS"
+          test "$LEGACY_CODE" = "200"
           echo "CUSTOMER_LIST_ASSET_OK"
           echo "PLAN_PAGE_HTTP_AND_CONTENT_OK"
 
@@ -64,7 +70,7 @@ jobs:
             const browser = await chromium.launch({ headless: true });
             const targets = [
               { name: 'reference', url: 'https://vamcity.com/cl/plans/' },
-              { name: 'roofixo', url: 'https://roofixo.ir/cl/plans/' }
+              { name: 'roofixo', url: 'https://roofixo.ir/plans/0/' }
             ];
             let failed = false;
 
@@ -88,7 +94,8 @@ jobs:
                 const bodyText = (await page.locator('body').innerText().catch(() => '')).replace(/\\s+/g, ' ').trim();
 
                 console.log('=== ' + target.name.toUpperCase() + ' ===');
-                console.log('URL=' + target.url);
+                console.log('REQUESTED_URL=' + target.url);
+                console.log('FINAL_URL=' + page.url());
                 console.log('HTTP=' + (response ? response.status() : 'no-response'));
                 console.log('TITLE=' + title);
                 console.log('APP_HTML_LENGTH=' + appHtmlLength);
@@ -99,7 +106,7 @@ jobs:
                 await page.screenshot({ path: 'artifacts/' + target.name + '-plans.png', fullPage: true }).catch(() => {});
 
                 if (target.name === 'roofixo') {
-                  if (!response || response.status() !== 200 || bodyText.length < 300 || !bodyText.includes('وام سیتی')) {
+                  if (!response || response.status() !== 200 || bodyText.length < 300 || !bodyText.includes('وام سیتی') || !page.url().includes('/cl/plans/')) {
                     console.error('ROOFIXO_RENDER_CHECK_FAILED');
                     failed = true;
                   }
