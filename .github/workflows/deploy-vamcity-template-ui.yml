@@ -1,0 +1,104 @@
+name: Deploy VamCity template management UI to Roofixo
+run-name: Deploy isolated VamCity template UI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "template-management/vamcity-template-management.html"
+      - ".github/workflows/deploy-vamcity-template-ui.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vamcity-template-ui-roofixo
+  cancel-in-progress: false
+
+jobs:
+  deploy-static-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate standalone HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s template-management/vamcity-template-management.html
+          grep -qi '<html' template-management/vamcity-template-management.html
+          grep -q 'وام‌سیتی' template-management/vamcity-template-management.html
+          echo "Standalone HTML validation passed."
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          : "${DEPLOY_HOST:?Missing DEPLOY_HOST secret}"
+          : "${DEPLOY_USER:?Missing DEPLOY_USER secret}"
+          : "${DEPLOY_SSH_KEY:?Missing DEPLOY_SSH_KEY secret}"
+          PORT="${DEPLOY_PORT:-22}"
+          umask 077
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_roofixo_key
+          chmod 600 ~/.ssh/vamcity_roofixo_key
+          ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          echo "DEPLOY_PORT_EFFECTIVE=$PORT" >> "$GITHUB_ENV"
+          echo "DEPLOY_HOST_EFFECTIVE=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "DEPLOY_USER_EFFECTIVE=$DEPLOY_USER" >> "$GITHUB_ENV"
+
+      - name: Upload to isolated temporary path
+        shell: bash
+        run: |
+          set -euo pipefail
+          scp -i ~/.ssh/vamcity_roofixo_key -P "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            template-management/vamcity-template-management.html \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE:/tmp/vamcity-template-management-$GITHUB_SHA.html"
+
+      - name: Publish without touching the VamCity app
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/vamcity_roofixo_key -p "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE" \
+            "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
+          set -euo pipefail
+          SHA="$1"
+          ROOT="/home/roofixo/domains/roofixo.ir/public_html/vamcity-template-management"
+          SRC="/tmp/vamcity-template-management-$SHA.html"
+          test -s "$SRC"
+          install -d -m 755 "$ROOT"
+          install -m 644 "$SRC" "$ROOT/index.html.new"
+          grep -qi '<html' "$ROOT/index.html.new"
+          mv -f "$ROOT/index.html.new" "$ROOT/index.html"
+          rm -f "$SRC"
+          echo "DEPLOYED_FILE=$ROOT/index.html"
+          stat -c 'SIZE_BYTES=%s MODE=%a' "$ROOT/index.html"
+          REMOTE
+
+      - name: Verify public URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          for URL in \
+            "https://roofixo.ir/vamcity-template-management/" \
+            "https://www.roofixo.ir/vamcity-template-management/"; do
+            CODE="$(curl -k -sS -L --max-time 20 -o /tmp/vamcity-ui-check.html -w '%{http_code}' "$URL" || true)"
+            echo "$URL HTTP $CODE"
+            if [ "$CODE" = "200" ] && grep -qi '<html' /tmp/vamcity-ui-check.html; then
+              echo "PUBLIC_URL_VERIFIED=$URL"
+              exit 0
+            fi
+          done
+          echo "::error::File was copied, but public URL verification failed. Check domain/vhost routing and webroot."
+          exit 1
