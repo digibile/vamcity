@@ -34,12 +34,12 @@ public class LoanService : BaseService, ILoanService
 
 	public Task<List<Loan>> GetByCustomerId(Guid customerId, params string[] includs)
 	{
-		IQueryable<Loan> source = Table<Loan>();
+		IQueryable<Loan> source = Table<Loan>().Where(x => x.CustomerId == customerId);
 		foreach (string navigationPropertyPath in includs)
 		{
 			source = source.Include(navigationPropertyPath);
 		}
-		return source.IgnoreAutoIncludes().ToListAsync();
+		return source.IgnoreAutoIncludes().AsSplitQuery().ToListAsync();
 	}
 
 	public Task<Loan> GetById(Guid entityId, params string[] includs)
