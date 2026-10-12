@@ -192,6 +192,35 @@ public class Startup
 			options.SignIn.RequireConfirmedEmail = false;
 			options.SignIn.RequireConfirmedPhoneNumber = false;
 		}).AddEntityFrameworkStores<AppDbContext>();
+
+		// SPA API calls expect a JSON response envelope. Cookie authentication's
+		// default 302 redirects produce an empty body, which the Vue client reports
+		// as "Response.data is undefined" instead of handling an expired session.
+		services.ConfigureApplicationCookie(options =>
+		{
+			options.Events.OnRedirectToLogin = context =>
+			{
+				if (context.Request.Headers.Accept.Any(value =>
+					value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true))
+				{
+					context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+					return Task.CompletedTask;
+				}
+				context.Response.Redirect(context.RedirectUri);
+				return Task.CompletedTask;
+			};
+			options.Events.OnRedirectToAccessDenied = context =>
+			{
+				if (context.Request.Headers.Accept.Any(value =>
+					value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true))
+				{
+					context.Response.StatusCode = StatusCodes.Status403Forbidden;
+					return Task.CompletedTask;
+				}
+				context.Response.Redirect(context.RedirectUri);
+				return Task.CompletedTask;
+			};
+		});
 		// API calls must receive HTTP status codes, not an HTML login redirect.
 		// The SPA treats the response body as a ResponseState JSON envelope.
 		services.ConfigureApplicationCookie(options =>
@@ -314,15 +343,35 @@ public class Startup
 		}
 		else
 		{
-			app.UseExceptionHandler("/home/error");
-			// Preserve real HTTP status codes for JSON/AJAX API calls. Re-executing
-			// these requests through an HTML error route can turn 401/403 into 404,
-			// preventing the frontend from clearing an expired login session.
+			// API callers must always receive JSON on server errors. The Vue client
+			// unwraps { success, message, data }; an HTML error page or empty 302
+			// response hides the actual failure behind "Response.data is undefined".
+			app.UseWhen(context =>
+			{
+				string accept = context.Request.Headers["Accept"].ToString();
+				return accept.Contains("application/json", StringComparison.OrdinalIgnoreCase);
+			}, branch => branch.UseExceptionHandler(errorApp => errorApp.Run(async context =>
+			{
+				context.Response.Clear();
+				context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+				context.Response.ContentType = "application/json; charset=utf-8";
+				await context.Response.WriteAsJsonAsync(new
+				{
+					success = false,
+					message = "خطای داخلی سرور رخ داد. شناسه درخواست را برای بررسی گزارش‌ها نگه دارید.",
+					messageType = "error",
+					data = (object)null
+				});
+			})));
 			app.UseWhen(context =>
 			{
 				string accept = context.Request.Headers["Accept"].ToString();
 				return !accept.Contains("application/json", StringComparison.OrdinalIgnoreCase);
-			}, branch => branch.UseStatusCodePagesWithReExecute("/home/error/{0}"));
+			}, branch =>
+			{
+				branch.UseExceptionHandler("/home/error");
+				branch.UseStatusCodePagesWithReExecute("/home/error/{0}");
+			});
 		}
 		app.UseForwardedHeaders();
 		app.UseStaticFiles();
