@@ -422,6 +422,16 @@ jobs:
             case "$API_CODE" in
               000|404|5??) echo "API_TRANSPORT_FAILED path=$API_PATH"; docker logs --tail 160 "$APP_CONTAINER" || true; exit 1 ;;
             esac
+            if [ "$API_CODE" = "401" ] || [ "$API_CODE" = "403" ]; then
+              API_BODY="$(curl -k -sS --max-time 8 --resolve "roofixo.ir:443:$VHOST_TEST_IP" -H 'Accept: application/json' "https://roofixo.ir$API_PATH" 2>/dev/null || true)"
+              if ! printf '%s' "$API_BODY" | grep -Eq '"success"[[:space:]]*:[[:space:]]*false'; then
+                echo "API_AUTH_RESPONSE_ENVELOPE_INVALID path=$API_PATH"
+                printf '%s\n' "$API_BODY" | head -c 600
+                docker logs --tail 120 "$APP_CONTAINER" || true
+                exit 1
+              fi
+              echo "API_AUTH_RESPONSE_ENVELOPE_OK path=$API_PATH"
+            fi
           done
           echo "=== NGINX LISTENING ADDRESSES AND ROOFIXO VHOST ==="
           ip -br -4 address 2>/dev/null || ip -4 address 2>/dev/null || true
