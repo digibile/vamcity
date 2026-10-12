@@ -37,6 +37,16 @@ jobs:
           set -uo pipefail
           TMP="$(mktemp -d /tmp/publish-rar-inspect.XXXXXX)"
           trap 'rm -rf "$TMP"' EXIT
+          echo "=== Ensure a RAR5 reader is available ==="
+          if ! command -v 7z >/dev/null 2>&1 && ! command -v 7zz >/dev/null 2>&1 && ! command -v unrar >/dev/null 2>&1 && ! command -v bsdtar >/dev/null 2>&1; then
+            if [ "$(id -u)" -eq 0 ] && command -v apt-get >/dev/null 2>&1; then
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update -qq
+              apt-get install -y -qq 7zip || apt-get install -y -qq p7zip-full || true
+            else
+              echo "Cannot install archive reader automatically: SSH user is not root or apt-get is unavailable."
+            fi
+          fi
           echo "=== FIND Publish.rar (case-insensitive) ==="
           find /home -type f -iname 'publish.rar' -printf '%TY-%Tm-%Td %TH:%TM:%TS | %s bytes | %p\n' 2>/dev/null | head -50
           mapfile -d '' FILES < <(find /home -type f -iname 'publish.rar' -print0 2>/dev/null)
@@ -49,11 +59,12 @@ jobs:
             file "$F" 2>/dev/null || true
             sha256sum "$F" 2>/dev/null || true
             echo "--- archive listing (first 250 entries) ---"
-            if command -v 7z >/dev/null 2>&1; then
-              7z l -slt "$F" 2>&1 | head -260
+            if command -v 7z >/dev/null 2>&1 || command -v 7zz >/dev/null 2>&1; then
+              Z="$(command -v 7z || command -v 7zz)"
+              "$Z" l -slt "$F" 2>&1 | head -260
               D="$TMP/extract-$(printf '%s' "$F" | sha256sum | cut -c1-10)"
               mkdir -p "$D"
-              if 7z x -y "-o$D" "$F" >/dev/null 2>&1; then
+              if "$Z" x -y "-o$D" "$F" >/dev/null 2>&1; then
                 echo "--- files extracted / size inventory ---"
                 find "$D" -type f -printf '%s bytes | %P\n' | sort -k1,1nr | head -100
                 echo "--- URLs/domains related to vamcity (secrets excluded) ---"
@@ -70,6 +81,18 @@ jobs:
               if unrar x -o+ "$F" "$D/" >/dev/null 2>&1; then
                 find "$D" -type f -printf '%s bytes | %P\n' | sort -k1,1nr | head -100
                 grep -RahoE '(https?://)?([[:alnum:]_-]+\.)*vamcity\.com([/:?#][^[:space:]"<>]*)?' "$D" 2>/dev/null | sed -E 's/[),.;]+$//' | sort -fu | head -300 || true
+              fi
+            elif command -v bsdtar >/dev/null 2>&1; then
+              bsdtar -tf "$F" 2>&1 | head -250
+              D="$TMP/extract-$(printf '%s' "$F" | sha256sum | cut -c1-10)"
+              mkdir -p "$D"
+              if bsdtar -xf "$F" -C "$D" >/dev/null 2>&1; then
+                find "$D" -type f -printf '%s bytes | %P\\n' | sort -k1,1nr | head -100
+                grep -RahoE '(https?://)?([[:alnum:]_-]+\\.)*vamcity\\.com([/:?#][^[:space:]"<>]*)?' "$D" 2>/dev/null | sed -E 's/[),.;]+$//' | sort -fu | head -300 || true
+                echo "--- config and deployment filenames ---"
+                find "$D" -type f | grep -Ei '(appsettings|web\\.config|\\.config$|\\.json$|\\.xml$|\\.csproj$|\\.sln$|\\.dll$|\\.deps\\.json$|runtimeconfig|\\.sql$|\\.bak$|\\.pfx$|\\.pem$|\\.key$)' | sed "s|$D/||" | head -200 || true
+              else
+                echo "ARCHIVE_EXTRACTION_FAILED"
               fi
             else
               echo "NO_RAR_TOOL_AVAILABLE; showing printable strings only"
