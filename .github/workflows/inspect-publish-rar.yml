@@ -38,15 +38,20 @@ jobs:
           TMP="$(mktemp -d /tmp/publish-rar-inspect.XXXXXX)"
           trap 'rm -rf "$TMP"' EXIT
           echo "=== Ensure a RAR5 reader is available ==="
-          if ! command -v 7z >/dev/null 2>&1 && ! command -v 7zz >/dev/null 2>&1 && ! command -v unrar >/dev/null 2>&1 && ! command -v bsdtar >/dev/null 2>&1 && ! command -v unar >/dev/null 2>&1; then
-            if [ "$(id -u)" -eq 0 ] && command -v apt-get >/dev/null 2>&1; then
-              export DEBIAN_FRONTEND=noninteractive
+          if [ "$(id -u)" -eq 0 ] && command -v apt-get >/dev/null 2>&1; then
+            export DEBIAN_FRONTEND=noninteractive
+            if ! command -v unar >/dev/null 2>&1 || ! command -v bsdtar >/dev/null 2>&1; then
               apt-get update -qq
-              apt-get install -y -qq 7zip unar || apt-get install -y -qq p7zip-full unar || true
-            else
-              echo "Cannot install archive reader automatically: SSH user is not root or apt-get is unavailable."
+              apt-get install -y -qq unar libarchive-tools || true
             fi
+          else
+            echo "Archive reader installation skipped; will use existing tools."
           fi
+          command -v 7z || true
+          command -v 7zz || true
+          command -v unar || true
+          command -v unrar || true
+          command -v bsdtar || true
           echo "=== FIND Publish.rar (case-insensitive) ==="
           find /home -type f \( -iname 'publish.rar' -o -iname 'publish1.rar' -o -iname 'publish*.zip' \) -printf '%TY-%Tm-%Td %TH:%TM:%TS | %s bytes | %p\n' 2>/dev/null | head -100
           mapfile -d '' FILES < <(find /home -type f \( -iname 'publish.rar' -o -iname 'publish1.rar' -o -iname 'publish*.zip' \) -print0 2>/dev/null)
