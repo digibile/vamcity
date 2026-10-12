@@ -255,7 +255,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 	}
 
@@ -448,7 +448,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 	}
 
@@ -698,7 +698,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 	}
 
@@ -834,7 +834,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 	}
 
@@ -970,7 +970,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 	}
 
@@ -1112,7 +1112,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 	}
 
@@ -1250,7 +1250,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -1389,7 +1389,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -1528,7 +1528,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -1667,7 +1667,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -1806,7 +1806,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -1945,7 +1945,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -2084,7 +2084,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -2223,7 +2223,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -2362,7 +2362,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -2501,7 +2501,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -2640,7 +2640,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -2791,7 +2791,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, newAppSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, newAppSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return newAppSms;
 	}
@@ -2930,7 +2930,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -3069,7 +3069,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -3209,7 +3209,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -3348,7 +3348,7 @@ public class IntegratedSmsSenderService
 		if (sendResult.Success)
 		{
 			await _appSettingsService.SyncChargeSmsCredit();
-			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+			BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 		}
 		return appSms;
 	}
@@ -3488,7 +3488,7 @@ public class IntegratedSmsSenderService
 			if (sendResult.Success)
 			{
 				await _appSettingsService.SyncChargeSmsCredit();
-				BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+				BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 			}
 			return true;
 		}
@@ -3635,7 +3635,7 @@ public class IntegratedSmsSenderService
 			if (sendResult.Success)
 			{
 				await _appSettingsService.SyncChargeSmsCredit();
-				BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud), TimeSpan.FromMinutes(30.0));
+				BackgroundJob.Schedule(() => CheckDelivery(sendResult.Key, appSms.Id, (Guid)_currentUserService.CustomerId, _appConfig.IsCloud, true), TimeSpan.FromMinutes(30.0));
 			}
 			return true;
 		}
