@@ -364,6 +364,32 @@ public class Startup
 		app.UseRouting();
 		app.UseCors("VueCorsPolicy");
 		UseAthentication(app);
+		// Older SuperAdmin JWTs may predate dedicated-tenant binding. They authenticate
+		// successfully but carry no tenant claim, causing all tenant-filtered pages to
+		// return empty data or API errors. In dedicated mode force a clean re-login
+		// unless the trusted SuperAdmin has explicitly selected a tenant in the SPA.
+		app.Use(async (context, next) =>
+		{
+			string path = context.Request.Path.Value ?? string.Empty;
+			bool panelApi = new[] { "/admin", "/superadmin", "/agent", "/member", "/sponsor", "/customermarketer" }
+				.Any(prefix => path.Equals(prefix, StringComparison.OrdinalIgnoreCase) ||
+					path.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase));
+			bool dedicated = !string.Equals(Configuration["AppConfig:IsCloud"], "true", StringComparison.OrdinalIgnoreCase);
+			if (dedicated && panelApi && context.User?.Identity?.IsAuthenticated == true &&
+				context.User.IsInRole("SuperAdmin"))
+			{
+				bool hasTenantClaim = Guid.TryParse(context.User.FindFirst("JETAQSAAT_APP_CID")?.Value, out _);
+				bool hasSelectedTenant = Guid.TryParse(context.Request.Headers["JETAQSAAT_APP_CID"].ToString(), out _);
+				if (!hasTenantClaim && !hasSelectedTenant)
+				{
+					context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+					context.Response.ContentType = "application/json; charset=utf-8";
+					await context.Response.WriteAsync("{\\"success\\":false,\\"message\\":\\"نشست مدیریت قدیمی است؛ یک‌بار خارج شوید و دوباره وارد شوید.\\",\\"messageType\\":1,\\"data\\":null}");
+					return;
+				}
+			}
+			await next();
+		});
 		app.UseAuthorization();
 		app.UseHangfireDashboard("/jetaqsaat_hangfire", new DashboardOptions
 		{
