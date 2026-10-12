@@ -120,22 +120,22 @@ public class CurrentUserService : ICurrentUserService
 			return null;
 		}
 
-		// Tenant identity from a signed access token is authoritative for ordinary
-		// users. The SPA also sends JETAQSAAT_APP_CID; stale/empty client headers
-		// must not override the token and silently filter every database query.
-		Claim tenantClaim = httpContext.User?.FindFirst("JETAQSAAT_APP_CID");
+		// Only a privileged SuperAdmin may select a tenant through the SPA header.
+		// For ordinary accounts, the signed token remains the source of tenant identity.
+		if (httpContext.User?.IsInRole("SuperAdmin") == true &&
+			httpContext.Request.Headers.TryGetValue(CUSTOMER_HEADER_KEY, out var adminHeader) &&
+			Guid.TryParse(adminHeader, out var selectedCustomerId))
+		{
+			_customerId = selectedCustomerId;
+			return _customerId;
+		}
+
+		// Stale/empty SPA headers must not override a signed claim and silently
+		// filter every tenant-scoped database query.
+		Claim tenantClaim = httpContext.User?.FindFirst(CUSTOMER_HEADER_KEY);
 		if (tenantClaim != null && Guid.TryParse(tenantClaim.Value, out var tokenCustomerId))
 		{
-			if (httpContext.User.IsInRole("SuperAdmin") &&
-				httpContext.Request.Headers.TryGetValue(CUSTOMER_HEADER_KEY, out var adminHeader) &&
-				Guid.TryParse(adminHeader, out var selectedCustomerId))
-			{
-				_customerId = selectedCustomerId;
-			}
-			else
-			{
-				_customerId = tokenCustomerId;
-			}
+			_customerId = tokenCustomerId;
 			return _customerId;
 		}
 
