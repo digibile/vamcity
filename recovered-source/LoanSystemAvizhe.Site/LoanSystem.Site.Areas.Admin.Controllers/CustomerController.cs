@@ -22,7 +22,7 @@ using Microsoft.Extensions.Options;
 namespace LoanSystem.Site.Areas.Admin.Controllers;
 
 [Route("[area]/[controller]")]
-[Authorize(Roles = "Admin,Agent")]
+[Authorize(Roles = "Agent")]
 public class CustomerController : BaseAgentController
 {
 	private readonly IMemberService _memberService;
