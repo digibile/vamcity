@@ -68,6 +68,32 @@ jobs:
           echo "DIRECTADMIN_CUSTOM_NGINX_EXISTS=$([ -f /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx ] && echo yes || echo no)"
           if command -v dotnet >/dev/null 2>&1; then dotnet --list-runtimes; else echo "DOTNET_NOT_INSTALLED"; fi
           if command -v nginx >/dev/null 2>&1; then nginx -t 2>&1 || true; else echo "NGINX_NOT_INSTALLED"; fi
+          echo "=== DOMAIN ROUTING FLAGS ==="
+          grep -E '^(ip|ssl|nginx)=' /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf 2>/dev/null || true
+          echo "=== CUSTOM NGINX CONFIG ==="
+          if [ -f /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx ]; then
+            sed -n '1,100p' /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx
+          else
+            echo "CUSTOM_NGINX_FILE_MISSING"
+          fi
+          echo "=== GENERATED PROXY CONFIG CONTEXT ==="
+          grep -n -B 8 -A 18 'proxy_pass http://127.0.0.1:5187' /usr/local/directadmin/data/users/roofixo/nginx.conf 2>/dev/null | head -100 || true
+          echo "=== APP LOOPBACK ROUTES ==="
+          for path in / /cl/plans/ /login/ /cl/login/ /cl/register/; do
+            status="$(curl -sS -o /tmp/vamcity-check-body --max-time 8 -w '%{http_code}' "http://127.0.0.1:5187$path" || true)"
+            echo "APP_LOCAL $status $path BODY_BYTES=$(wc -c < /tmp/vamcity-check-body 2>/dev/null || echo 0)"
+          done
+          echo "=== LOCAL HTTP/HTTPS VHOST ROUTES ==="
+          for spec in "80 http" "443 https"; do
+            set -- $spec; port="$1"; scheme="$2"
+            for path in / /cl/plans/ /login/ /cl/login/ /cl/register/; do
+              status="$(curl --resolve "roofixo.ir:$port:127.0.0.1" -k -sS -o /tmp/vamcity-check-body --max-time 8 -w '%{http_code}' "$scheme://roofixo.ir$path" || true)"
+              echo "VHOST_LOCAL $scheme $status $path BODY_BYTES=$(wc -c < /tmp/vamcity-check-body 2>/dev/null || echo 0)"
+            done
+          done
+          echo "=== RECENT NGINX ERRORS ==="
+          tail -n 40 /var/log/nginx/error_log 2>/dev/null || true
+          rm -f /tmp/vamcity-check-body
           echo "RUNNING_VAMCITY_PROCESSES:"
           pgrep -af 'LoanSystemAvizhe.Site|LoanSystem.Site.dll|vamcity' || true
           echo "READ_ONLY_PREFLIGHT_FINISHED"
