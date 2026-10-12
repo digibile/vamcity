@@ -10,7 +10,7 @@ permissions:
 jobs:
   audit-links:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/setup-node@v4
         with:
@@ -19,47 +19,55 @@ jobs:
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
-      - name: Crawl public VamCity links and check routes
+      - name: Crawl public routes and check rendered links
         run: |
           set -euo pipefail
           cat > audit.cjs <<'NODE'
           const { chromium } = require('playwright');
           (async () => {
             const base = 'https://roofixo.ir';
-            const starts = ['/', '/plans/0/', '/cl/plans/', '/c/lplans/0/', '/clplans/0/'];
+            const starts = ['/', '/login/', '/cl/login/', '/cl/register/', '/cl/agentregister/0', '/plans/0/', '/cl/plans/', '/c/lplans/0/', '/clplans/0/', '/cl/ourplans/0'];
             const browser = await chromium.launch({headless:true});
             const context = await browser.newContext({ignoreHTTPSErrors:true});
             const page = await context.newPage();
-            const routes = new Set(starts);
-            const bad = [];
-            for (const path of starts) {
+            const queue = [...starts], visited = new Set(), bad = [], errors = [];
+            page.on('pageerror', e => errors.push('PAGEERROR '+e.message));
+            while (queue.length && visited.size < 80) {
+              const path = queue.shift();
+              if (visited.has(path)) continue;
+              visited.add(path);
               try {
-                const resp = await page.goto(base + path, {waitUntil:'domcontentloaded',timeout:30000});
-                await page.waitForTimeout(3000);
-                const status = resp?.status() ?? 0;
-                const final = new URL(page.url());
-                console.log('ROUTE', path, 'HTTP', status, 'FINAL', final.pathname);
+                const response = await page.goto(new URL(path,base).href, {waitUntil:'domcontentloaded',timeout:30000});
+                await page.waitForTimeout(1800);
+                const status = response?.status() ?? 0;
+                const finalUrl = page.url();
+                const bodyText = (await page.locator('body').innerText().catch(()=>'' )).replace(/\\s+/g,' ').trim();
+                console.log('PAGE', status, path, 'FINAL', new URL(finalUrl).pathname, 'TEXT', bodyText.length);
                 if (!status || status >= 400) bad.push({path,status});
-                const hrefs = await page.locator('a[href]').evaluateAll(els => els.map(a => a.getAttribute('href')).filter(Boolean));
-                for (const h of hrefs) {
+                if (status < 400 && bodyText.length < 10) bad.push({path,issue:'empty-render'});
+                const hrefs = await page.locator('a[href]').evaluateAll(els => els.map(a => ({href:a.getAttribute('href'),text:(a.innerText||a.getAttribute('aria-label')||'').trim()})));
+                for (const a of hrefs) {
+                  if (!a.href || a.href.startsWith('javascript:') || a.href === '#') continue;
                   try {
-                    const u = new URL(h, base);
-                    if (u.origin === base && !u.pathname.startsWith('/#')) routes.add(u.pathname + u.search);
+                    const u = new URL(a.href, base);
+                    if (u.origin === base) {
+                      const next = u.pathname + u.search;
+                      if (!visited.has(next) && queue.length < 120) queue.push(next);
+                    }
                   } catch {}
                 }
-              } catch(e) { console.log('NAV_ERROR',path,e.message); bad.push({path,error:e.message}); }
+                const disabledButtons = await page.locator('button:disabled,[role=button][aria-disabled="true"]').count().catch(()=>0);
+                if (disabledButtons) console.log('DISABLED_CONTROLS', path, disabledButtons);
+              } catch(e) {
+                console.log('NAV_ERROR',path,e.message);
+                bad.push({path,error:e.message});
+              }
             }
-            console.log('DISCOVERED_SAME_ORIGIN_LINKS', routes.size);
-            for (const path of [...routes]) {
-              try {
-                const res = await context.request.get(base + path, {timeout:15000, maxRedirects:5});
-                console.log('LINK_HTTP',res.status(),path,'FINAL',res.url());
-                if (res.status() >= 400) bad.push({path,status:res.status()});
-              } catch(e) { console.log('LINK_ERROR',path,e.message); bad.push({path,error:e.message}); }
-            }
-            await browser.close();
+            console.log('PAGES_VISITED',visited.size);
+            console.log('BROWSER_PAGE_ERRORS',JSON.stringify(errors));
             console.log('BROKEN_LINKS',JSON.stringify(bad));
-            if (bad.length) process.exitCode = 1;
+            await browser.close();
+            if (bad.length || errors.length) process.exitCode = 1;
           })();
           NODE
           node audit.cjs
