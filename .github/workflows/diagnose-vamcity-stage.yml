@@ -79,6 +79,12 @@ jobs:
           ip route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}' || true
           echo "=== HOST / DOMAIN STATUS ==="
           curl -sS -o /dev/null --max-time 5 -w 'ROOFIXO_HTTPS=%{http_code}\n' https://roofixo.ir || true
+          echo "=== PUBLIC SITE CONFIG AND PLAN API ==="
+          SITE_CONFIG="$(curl -fsS --max-time 15 -X POST -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{}' https://roofixo.ir/Site/SiteConfig 2>/dev/null || true)"
+          printf '%s' "$SITE_CONFIG" | python3 -c 'import json,sys; d=json.load(sys.stdin); x=d.get("data") or {}; print("SITE_CONFIG_SUCCESS=",d.get("success",d.get("Success"))); print("SITE_CONFIG_IS_CLOUD=",x.get("isCloud",x.get("IsCloud"))); print("SITE_CONFIG_CUSTOMER_CODE=",x.get("customerCode",x.get("CustomerCode")))' 2>&1 || echo "SITE_CONFIG_PARSE_FAILED"
+          CUSTOMER_CODE="$(printf '%s' "$SITE_CONFIG" | python3 -c 'import json,sys; d=json.load(sys.stdin); x=d.get("data") or {}; print(x.get("customerCode",x.get("CustomerCode",0)) or 0)' 2>/dev/null || echo 0)"
+          PLANS_RESPONSE="$(curl -sS --max-time 15 -H 'Accept: application/json' "https://roofixo.ir/Loan/List/$CUSTOMER_CODE" 2>/dev/null || true)"
+          printf '%s' "$PLANS_RESPONSE" | python3 -c 'import json,sys; d=json.load(sys.stdin); data=d.get("data",d.get("Data")); print("PUBLIC_PLANS_SUCCESS=",d.get("success",d.get("Success"))); print("PUBLIC_PLANS_COUNT=",len(data) if isinstance(data,list) else "NOT_LIST"); print("PUBLIC_PLANS_ERROR=",d.get("message",d.get("Message","")) if d.get("success",d.get("Success")) is False else "")' 2>&1 || echo "PUBLIC_PLANS_PARSE_FAILED"
           echo "=== DATABASE HEALTH SUMMARY ==="
           SQL_PASSWORD="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' /home/roofixo/domains/roofixo.ir/vamcity-app/private/sql.env | head -1)"
           SQLCMD="$(docker exec vamcity-stage-sql bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' 2>/dev/null | tail -1)"
