@@ -1,6 +1,6 @@
 name: Diagnose VamCity staging containers
 # Triggered read-only status snapshot for the current staging attempt
-# Include the newest startup probe after the NLog config fix
+# Re-check API transport and role state after guarded SuperAdmin repair
 
 on:
   push:
