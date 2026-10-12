@@ -1,0 +1,65 @@
+name: VamCity live link audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/vamcity-live-link-audit.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Crawl public VamCity links and check routes
+        run: |
+          set -euo pipefail
+          cat > audit.cjs <<'NODE'
+          const { chromium } = require('playwright');
+          (async () => {
+            const base = 'https://roofixo.ir';
+            const starts = ['/', '/plans/0/', '/cl/plans/', '/c/lplans/0/', '/clplans/0/'];
+            const browser = await chromium.launch({headless:true});
+            const context = await browser.newContext({ignoreHTTPSErrors:true});
+            const page = await context.newPage();
+            const routes = new Set(starts);
+            const bad = [];
+            for (const path of starts) {
+              try {
+                const resp = await page.goto(base + path, {waitUntil:'domcontentloaded',timeout:30000});
+                await page.waitForTimeout(3000);
+                const status = resp?.status() ?? 0;
+                const final = new URL(page.url());
+                console.log('ROUTE', path, 'HTTP', status, 'FINAL', final.pathname);
+                if (!status || status >= 400) bad.push({path,status});
+                const hrefs = await page.locator('a[href]').evaluateAll(els => els.map(a => a.getAttribute('href')).filter(Boolean));
+                for (const h of hrefs) {
+                  try {
+                    const u = new URL(h, base);
+                    if (u.origin === base && !u.pathname.startsWith('/#')) routes.add(u.pathname + u.search);
+                  } catch {}
+                }
+              } catch(e) { console.log('NAV_ERROR',path,e.message); bad.push({path,error:e.message}); }
+            }
+            console.log('DISCOVERED_SAME_ORIGIN_LINKS', routes.size);
+            for (const path of [...routes]) {
+              try {
+                const res = await context.request.get(base + path, {timeout:15000, maxRedirects:5});
+                console.log('LINK_HTTP',res.status(),path,'FINAL',res.url());
+                if (res.status() >= 400) bad.push({path,status:res.status()});
+              } catch(e) { console.log('LINK_ERROR',path,e.message); bad.push({path,error:e.message}); }
+            }
+            await browser.close();
+            console.log('BROKEN_LINKS',JSON.stringify(bad));
+            if (bad.length) process.exitCode = 1;
+          })();
+          NODE
+          node audit.cjs
