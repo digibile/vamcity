@@ -410,6 +410,9 @@ jobs:
               print("ERROR: expected both generated Roofixo HTTP/HTTPS vhost insertion points")
               raise SystemExit(2)
           block = """\n\t# BEGIN VAMCITY REVERSE PROXY
+          \t# The requested legacy landing URL must route to the real Vue plans page.
+          \tlocation = /plans/0/ { return 302 /cl/plans/; }
+          \tlocation = /plans/0 { return 302 /cl/plans/; }
           \tlocation / {
           \t\tproxy_pass http://127.0.0.1:5187;
           \t\tproxy_http_version 1.1;
