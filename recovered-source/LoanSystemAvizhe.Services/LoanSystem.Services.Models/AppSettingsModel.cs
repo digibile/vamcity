@@ -258,6 +258,24 @@ public class AppSettingsModel : BaseModel
 
 	public bool MemberCanChangeProfile { get; set; }
 
+	private static T DeserializeOrDefault<T>(string json) where T : new()
+	{
+		if (string.IsNullOrWhiteSpace(json))
+		{
+			return new T();
+		}
+
+		try
+		{
+			return JsonSerializer.Deserialize<T>(json) ?? new T();
+		}
+		catch (JsonException)
+		{
+			// A stale or malformed optional settings blob must not crash the entire settings screen.
+			return new T();
+		}
+	}
+
 	public AppSettingsModel()
 	{
 	}
@@ -451,55 +469,55 @@ public class AppSettingsModel : BaseModel
 			}
 			if (!string.IsNullOrEmpty(appSettings.EmailConfigJson))
 			{
-				EmailConfig = JsonSerializer.Deserialize<EmailConfig>(appSettings.EmailConfigJson);
+				EmailConfig = DeserializeOrDefault<EmailConfig>(appSettings.EmailConfigJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.MelliPayamakConfigJson))
 			{
-				MelliPayamakConfig = JsonSerializer.Deserialize<MelliPayamakConfig>(appSettings.MelliPayamakConfigJson);
+				MelliPayamakConfig = DeserializeOrDefault<MelliPayamakConfig>(appSettings.MelliPayamakConfigJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.KaveNegarConfigJson))
 			{
-				KaveNegarConfig = JsonSerializer.Deserialize<KaveNegarConfig>(appSettings.KaveNegarConfigJson);
+				KaveNegarConfig = DeserializeOrDefault<KaveNegarConfig>(appSettings.KaveNegarConfigJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.BaleConfigJson))
 			{
-				BaleConfig = JsonSerializer.Deserialize<BaleConfig>(appSettings.BaleConfigJson);
+				BaleConfig = DeserializeOrDefault<BaleConfig>(appSettings.BaleConfigJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.IPPanelConfigJson))
 			{
-				IPPanelConfig = JsonSerializer.Deserialize<IPPanelConfig>(appSettings.IPPanelConfigJson);
+				IPPanelConfig = DeserializeOrDefault<IPPanelConfig>(appSettings.IPPanelConfigJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.WebOneConfigJson))
 			{
-				WebOneConfig = JsonSerializer.Deserialize<WebOneConfig>(appSettings.WebOneConfigJson);
+				WebOneConfig = DeserializeOrDefault<WebOneConfig>(appSettings.WebOneConfigJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.IceConfigJson))
 			{
-				IceConfig = JsonSerializer.Deserialize<IceConfig>(appSettings.IceConfigJson);
+				IceConfig = DeserializeOrDefault<IceConfig>(appSettings.IceConfigJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.FinnoTechConfigJson))
 			{
-				FinnoTechConfig = JsonSerializer.Deserialize<FinnoTechConfig>(appSettings.FinnoTechConfigJson);
+				FinnoTechConfig = DeserializeOrDefault<FinnoTechConfig>(appSettings.FinnoTechConfigJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.EmzameConfigJson))
 			{
-				EmzameConfig = JsonSerializer.Deserialize<EmzameConfig>(appSettings.EmzameConfigJson);
+				EmzameConfig = DeserializeOrDefault<EmzameConfig>(appSettings.EmzameConfigJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.ApiIRConfigJson))
 			{
-				ApiIRConfig = JsonSerializer.Deserialize<ApiIRConfig>(appSettings.ApiIRConfigJson);
+				ApiIRConfig = DeserializeOrDefault<ApiIRConfig>(appSettings.ApiIRConfigJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.RefahBetaConfigJson))
 			{
-				RefahBetaConfig = JsonSerializer.Deserialize<RefahBetaConfig>(appSettings.RefahBetaConfigJson);
+				RefahBetaConfig = DeserializeOrDefault<RefahBetaConfig>(appSettings.RefahBetaConfigJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.IranValidityConfigJson))
 			{
-				IranValidityConfig = JsonSerializer.Deserialize<IranValidityConfig>(appSettings.IranValidityConfigJson);
+				IranValidityConfig = DeserializeOrDefault<IranValidityConfig>(appSettings.IranValidityConfigJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.ThemeSettingsJson))
 			{
-				ThemeSettings = JsonSerializer.Deserialize<ThemeSettingsModel>(appSettings.ThemeSettingsJson);
+				ThemeSettings = DeserializeOrDefault<ThemeSettingsModel>(appSettings.ThemeSettingsJson);
 			}
 			if (!string.IsNullOrEmpty(appSettings.DepositChargeDueDateStatuses))
 			{
