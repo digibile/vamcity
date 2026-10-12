@@ -56,7 +56,7 @@ public class AppSettingsController : BaseAdminController
 			AppSettings appSettings = await GetCurrentAppSettingsAsync(false);
 			if (appSettings == null)
 			{
-				return Error("تنظیمات برای مشتری انتخاب‌شده پیدا نشد.");
+				return Error<AppSettingsModel>(default, "تنظیمات برای مشتری انتخاب‌شده پیدا نشد.");
 			}
 			AppSettingsModel appSettingsModel = new AppSettingsModel(appSettings);
 			List<DashboardSettingsModel> source = JsonSerializer.Deserialize<List<DashboardSettingsModel>>((!string.IsNullOrWhiteSpace(appSettings?.DashboardSettingsJson)) ? appSettings.DashboardSettingsJson : "[]");
