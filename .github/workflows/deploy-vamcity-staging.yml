@@ -411,6 +411,8 @@ jobs:
               raise SystemExit(2)
           block = """\n\t# BEGIN VAMCITY REVERSE PROXY
           \t# The requested legacy landing URL must route to the real Vue plans page.
+          \tlocation = /clplans/0/ { return 302 /cl/plans/; }
+          \tlocation = /clplans/0 { return 302 /cl/plans/; }
           \tlocation = /plans/0/ { return 302 /cl/plans/; }
           \tlocation = /plans/0 { return 302 /cl/plans/; }
           \tlocation / {
