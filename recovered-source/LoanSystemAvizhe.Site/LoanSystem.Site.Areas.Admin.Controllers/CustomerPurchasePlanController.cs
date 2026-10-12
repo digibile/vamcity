@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace LoanSystem.Site.Areas.Admin.Controllers;
 
 [Route("[area]/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,SuperAdmin")]
 public class CustomerPurchasePlanController : BaseAdminController
 {
 	private readonly ICustomerPurchasePlanService _customerPurchasePlanService;
@@ -28,7 +28,8 @@ public class CustomerPurchasePlanController : BaseAdminController
 	{
 		return TryCatch(async () =>
 		{
-			List<CustomerPurchasePlanModel> data = (await _customerPurchasePlanService.GetAll(true, "Purchase")).Select((CustomerPurchasePlan x) => new CustomerPurchasePlanModel
+			bool isSuperAdmin = User.IsInRole("SuperAdmin");
+			List<CustomerPurchasePlanModel> data = (await _customerPurchasePlanService.GetAll(!isSuperAdmin, "Purchase")).Select((CustomerPurchasePlan x) => new CustomerPurchasePlanModel
 			{
 				Id = x.Id,
 				PlanType = ((x.Purchase != null && x.Purchase.ProductType == ProductTypes.Permanent) ? "دائمی" : "ابری"),
