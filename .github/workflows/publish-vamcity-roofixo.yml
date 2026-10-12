@@ -104,6 +104,13 @@ jobs:
             else
               rm -f "$CUSTOM"
             fi
+            for t in "$TEMPLATE_HTTP" "$TEMPLATE_HTTPS"; do
+              if [ "$(cat "$BACKUP/$t.state")" = existing ]; then
+                cp -a "$BACKUP/$t.before" "$TEMPLATE_DIR/$t"
+              else
+                rm -f "$TEMPLATE_DIR/$t"
+              fi
+            done
             /usr/local/directadmin/custombuild/build rewrite_confs >/dev/null 2>&1 || true
             nginx -t && systemctl reload nginx || true
             docker restart vamcity-stage-app >/dev/null 2>&1 || true
@@ -173,6 +180,34 @@ jobs:
             fi
             chmod 600 "$TARGET"
           done
+
+          echo "=== ADD SAFE REDIRECTS FOR EMPTY LEGACY LOGIN ROUTES ==="
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ("nginx_server.conf.CUSTOM.4.post", "nginx_server_secure.conf.CUSTOM.4.post"):
+              path = Path("/usr/local/directadmin/data/templates/custom") / name
+              text = path.read_text()
+              marker = "# BEGIN VAMCITY ROOFIXO ROUTE"
+              end = "# END VAMCITY ROOFIXO ROUTE"
+              start_i = text.find(marker)
+              end_i = text.find(end, start_i + len(marker))
+              if start_i < 0 or end_i < 0:
+                  raise SystemExit(f"VamCity route marker missing in {name}")
+              block = text[start_i:end_i]
+              if "VAMCITY AUTH ROUTE ALIASES" not in block:
+                  target = "location / {"
+                  pos = block.find(target)
+                  if pos < 0:
+                      raise SystemExit(f"proxy location missing in {name}")
+                  aliases = """# VAMCITY AUTH ROUTE ALIASES
+          location ~* ^/cl/(login|register)/?$ {
+              return 302 /login/;
+          }
+          """
+                  block = block[:pos] + aliases + block[pos:]
+                  text = text[:start_i] + block + text[end_i:]
+                  path.write_text(text)
+          PY
 
           if ! /usr/local/directadmin/custombuild/build rewrite_confs; then
             rollback
