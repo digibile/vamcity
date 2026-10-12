@@ -114,7 +114,11 @@ jobs:
               UNION ALL SELECT 'customers_with_settings', COUNT_BIG(*) FROM [vamcity_stage].dbo.Customers c JOIN [vamcity_stage].dbo.AppSettings s ON s.CustomerId=c.Id;
               SELECT 'role_claims' AS metric, COUNT_BIG(*) AS value FROM [vamcity_stage].dbo.AspNetRoleClaims
               UNION ALL SELECT 'user_claims', COUNT_BIG(*) FROM [vamcity_stage].dbo.AspNetUserClaims
-              UNION ALL SELECT 'users_without_roles', COUNT_BIG(*) FROM [vamcity_stage].dbo.AspNetUsers u WHERE NOT EXISTS (SELECT 1 FROM [vamcity_stage].dbo.AspNetUserRoles ur WHERE ur.UserId=u.Id);" 2>&1
+              UNION ALL SELECT 'users_without_roles', COUNT_BIG(*) FROM [vamcity_stage].dbo.AspNetUsers u WHERE NOT EXISTS (SELECT 1 FROM [vamcity_stage].dbo.AspNetUserRoles ur WHERE ur.UserId=u.Id);
+              SELECT ClaimType, COUNT_BIG(*) AS claim_count
+              FROM [vamcity_stage].dbo.AspNetUserClaims
+              WHERE ClaimType NOT LIKE '%userdata%' AND ClaimType NOT LIKE '%email%' AND ClaimType NOT LIKE '%mobile%' AND ClaimType NOT LIKE '%name%'
+              GROUP BY ClaimType ORDER BY ClaimType;" 2>&1
           fi
           echo "=== ONE-SHOT APP DIAGNOSTIC (isolated network, no host port) ==="
           BASE=/home/roofixo/domains/roofixo.ir/vamcity-app
