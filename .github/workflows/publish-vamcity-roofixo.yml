@@ -200,7 +200,16 @@ jobs:
                   if pos < 0:
                       raise SystemExit(f"proxy location missing in {name}")
                   aliases = """# VAMCITY AUTH ROUTE ALIASES
-          location ~* ^/cl/(login|register)/?$ {
+          location = /cl/login {
+              return 302 /login/;
+          }
+          location = /cl/login/ {
+              return 302 /login/;
+          }
+          location = /cl/register {
+              return 302 /login/;
+          }
+          location = /cl/register/ {
               return 302 /login/;
           }
           """
