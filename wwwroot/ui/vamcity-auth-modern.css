@@ -1,0 +1,189 @@
+/* VamCity authentication and membership refresh. Keeps the existing Vue/Vuetify forms and API contracts. */
+:root {
+  --vam-ink: #17243b;
+  --vam-muted: #6a7890;
+  --vam-line: #e4eaf2;
+  --vam-primary: #3f5bd9;
+  --vam-primary-deep: #293ca8;
+  --vam-accent: #14a89a;
+  --vam-surface: #ffffff;
+}
+body.vam-auth-page,
+body.vam-membership-page {
+  background: #f4f7fc !important;
+  color: var(--vam-ink);
+}
+body.vam-auth-page .v-main,
+body.vam-membership-page .v-main {
+  background:
+    radial-gradient(ellipse at 8% 12%, rgba(63,91,217,.11), transparent 34%),
+    radial-gradient(ellipse at 92% 88%, rgba(20,168,154,.10), transparent 32%),
+    linear-gradient(135deg, #f8faff 0%, #eef3fa 100%) !important;
+}
+body.vam-auth-page .v-main__wrap,
+body.vam-membership-page .v-main__wrap {
+  min-height: 100%;
+}
+body.vam-auth-page .v-main__wrap > .container,
+body.vam-membership-page .v-main__wrap > .container {
+  width: 100%;
+  max-width: 1120px !important;
+  padding: clamp(14px, 3vw, 36px) !important;
+}
+body.vam-auth-page .v-card,
+body.vam-membership-page .v-card {
+  border: 1px solid rgba(220,228,240,.95) !important;
+  border-radius: 24px !important;
+  background: var(--vam-surface) !important;
+  box-shadow: 0 22px 70px rgba(25,45,84,.10), 0 3px 12px rgba(25,45,84,.04) !important;
+  overflow: hidden;
+}
+body.vam-auth-page .v-card__title,
+body.vam-membership-page .v-card__title {
+  color: var(--vam-ink);
+  font-weight: 800;
+  line-height: 1.7;
+  letter-spacing: -.2px;
+  padding: 22px 24px 12px;
+}
+body.vam-auth-page .v-card__text,
+body.vam-membership-page .v-card__text {
+  color: var(--vam-muted);
+  line-height: 1.9;
+}
+body.vam-auth-page .v-image,
+body.vam-membership-page .v-image {
+  overflow: hidden;
+}
+body.vam-auth-page .v-image__image,
+body.vam-membership-page .v-image__image {
+  background-position: center !important;
+}
+body.vam-auth-page .v-input,
+body.vam-membership-page .v-input {
+  margin-top: 12px;
+}
+body.vam-auth-page .v-input__slot,
+body.vam-membership-page .v-input__slot {
+  border-radius: 13px !important;
+}
+body.vam-auth-page .v-text-field--outlined fieldset,
+body.vam-membership-page .v-text-field--outlined fieldset {
+  border-color: #dce4ef !important;
+}
+body.vam-auth-page .v-input--is-focused .v-input__slot fieldset,
+body.vam-membership-page .v-input--is-focused .v-input__slot fieldset {
+  border-color: var(--vam-primary) !important;
+  border-width: 2px !important;
+}
+body.vam-auth-page .v-label,
+body.vam-membership-page .v-label {
+  color: #62718a;
+}
+body.vam-auth-page .v-btn,
+body.vam-membership-page .v-btn {
+  min-height: 44px;
+  border-radius: 12px;
+  font-weight: 750;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+body.vam-auth-page .v-btn:not(.v-btn--text):not(.v-btn--outlined),
+body.vam-membership-page .v-btn:not(.v-btn--text):not(.v-btn--outlined) {
+  box-shadow: 0 8px 20px rgba(63,91,217,.17);
+}
+body.vam-auth-page .v-btn:hover,
+body.vam-membership-page .v-btn:hover {
+  transform: translateY(-1px);
+}
+body.vam-auth-page .v-btn.v-btn--text,
+body.vam-membership-page .v-btn.v-btn--text {
+  color: var(--vam-primary);
+}
+body.vam-auth-page .v-alert,
+body.vam-membership-page .v-alert {
+  border-radius: 14px;
+  line-height: 1.8;
+}
+body.vam-auth-page .v-divider,
+body.vam-membership-page .v-divider {
+  border-color: var(--vam-line);
+}
+body.vam-auth-page a,
+body.vam-membership-page a {
+  color: var(--vam-primary);
+  font-weight: 650;
+}
+body.vam-auth-page .v-form,
+body.vam-membership-page .v-form {
+  padding-bottom: 18px;
+}
+body.vam-auth-page .v-card .v-card__actions,
+body.vam-membership-page .v-card .v-card__actions {
+  padding: 16px 24px 22px;
+}
+body.vam-membership-page .v-card {
+  border-radius: 22px !important;
+}
+body.vam-membership-page .v-card__title {
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+}
+body.vam-membership-page .v-stepper,
+body.vam-membership-page .v-window {
+  border-radius: 18px;
+}
+body.vam-membership-page .v-stepper__step__step {
+  box-shadow: none;
+}
+body.vam-auth-page .v-messages,
+body.vam-membership-page .v-messages {
+  line-height: 1.7;
+}
+body.vam-auth-page .v-input--selection-controls,
+body.vam-membership-page .v-input--selection-controls {
+  margin-top: 6px;
+}
+body.vam-auth-page .v-input--selection-controls .v-label,
+body.vam-membership-page .v-input--selection-controls .v-label {
+  font-size: .92rem;
+}
+body.vam-auth-page .v-card .v-card__title + .v-card__text {
+  padding-top: 4px;
+}
+body.vam-auth-page .v-card .v-card__title,
+body.vam-membership-page .v-card .v-card__title {
+  word-break: normal;
+}
+@media (max-width: 600px) {
+  body.vam-auth-page .v-main__wrap > .container,
+  body.vam-membership-page .v-main__wrap > .container {
+    padding: 12px !important;
+  }
+  body.vam-auth-page .v-card,
+  body.vam-membership-page .v-card {
+    border-radius: 18px !important;
+  }
+  body.vam-auth-page .v-card__title,
+  body.vam-membership-page .v-card__title {
+    padding: 18px 18px 8px;
+    font-size: 1.08rem;
+  }
+  body.vam-auth-page .v-card .v-card__actions,
+  body.vam-membership-page .v-card .v-card__actions {
+    padding: 12px 18px 18px;
+    flex-wrap: wrap;
+  }
+  body.vam-auth-page .v-btn,
+  body.vam-membership-page .v-btn {
+    max-width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.vam-auth-page *,
+  body.vam-membership-page * {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
