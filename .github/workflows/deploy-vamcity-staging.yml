@@ -36,8 +36,8 @@ jobs:
           set -euo pipefail
           test -f wwwroot/ui/index.html
           mkdir -p recovered-source/LoanSystemAvizhe.Site/wwwroot
-          # Preserve original root assets (logos/fonts) and also publish Vue assets at /js and /css.
-          cp -a wwwroot/. recovered-source/LoanSystemAvizhe.Site/wwwroot/
+          # Preserve original root assets (logos) and publish Vue assets at /js and /css.
+          find wwwroot -mindepth 1 -maxdepth 1 ! -name ui -exec cp -a {} recovered-source/LoanSystemAvizhe.Site/wwwroot/ \\;
           cp -a wwwroot/ui/. recovered-source/LoanSystemAvizhe.Site/wwwroot/
           test -s recovered-source/LoanSystemAvizhe.Site/wwwroot/index.html
           test -s recovered-source/LoanSystemAvizhe.Site/wwwroot/js/app.e76ab352.js
