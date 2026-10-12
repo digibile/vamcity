@@ -47,7 +47,7 @@ jobs:
           PORT="${DEPLOY_PORT:-22}"
           umask 077
           install -d -m 700 ~/.ssh
-          printf '%s\\n' "$DEPLOY_SSH_KEY" > ~/.ssh/template_preview_key
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/template_preview_key
           chmod 600 ~/.ssh/template_preview_key
           ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
           echo "PORT=$PORT" >> "$GITHUB_ENV"
