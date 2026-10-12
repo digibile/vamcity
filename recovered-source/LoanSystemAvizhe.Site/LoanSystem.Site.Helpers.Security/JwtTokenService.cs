@@ -56,7 +56,7 @@ public class JwtTokenService
 			PropertyNamingPolicy = JsonNamingPolicy.CamelCase
 		};
 		UserModel userModel = new UserModel(user);
-		userModel.IsSuperAdmin = silent;
+		userModel.IsSuperAdmin = list.Any(roleName => string.Equals(roleName, "SuperAdmin", StringComparison.OrdinalIgnoreCase));
 		userModel.Claims = userClaims.Select((Claim x) => new UserClaimModel
 		{
 			Type = x.Type,
