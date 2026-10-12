@@ -8,7 +8,8 @@ using Microsoft.Extensions.Logging;
 
 namespace LoanSystem.Site.Areas.SuperAdmin.Controllers;
 
-[Route("[area]/[controller]")]
+[Area("SuperAdmin")]
+[Route("superadmin/dashboard")]
 [Authorize(Roles = "SuperAdmin")]
 public class DashboardController : BaseSuperAdminController
 {
@@ -20,7 +21,7 @@ public class DashboardController : BaseSuperAdminController
 		_superAdminDashboardService = superAdminDashboardService;
 	}
 
-	[HttpGet("[action]")]
+	[HttpGet("get")]
 	public Task<ResponseState<SuperAdminDashboardModel>> Get()
 	{
 		return TryCatch(async () => Success(await _superAdminDashboardService.GetData()));
