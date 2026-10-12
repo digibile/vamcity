@@ -8,7 +8,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: vamcity-superadmin-activation
+  group: vamcity-roofixo-staging
   cancel-in-progress: false
 jobs:
   activate-existing-account:
@@ -50,7 +50,18 @@ jobs:
           test -n "$SQL_PASSWORD"
           SQLCMD="$(docker exec "$SQL_CONTAINER" bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' | tail -1)"
           test -n "$SQLCMD"
+          BACKUP_FILE="/var/opt/mssql/backup/pre-superadmin-activation-$(date -u +%Y%m%dT%H%M%SZ).bak"
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "BACKUP DATABASE [$DB_NAME] TO DISK = N'$BACKUP_FILE' WITH COPY_ONLY, INIT, COMPRESSION;"
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "RESTORE VERIFYONLY FROM DISK = N'$BACKUP_FILE';"
+          echo "VERIFIED_PRE_ACTIVATION_BACKUP=$BACKUP_FILE"
           docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "
+          SET ANSI_NULLS ON;
+          SET QUOTED_IDENTIFIER ON;
+          SET ANSI_PADDING ON;
+          SET ANSI_WARNINGS ON;
+          SET ARITHABORT ON;
+          SET CONCAT_NULL_YIELDS_NULL ON;
+          SET NUMERIC_ROUNDABORT OFF;
           SET NOCOUNT ON;
           SET QUOTED_IDENTIFIER ON;
           SET ANSI_NULLS ON;
