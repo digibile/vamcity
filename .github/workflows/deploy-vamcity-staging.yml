@@ -398,10 +398,20 @@ jobs:
           systemctl reload nginx
           echo "=== API TRANSPORT CHECK (local Roofixo vhost; anonymous protected routes should return 401/403) ==="
           for API_PATH in /superadmin/dashboard/get /admin/appSettings/get; do
-            API_CODE="$(curl -k -sS --max-time 12 --resolve roofixo.ir:443:127.0.0.1 -H 'Accept: application/json' -o /dev/null -w '%{http_code}' "https://roofixo.ir$API_PATH" || true)"
-            echo "API_TRANSPORT path=$API_PATH http=$API_CODE"
+            API_CODE="000"
+            # ASP.NET may still be applying EF migrations immediately after the container starts.
+            # Retry transient 000/404/5xx responses instead of racing application startup.
+            for ATTEMPT in $(seq 1 24); do
+              API_CODE="$(curl -k -sS --max-time 8 --resolve roofixo.ir:443:127.0.0.1 -H 'Accept: application/json' -o /dev/null -w '%{http_code}' "https://roofixo.ir$API_PATH" 2>/dev/null || true)"
+              echo "API_TRANSPORT_ATTEMPT path=$API_PATH attempt=$ATTEMPT http=$API_CODE"
+              case "$API_CODE" in
+                200|204|301|302|307|308|401|403) break ;;
+              esac
+              sleep 3
+            done
+            echo "API_TRANSPORT_FINAL path=$API_PATH http=$API_CODE"
             case "$API_CODE" in
-              000|404|5??) echo "API_TRANSPORT_FAILED path=$API_PATH"; docker logs --tail 100 "$APP_CONTAINER" || true; exit 1 ;;
+              000|404|5??) echo "API_TRANSPORT_FAILED path=$API_PATH"; docker logs --tail 160 "$APP_CONTAINER" || true; exit 1 ;;
             esac
           done
           echo "=== NGINX LISTENING ADDRESSES AND ROOFIXO VHOST ==="
