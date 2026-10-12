@@ -31,10 +31,19 @@ jobs:
         run: |
           set -euo pipefail
           HTML="$(curl -fsSL --retry 3 --max-time 30 https://roofixo.ir/)"
-          printf '%s' "$HTML" | grep -Fq '/js/app.e76ab352.js?v=79da940b'
-          APP="$(curl -fsSL --retry 3 --max-time 30 'https://roofixo.ir/js/app.e76ab352.js?v=79da940b')"
-          printf '%s' "$APP" | grep -Fq '"views-superAdmin-Customers":"e95d8252"'
-          CUSTOMERS="$(curl -fsSL --retry 3 --max-time 30 https://roofixo.ir/js/views-superAdmin-Customers.e95d8252.js)"
+          APP_PATH="$(printf '%s' "$HTML" | grep -oE '/js/app\\.[a-f0-9]+\\.js(\\?[^"]*)?' | tail -1)"
+          VENDORS_PATH="$(printf '%s' "$HTML" | grep -oE '/js/chunk-vendors\\.[a-f0-9]+\\.js' | tail -1)"
+          CUSTOMER_PATH="$(printf '%s' "$HTML" | grep -oE '/js/views-superAdmin-Customers\\.[a-f0-9]+\\.js' | head -1)"
+          test -n "$APP_PATH"
+          test -n "$VENDORS_PATH"
+          test -n "$CUSTOMER_PATH"
+          for ASSET in "$APP_PATH" "$VENDORS_PATH" "$CUSTOMER_PATH" /css/app.65501a28.css /css/chunk-vendors.c0d350b3.css /myStyle.css; do
+            CODE="$(curl -sS -o /dev/null --max-time 30 -w '%{http_code}' "https://roofixo.ir$ASSET")"
+            echo "ASSET_HTTP=$CODE PATH=$ASSET"
+            test "$CODE" = "200"
+          done
+          APP="$(curl -fsSL --retry 3 --max-time 30 "https://roofixo.ir$APP_PATH")"
+          CUSTOMERS="$(curl -fsSL --retry 3 --max-time 30 "https://roofixo.ir$CUSTOMER_PATH")"
           printf '%s' "$CUSTOMERS" | grep -Fq 'superadmin/customer/list/'
           if printf '%s' "$CUSTOMERS" | grep -Fq 'value:"affCode"},,{text:"آمار"'; then
             echo "CUSTOMER_LIST_HAS_BROKEN_HEADER"
@@ -62,9 +71,11 @@ jobs:
             for (const target of targets) {
               const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, deviceScaleFactor: 1 });
               const errors = [];
-              page.on('pageerror', error => errors.push(error.message));
+              page.on('pageerror', error => errors.push('PAGEERROR ' + error.message));
+              page.on('requestfailed', request => errors.push('REQUEST_FAILED ' + request.url() + ' ' + (request.failure()?.errorText || 'unknown')));
+              page.on('response', response => { if (response.status() >= 400 && new URL(response.url()).hostname === 'roofixo.ir') errors.push('HTTP_' + response.status() + ' ' + response.url()); });
               page.on('console', message => {
-                if (message.type() === 'error') errors.push(message.text());
+                if (message.type() === 'error') errors.push('CONSOLE ' + message.text());
               });
 
               try {
