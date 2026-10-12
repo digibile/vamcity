@@ -194,39 +194,12 @@ public class Startup
 			options.SignIn.RequireConfirmedPhoneNumber = false;
 		}).AddEntityFrameworkStores<AppDbContext>();
 
-		// SPA API calls expect a JSON response envelope. Cookie authentication's
-		// default 302 redirects produce an empty body, which the Vue client reports
-		// as "Response.data is undefined" instead of handling an expired session.
+		// Keep browser navigation redirects for HTML pages, but return a JSON
+		// ResponseState envelope for SPA/API calls. Empty 401/403 responses cause
+		// the Vue client to fail with "Response.data is undefined".
 		services.ConfigureApplicationCookie(options =>
 		{
-			options.Events.OnRedirectToLogin = context =>
-			{
-				if (context.Request.Headers.Accept.Any(value =>
-					value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true))
-				{
-					context.Response.StatusCode = 401;
-					return Task.CompletedTask;
-				}
-				context.Response.Redirect(context.RedirectUri);
-				return Task.CompletedTask;
-			};
-			options.Events.OnRedirectToAccessDenied = context =>
-			{
-				if (context.Request.Headers.Accept.Any(value =>
-					value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true))
-				{
-					context.Response.StatusCode = 403;
-					return Task.CompletedTask;
-				}
-				context.Response.Redirect(context.RedirectUri);
-				return Task.CompletedTask;
-			};
-		});
-		// API calls must receive HTTP status codes, not an HTML login redirect.
-		// The SPA treats the response body as a ResponseState JSON envelope.
-		services.ConfigureApplicationCookie(options =>
-		{
-			options.Events.OnRedirectToLogin = context =>
+			options.Events.OnRedirectToLogin = async context =>
 			{
 				string accept = context.Request.Headers["Accept"].ToString();
 				bool apiRequest = context.Request.Path.StartsWithSegments("/admin") ||
@@ -236,15 +209,16 @@ public class Startup
 					context.Request.Path.StartsWithSegments("/sponsor") ||
 					accept.Contains("application/json", StringComparison.OrdinalIgnoreCase) ||
 					context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
-				if (apiRequest)
+				if (!apiRequest)
 				{
-					context.Response.StatusCode = 401;
-					return Task.CompletedTask;
+					context.Response.Redirect(context.RedirectUri);
+					return;
 				}
-				context.Response.Redirect(context.RedirectUri);
-				return Task.CompletedTask;
+				context.Response.StatusCode = 401;
+				context.Response.ContentType = "application/json; charset=utf-8";
+				await context.Response.WriteAsync("{\\"success\\":false,\\"message\\":\\"نشست شما منقضی شده است؛ دوباره وارد شوید.\\",\\"messageType\\":1,\\"data\\":null}");
 			};
-			options.Events.OnRedirectToAccessDenied = context =>
+			options.Events.OnRedirectToAccessDenied = async context =>
 			{
 				string accept = context.Request.Headers["Accept"].ToString();
 				bool apiRequest = context.Request.Path.StartsWithSegments("/admin") ||
@@ -254,13 +228,14 @@ public class Startup
 					context.Request.Path.StartsWithSegments("/sponsor") ||
 					accept.Contains("application/json", StringComparison.OrdinalIgnoreCase) ||
 					context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
-				if (apiRequest)
+				if (!apiRequest)
 				{
-					context.Response.StatusCode = 403;
-					return Task.CompletedTask;
+					context.Response.Redirect(context.RedirectUri);
+					return;
 				}
-				context.Response.Redirect(context.RedirectUri);
-				return Task.CompletedTask;
+				context.Response.StatusCode = 403;
+				context.Response.ContentType = "application/json; charset=utf-8";
+				await context.Response.WriteAsync("{\\"success\\":false,\\"message\\":\\"دسترسی به این بخش برای حساب شما مجاز نیست.\\",\\"messageType\\":1,\\"data\\":null}");
 			};
 		});
 		services.AddSpaStaticFiles((SpaStaticFilesOptions options) =>
