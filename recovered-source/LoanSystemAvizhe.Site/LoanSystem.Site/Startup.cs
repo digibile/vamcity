@@ -240,7 +240,7 @@ public class Startup
 		});
 		services.AddSpaStaticFiles((SpaStaticFilesOptions options) =>
 		{
-			options.RootPath = "wwwroot/ui";
+			options.RootPath = "wwwroot";
 		});
 		services.AddControllers();
 		services.AddCors((CorsOptions options) =>
