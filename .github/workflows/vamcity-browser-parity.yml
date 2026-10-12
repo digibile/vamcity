@@ -51,12 +51,15 @@ jobs:
           fi
           PLANS="$(curl -fsSL --retry 3 --max-time 30 https://roofixo.ir/cl/plans/)"
           printf '%s' "$PLANS" | grep -Fq 'وام سیتی'
-          LEGACY_HEADERS="$(mktemp)"
-          LEGACY_CODE="$(curl -sS -L --max-time 30 -D "$LEGACY_HEADERS" -o /dev/null -w '%{http_code}' https://roofixo.ir/clplans/0/)"
-          echo "LEGACY_PLANS_ROUTE_HTTP=$LEGACY_CODE"
-          grep -Eqi '^location: */cl/plans/' "$LEGACY_HEADERS"
-          rm -f "$LEGACY_HEADERS"
+          LEGACY_RESULT="$(curl -sS -L --max-time 30 -o /dev/null -w '%{http_code} %{url_effective}' https://roofixo.ir/clplans/0/)"
+          LEGACY_CODE="${LEGACY_RESULT%% *}"
+          LEGACY_FINAL_URL="${LEGACY_RESULT#* }"
+          echo "LEGACY_PLANS_ROUTE_HTTP=$LEGACY_CODE FINAL_URL=$LEGACY_FINAL_URL"
           test "$LEGACY_CODE" = "200"
+          case "$LEGACY_FINAL_URL" in
+            https://roofixo.ir/cl/plans|https://roofixo.ir/cl/plans/) ;;
+            *) echo "LEGACY_PLANS_ROUTE_FINAL_URL_UNEXPECTED"; exit 1 ;;
+          esac
           echo "CUSTOMER_LIST_ASSET_OK"
           echo "PLAN_PAGE_HTTP_AND_CONTENT_OK"
 
