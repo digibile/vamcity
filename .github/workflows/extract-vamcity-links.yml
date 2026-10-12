@@ -1,0 +1,89 @@
+name: Extract VamCity domain links from server backups
+run-name: Read-only scan for vamcity.com links in Roofixo backups
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/extract-vamcity-links.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Scan server files and archives over SSH (read-only)
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/roofixo_key
+          chmod 600 ~/.ssh/roofixo_key
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/roofixo_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          BASE=/home/roofixo/domains/roofixo.ir
+          PUB="$BASE/public_html"
+          TMP="$(mktemp -d /tmp/vamcity-link-scan.XXXXXX)"
+          trap 'rm -rf "$TMP"' EXIT
+          OUT="$TMP/hits.txt"
+          touch "$OUT"
+          URL_RE='(https?://)?([[:alnum:]_-]+\.)*vamcity\.com([/:?#][^[:space:]"<>\047]*)?'
+          echo "=== MATCHES FROM TEXT FILES AND ARCHIVES (URLS ONLY) ==="
+          find "$BASE" -type f \( -iname '*.zip' -o -iname '*.rar' -o -iname '*.7z' -o -iname '*.json' -o -iname '*.config' -o -iname '*.xml' -o -iname '*.html' -o -iname '*.js' -o -iname '*.css' -o -iname '*.cs' -o -iname '*.txt' -o -iname '*.sql' -o -iname '*.bak' \) -print0 2>/dev/null |
+          while IFS= read -r -d '' F; do
+            case "$F" in
+              *.zip)
+                D="$TMP/unzip-$(printf '%s' "$F" | sha256sum | cut -c1-12)"
+                mkdir -p "$D"
+                if unzip -oq "$F" -d "$D" 2>/dev/null; then
+                  grep -RahoE "$URL_RE" "$D" 2>/dev/null || true
+                  find "$D" -type f -print0 | while IFS= read -r -d '' X; do
+                    strings -el "$X" 2>/dev/null | grep -Eo "$URL_RE" || true
+                    strings -a "$X" 2>/dev/null | grep -Eo "$URL_RE" || true
+                  done
+                fi
+                ;;
+              *.rar|*.7z)
+                D="$TMP/archive-$(printf '%s' "$F" | sha256sum | cut -c1-12)"
+                mkdir -p "$D"
+                if command -v 7z >/dev/null 2>&1 && 7z x -y "-o$D" "$F" >/dev/null 2>&1; then
+                  grep -RahoE "$URL_RE" "$D" 2>/dev/null || true
+                  find "$D" -type f -print0 | while IFS= read -r -d '' X; do
+                    strings -el "$X" 2>/dev/null | grep -Eo "$URL_RE" || true
+                    strings -a "$X" 2>/dev/null | grep -Eo "$URL_RE" || true
+                  done
+                elif command -v unrar >/dev/null 2>&1 && unrar x -o+ "$F" "$D/" >/dev/null 2>&1; then
+                  grep -RahoE "$URL_RE" "$D" 2>/dev/null || true
+                else
+                  strings -a "$F" 2>/dev/null | grep -Eo "$URL_RE" || true
+                  strings -el "$F" 2>/dev/null | grep -Eo "$URL_RE" || true
+                fi
+                ;;
+              *.bak)
+                strings -a "$F" 2>/dev/null | grep -Eo "$URL_RE" || true
+                strings -el "$F" 2>/dev/null | grep -Eo "$URL_RE" || true
+                ;;
+              *)
+                grep -ahoE "$URL_RE" "$F" 2>/dev/null || true
+                ;;
+            esac
+          done | sed -E 's/[),.;]+$//' | sort -fu > "$OUT"
+          if [ -s "$OUT" ]; then cat "$OUT"; else echo "NO_MATCHES_FOUND_IN_SCANNED_FILES"; fi
+          echo "=== ARCHIVE INVENTORY (NAMES/SIZES ONLY) ==="
+          find "$BASE" -type f \( -iname '*.zip' -o -iname '*.rar' -o -iname '*.7z' -o -iname '*.bak' -o -iname '*.sql' \) -printf '%TY-%Tm-%Td %TH:%TM %s %p\n' 2>/dev/null | sort -r | head -100
+          echo "=== SCAN COMPLETE ==="
+          REMOTE
