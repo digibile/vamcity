@@ -53,7 +53,7 @@ public class AppSettingsController : BaseAdminController
 	{
 		return TryCatch(async () =>
 		{
-			AppSettings appSettings = await _appSettingsService.GetAppSettings();
+			AppSettings appSettings = await GetCurrentAppSettingsAsync(false);
 			AppSettingsModel appSettingsModel = new AppSettingsModel(appSettings);
 			List<DashboardSettingsModel> source = JsonSerializer.Deserialize<List<DashboardSettingsModel>>((!string.IsNullOrWhiteSpace(appSettings?.DashboardSettingsJson)) ? appSettings.DashboardSettingsJson : "[]");
 			appSettingsModel.DashboardSettings = source.FirstOrDefault((DashboardSettingsModel x) => x.UserId == _currentUserService.UserId) ?? new DashboardSettingsModel();
@@ -136,10 +136,10 @@ public class AppSettingsController : BaseAdminController
 			{
 				return Error("آدرس پایه سرویس اعتبارسنجی ایران باید با https:// شروع شود.");
 			}
-			AppSettings entity = await _appSettingsService.GetAppSettings();
+			AppSettings entity = await GetCurrentAppSettingsAsync(true);
 			if (entity == null)
 			{
-				entity = new AppSettings();
+				entity = new AppSettings { CustomerId = await ResolveSettingsCustomerIdAsync() };
 			}
 			bool mustInsertApiUser = false;
 			if (!string.IsNullOrWhiteSpace(model.ApiKey) && entity.ApiKey != model.ApiKey)
@@ -359,7 +359,7 @@ public class AppSettingsController : BaseAdminController
 				User user = (await _userManager.GetUsersInRoleAsync("AppApiUser"))?.FirstOrDefault();
 				if (user == null)
 				{
-					Customer customer = await _customerService.GetById(_currentUserService.CustomerId.Value);
+					Customer customer = await _customerService.GetById(entity.CustomerId);
 					user = new User
 					{
 						FirstName = "کاربر",
@@ -367,7 +367,7 @@ public class AppSettingsController : BaseAdminController
 						Email = $"{customer.Code}-apiuser@mail.com",
 						UserName = $"{customer.Code}-apiuser",
 						IsActive = true,
-						CustomerId = _currentUserService.CustomerId,
+						CustomerId = entity.CustomerId,
 						RegDate2 = DateTime.Now
 					};
 					user.UserRoleNames = new List<string> { "AppApiUser" };
@@ -407,5 +407,36 @@ public class AppSettingsController : BaseAdminController
 			await _appSettingsService.Update(entity);
 			return Success(entity.Id, "عملیات با موفقیت انجام شد.");
 		});
+	}
+
+	private async Task<Guid> ResolveSettingsCustomerIdAsync()
+	{
+		if (_currentUserService.CustomerId.HasValue)
+		{
+			return _currentUserService.CustomerId.Value;
+		}
+		if (!_currentUserService.IsInRole("SuperAdmin"))
+		{
+			throw new UnauthorizedAccessException("A customer context is required to access application settings.");
+		}
+		List<Customer> customers = await _customerService.GetAllCustomers();
+		if (customers.Count != 1)
+		{
+			throw new InvalidOperationException("Select a customer before editing application settings.");
+		}
+		return customers[0].Id;
+	}
+
+	private async Task<AppSettings> GetCurrentAppSettingsAsync(bool createIfMissing)
+	{
+		Guid customerId = await ResolveSettingsCustomerIdAsync();
+		AppSettings entity = _currentUserService.CustomerId.HasValue
+			? await _appSettingsService.GetAppSettings()
+			: await _appSettingsService.GetAppSettings(customerId);
+		if (entity == null && createIfMissing)
+		{
+			entity = new AppSettings { CustomerId = customerId };
+		}
+		return entity;
 	}
 }
