@@ -84,7 +84,25 @@ jobs:
           SQLCMD="$(docker exec vamcity-stage-sql bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' 2>/dev/null | tail -1)"
           if [ -n "$SQLCMD" ] && [ -n "$SQL_PASSWORD" ]; then
             echo "=== DATABASE SAFE SUMMARY ONLY ==="
-            docker exec vamcity-stage-sql "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON; SELECT name,state_desc FROM sys.databases WHERE name=N'vamcity_stage'; SELECT COUNT(*) AS table_count FROM [vamcity_stage].sys.tables; SELECT COUNT(*) AS active_plan_count FROM [vamcity_stage].dbo.Loans WHERE Disable=0;" 2>&1
+            docker exec vamcity-stage-sql "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "SET NOCOUNT ON;
+              SELECT name,state_desc FROM sys.databases WHERE name=N'vamcity_stage';
+              SELECT COUNT(*) AS table_count FROM [vamcity_stage].sys.tables;
+              SELECT COUNT(*) AS active_plan_count FROM [vamcity_stage].dbo.Loans WHERE Disable=0;
+              SELECT 'customers' AS metric, COUNT_BIG(*) AS value FROM [vamcity_stage].dbo.Customers
+              UNION ALL SELECT 'app_settings', COUNT_BIG(*) FROM [vamcity_stage].dbo.AppSettings
+              UNION ALL SELECT 'users', COUNT_BIG(*) FROM [vamcity_stage].dbo.AspNetUsers
+              UNION ALL SELECT 'user_roles', COUNT_BIG(*) FROM [vamcity_stage].dbo.AspNetUserRoles
+              UNION ALL SELECT 'migration_records', COUNT_BIG(*) FROM [vamcity_stage].dbo.__EFMigrationsHistory;
+              SELECT 'AppSettings.CustomerId' AS expected_column, CASE WHEN COL_LENGTH('vamcity_stage.dbo.AppSettings','CustomerId') IS NULL THEN 'MISSING' ELSE 'OK' END AS status
+              UNION ALL SELECT 'AppSettings.DashboardSettingsJson', CASE WHEN COL_LENGTH('vamcity_stage.dbo.AppSettings','DashboardSettingsJson') IS NULL THEN 'MISSING' ELSE 'OK' END
+              UNION ALL SELECT 'AspNetUsers.CustomerId', CASE WHEN COL_LENGTH('vamcity_stage.dbo.AspNetUsers','CustomerId') IS NULL THEN 'MISSING' ELSE 'OK' END
+              UNION ALL SELECT 'AspNetUsers.IsActive', CASE WHEN COL_LENGTH('vamcity_stage.dbo.AspNetUsers','IsActive') IS NULL THEN 'MISSING' ELSE 'OK' END
+              UNION ALL SELECT 'Loans.Disable', CASE WHEN COL_LENGTH('vamcity_stage.dbo.Loans','Disable') IS NULL THEN 'MISSING' ELSE 'OK' END;
+              SELECT 'active_superadmin_users' AS metric, COUNT_BIG(*) AS value
+              FROM [vamcity_stage].dbo.AspNetUsers u
+              JOIN [vamcity_stage].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
+              JOIN [vamcity_stage].dbo.AspNetRoles r ON r.Id=ur.RoleId
+              WHERE r.NormalizedName=N'SUPERADMIN' AND u.IsActive=1;" 2>&1
           fi
           echo "=== ONE-SHOT APP DIAGNOSTIC (isolated network, no host port) ==="
           BASE=/home/roofixo/domains/roofixo.ir/vamcity-app
