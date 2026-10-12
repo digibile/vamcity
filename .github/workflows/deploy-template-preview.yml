@@ -1,11 +1,11 @@
-name: Deploy standalone template preview
-run-name: Publish independent template preview
+name: Deploy independent VamCity template management
+run-name: Publish VamCity template management preview
 
 on:
   push:
     branches: [main]
     paths:
-      - "template-preview/index.html"
+      - "template-management/vamcity-template-management.html"
       - ".github/workflows/deploy-template-preview.yml"
   workflow_dispatch:
 
@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: standalone-template-preview
+  group: vamcity-template-management-preview
   cancel-in-progress: false
 
 jobs:
@@ -23,13 +23,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate independent HTML
+      - name: Validate independent admin template
         run: |
           set -euo pipefail
-          test -s template-preview/index.html
-          grep -qi '<html' template-preview/index.html
-          grep -q 'id="overview"' template-preview/index.html
-          echo "Independent template HTML validated."
+          FILE="template-management/vamcity-template-management.html"
+          test -s "$FILE"
+          grep -qi '<html' "$FILE"
+          grep -q 'id="overview"' "$FILE"
+          grep -q 'مرکز مدیریت' "$FILE"
+          echo "Independent admin template validated."
 
       - name: Configure SSH
         env:
@@ -45,54 +47,55 @@ jobs:
           PORT="${DEPLOY_PORT:-22}"
           umask 077
           install -d -m 700 ~/.ssh
-          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/template_preview_key
+          printf '%s\\n' "$DEPLOY_SSH_KEY" > ~/.ssh/template_preview_key
           chmod 600 ~/.ssh/template_preview_key
           ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
           echo "PORT=$PORT" >> "$GITHUB_ENV"
           echo "HOST=$DEPLOY_HOST" >> "$GITHUB_ENV"
           echo "USER=$DEPLOY_USER" >> "$GITHUB_ENV"
 
-      - name: Upload independent page
+      - name: Upload independent admin template
         run: |
           set -euo pipefail
           scp -i ~/.ssh/template_preview_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            template-preview/index.html "$USER@$HOST:/tmp/template-preview-$GITHUB_SHA.html"
+            template-management/vamcity-template-management.html "$USER@$HOST:/tmp/vamcity-template-management-$GITHUB_SHA.html"
 
-      - name: Publish to separate web paths
+      - name: Publish to isolated web paths
         run: |
           set -euo pipefail
           ssh -i ~/.ssh/template_preview_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST" \
             "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
           set -euo pipefail
           SHA="$1"
-          SRC="/tmp/template-preview-$SHA.html"
+          SRC="/tmp/vamcity-template-management-$SHA.html"
           ROOT="/home/roofixo/domains/roofixo.ir/public_html"
+          DEST="$ROOT/vamcity-template-management"
           test -s "$SRC"
           grep -qi '<html' "$SRC"
           grep -q 'id="overview"' "$SRC"
-          install -d -m 755 "$ROOT/template-preview"
-          install -m 644 "$SRC" "$ROOT/template-preview/index.html.new"
-          install -m 644 "$SRC" "$ROOT/template-preview.html.new"
-          mv -f "$ROOT/template-preview/index.html.new" "$ROOT/template-preview/index.html"
-          mv -f "$ROOT/template-preview.html.new" "$ROOT/template-preview.html"
+          install -d -m 755 "$DEST"
+          install -m 644 "$SRC" "$DEST/index.html.new"
+          install -m 644 "$SRC" "$ROOT/vamcity-template-management.html.new"
+          mv -f "$DEST/index.html.new" "$DEST/index.html"
+          mv -f "$ROOT/vamcity-template-management.html.new" "$ROOT/vamcity-template-management.html"
           rm -f "$SRC"
-          test -s "$ROOT/template-preview/index.html"
-          test -s "$ROOT/template-preview.html"
-          echo "PUBLISHED=$ROOT/template-preview/index.html"
-          echo "PUBLISHED=$ROOT/template-preview.html"
+          test -s "$DEST/index.html"
+          test -s "$ROOT/vamcity-template-management.html"
+          echo "PUBLISHED=$DEST/index.html"
+          echo "PUBLISHED=$ROOT/vamcity-template-management.html"
           REMOTE
 
-      - name: Verify published pages and real content
+      - name: Verify live URLs and expected content
         run: |
           set -euo pipefail
-          for URL in "https://roofixo.ir/template-preview.html?build=$GITHUB_SHA" "https://roofixo.ir/template-preview/?build=$GITHUB_SHA"; do
-            CODE="$(curl -k -sS -L --max-time 25 -o /tmp/template-preview-check.html -w '%{http_code}' "$URL" || true)"
-            SIZE="$(wc -c < /tmp/template-preview-check.html 2>/dev/null || echo 0)"
+          for URL in "https://roofixo.ir/vamcity-template-management/?build=$GITHUB_SHA" "https://roofixo.ir/vamcity-template-management.html?build=$GITHUB_SHA"; do
+            CODE="$(curl -k -sS -L --max-time 25 -o /tmp/vamcity-template-check.html -w '%{http_code}' "$URL" || true)"
+            SIZE="$(wc -c < /tmp/vamcity-template-check.html 2>/dev/null || echo 0)"
             echo "$URL HTTP $CODE bytes=$SIZE"
             test "$CODE" = "200"
             test "$SIZE" -gt 10000
-            grep -qi '<html' /tmp/template-preview-check.html
-            grep -q 'id="overview"' /tmp/template-preview-check.html
-            grep -q 'مرکز مدیریت' /tmp/template-preview-check.html
+            grep -qi '<html' /tmp/vamcity-template-check.html
+            grep -q 'id="overview"' /tmp/vamcity-template-check.html
+            grep -q 'مرکز مدیریت' /tmp/vamcity-template-check.html
           done
-          echo "Both published URLs contain the expected standalone template."
+          echo "Both isolated VamCity admin-template URLs serve the expected content."
