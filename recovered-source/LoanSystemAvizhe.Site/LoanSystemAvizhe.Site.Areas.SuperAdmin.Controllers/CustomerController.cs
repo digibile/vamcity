@@ -42,25 +42,35 @@ public class CustomerController : BaseSuperAdminController
 		return TryCatch(async () =>
 		{
 			List<Customer> source = await _customerService.GetAllCustomers();
-			var loan_groupCustomer = _loanService.GetAllLoansAsQueryable().IgnoreQueryFilters().GroupBy((Loan p) => p.CustomerId, (Guid key, IEnumerable<Loan> g) => new
-			{
-				CustomerId = key,
-				MembersCount = g.Count()
-			})
-				.ToList();
-			var userloan_groupCustomer = _userLoanService.GetAllAsQueryable().IgnoreQueryFilters().Include((UserLoan x) => x.Loan)
-				.GroupBy((UserLoan p) => p.Loan.CustomerId, (Guid key, IEnumerable<UserLoan> g) => new
+			var loan_groupCustomer = await _loanService.GetAllLoansAsQueryable()
+				.IgnoreQueryFilters()
+				.GroupBy(p => p.CustomerId)
+				.Select(g => new
 				{
-					CustomerId = key,
+					CustomerId = g.Key,
 					MembersCount = g.Count()
 				})
-				.ToList();
-			var member_groupCustomer = _userManager.GetAllAsQueryable().IgnoreQueryFilters().GroupBy((User p) => p.CustomerId, (Guid? key, IEnumerable<User> g) => new
-			{
-				CustomerId = key,
-				MembersCount = g.Count()
-			})
-				.ToList();
+				.ToListAsync();
+
+			var userloan_groupCustomer = await _userLoanService.GetAllAsQueryable()
+				.IgnoreQueryFilters()
+				.GroupBy(p => p.Loan.CustomerId)
+				.Select(g => new
+				{
+					CustomerId = g.Key,
+					MembersCount = g.Count()
+				})
+				.ToListAsync();
+
+			var member_groupCustomer = await _userManager.GetAllAsQueryable()
+				.IgnoreQueryFilters()
+				.GroupBy(p => p.CustomerId)
+				.Select(g => new
+				{
+					CustomerId = g.Key,
+					MembersCount = g.Count()
+				})
+				.ToListAsync();
 			List<CustomerModel> list = (from x in source
 				select new CustomerModel(x) into x
 				orderby x.RegDate descending
