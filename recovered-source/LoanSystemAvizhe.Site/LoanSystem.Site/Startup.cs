@@ -192,6 +192,47 @@ public class Startup
 			options.SignIn.RequireConfirmedEmail = false;
 			options.SignIn.RequireConfirmedPhoneNumber = false;
 		}).AddEntityFrameworkStores<AppDbContext>();
+		// API calls must receive HTTP status codes, not an HTML login redirect.
+		// The SPA treats the response body as a ResponseState JSON envelope.
+		services.ConfigureApplicationCookie(options =>
+		{
+			options.Events.OnRedirectToLogin = context =>
+			{
+				string accept = context.Request.Headers["Accept"].ToString();
+				bool apiRequest = context.Request.Path.StartsWithSegments("/admin") ||
+					context.Request.Path.StartsWithSegments("/superadmin") ||
+					context.Request.Path.StartsWithSegments("/agent") ||
+					context.Request.Path.StartsWithSegments("/member") ||
+					context.Request.Path.StartsWithSegments("/sponsor") ||
+					accept.Contains("application/json", StringComparison.OrdinalIgnoreCase) ||
+					context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+				if (apiRequest)
+				{
+					context.Response.StatusCode = 401;
+					return Task.CompletedTask;
+				}
+				context.Response.Redirect(context.RedirectUri);
+				return Task.CompletedTask;
+			};
+			options.Events.OnRedirectToAccessDenied = context =>
+			{
+				string accept = context.Request.Headers["Accept"].ToString();
+				bool apiRequest = context.Request.Path.StartsWithSegments("/admin") ||
+					context.Request.Path.StartsWithSegments("/superadmin") ||
+					context.Request.Path.StartsWithSegments("/agent") ||
+					context.Request.Path.StartsWithSegments("/member") ||
+					context.Request.Path.StartsWithSegments("/sponsor") ||
+					accept.Contains("application/json", StringComparison.OrdinalIgnoreCase) ||
+					context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+				if (apiRequest)
+				{
+					context.Response.StatusCode = 403;
+					return Task.CompletedTask;
+				}
+				context.Response.Redirect(context.RedirectUri);
+				return Task.CompletedTask;
+			};
+		});
 		services.AddSpaStaticFiles((SpaStaticFilesOptions options) =>
 		{
 			options.RootPath = "wwwroot/ui";
