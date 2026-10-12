@@ -22,7 +22,7 @@ using Microsoft.Extensions.Options;
 namespace LoanSystem.Site.Areas.Admin.Controllers;
 
 [Route("[area]/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,SuperAdmin")]
 public class AppSettingsController : BaseAdminController
 {
 	private readonly UserManager _userManager;
@@ -402,7 +402,7 @@ public class AppSettingsController : BaseAdminController
 			}
 			else
 			{
-				entity.IceConfigJson = "";
+				entity.ThemeSettingsJson = "";
 			}
 			await _appSettingsService.Update(entity);
 			return Success(entity.Id, "عملیات با موفقیت انجام شد.");
