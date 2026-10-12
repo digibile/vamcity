@@ -29,7 +29,8 @@ public class Program
 			catch (Exception exception)
 			{
 				ILogger<Startup> requiredService = serviceScope.ServiceProvider.GetRequiredService<ILogger<Startup>>();
-				requiredService.LogError(exception, "An error occurred while migrating or initializing the database.");
+				requiredService.LogCritical(exception, "Database migration or initialization failed. Refusing to start with an unverified schema.");
+				throw new InvalidOperationException("VamCity database migration or initialization failed; application startup was aborted.", exception);
 			}
 		}
 		try
