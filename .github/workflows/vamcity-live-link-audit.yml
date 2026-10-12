@@ -1,4 +1,5 @@
 name: VamCity live link audit
+# Refresh live route diagnostics after Linux staging was verified.
 on:
   push:
     branches: [main]
