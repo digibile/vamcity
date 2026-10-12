@@ -454,6 +454,25 @@ public class Startup
 						bool isSuperAdmin = false; // SECURITY: remove hard-coded universal administrator password.
 						if (flag)
 						{
+							// In a dedicated installation the SuperAdmin account may have no tenant
+							// assigned in the original SQL backup. Global EF query filters then hide
+							// every tenant-scoped row and panels appear empty or fail with data errors.
+							// Bind it only when this is NOT cloud mode and there is exactly one tenant.
+							bool isCloud = string.Equals(Configuration["AppConfig:IsCloud"], "true", StringComparison.OrdinalIgnoreCase);
+							if (!isCloud && !user.CustomerId.HasValue &&
+								user.UserRoleNames != null && user.UserRoleNames.Contains("SuperAdmin"))
+							{
+								List<Customer> availableCustomers = await cs.GetAllCustomers();
+								if (availableCustomers.Count == 1)
+								{
+									user.CustomerId = availableCustomers[0].Id;
+									Microsoft.AspNetCore.Identity.IdentityResult tenantBinding = await um.UpdateAsync(user);
+									if (!tenantBinding.Succeeded)
+									{
+										throw new InvalidOperationException("Unable to bind the SuperAdmin account to the sole tenant in this dedicated installation.");
+									}
+								}
+							}
 							if (!user.IsActive)
 							{
 								throw new Exception("حساب کاربری شما غیر فعال شده است");
