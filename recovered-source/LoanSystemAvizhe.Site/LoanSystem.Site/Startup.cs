@@ -204,7 +204,7 @@ public class Startup
 				if (context.Request.Headers.Accept.Any(value =>
 					value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true))
 				{
-					context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+					context.Response.StatusCode = 401;
 					return Task.CompletedTask;
 				}
 				context.Response.Redirect(context.RedirectUri);
@@ -215,7 +215,7 @@ public class Startup
 				if (context.Request.Headers.Accept.Any(value =>
 					value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true))
 				{
-					context.Response.StatusCode = StatusCodes.Status403Forbidden;
+					context.Response.StatusCode = 403;
 					return Task.CompletedTask;
 				}
 				context.Response.Redirect(context.RedirectUri);
@@ -353,16 +353,9 @@ public class Startup
 				return accept.Contains("application/json", StringComparison.OrdinalIgnoreCase);
 			}, branch => branch.UseExceptionHandler(errorApp => errorApp.Run(async context =>
 			{
-				context.Response.Clear();
-				context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+				context.Response.StatusCode = 500;
 				context.Response.ContentType = "application/json; charset=utf-8";
-				await context.Response.WriteAsJsonAsync(new
-				{
-					success = false,
-					message = "خطای داخلی سرور رخ داد. شناسه درخواست را برای بررسی گزارش‌ها نگه دارید.",
-					messageType = "error",
-					data = (object)null
-				});
+				await context.Response.WriteAsync("{\"success\":false,\"message\":\"خطای داخلی سرور رخ داد. گزارش سرور را برای بررسی نگه دارید.\",\"messageType\":\"error\",\"data\":null}");
 			})));
 			app.UseWhen(context =>
 			{
