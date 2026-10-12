@@ -468,8 +468,9 @@ public class Startup
 							{
 								user.LastLoginDate = DateTime.Now;
 								await um.UpdateAsync(user);
-								if (!user.UserRoleNames.Any((string x) => x == "SuperAdmin"))
+								if (!user.UserRoleNames.Any((string x) => x == "SuperAdmin") && user.CustomerId.HasValue)
 								{
+									// Login must not fail for global users without a tenant/customer.
 									await sms.TrySendLogin(new LoginRegisterModel
 									{
 										Date = DateTime.Now,
