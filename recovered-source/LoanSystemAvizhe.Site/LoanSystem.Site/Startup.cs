@@ -274,7 +274,14 @@ public class Startup
 		else
 		{
 			app.UseExceptionHandler("/home/error");
-			app.UseStatusCodePagesWithReExecute("/home/error/{0}");
+			// Preserve real HTTP status codes for JSON/AJAX API calls. Re-executing
+			// these requests through an HTML error route can turn 401/403 into 404,
+			// preventing the frontend from clearing an expired login session.
+			app.UseWhen(context =>
+			{
+				string accept = context.Request.Headers["Accept"].ToString();
+				return !accept.Contains("application/json", StringComparison.OrdinalIgnoreCase);
+			}, branch => branch.UseStatusCodePagesWithReExecute("/home/error/{0}"));
 		}
 		app.UseForwardedHeaders();
 		app.UseStaticFiles();
