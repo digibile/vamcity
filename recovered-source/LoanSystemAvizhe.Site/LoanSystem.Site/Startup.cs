@@ -466,6 +466,7 @@ public class Startup
 								if (availableCustomers.Count == 1)
 								{
 									user.CustomerId = availableCustomers[0].Id;
+									user.Customer = availableCustomers[0];
 									Microsoft.AspNetCore.Identity.IdentityResult tenantBinding = await um.UpdateAsync(user);
 									if (!tenantBinding.Succeeded)
 									{
