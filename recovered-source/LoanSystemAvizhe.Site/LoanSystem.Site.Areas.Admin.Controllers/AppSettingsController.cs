@@ -440,6 +440,7 @@ public class AppSettingsController : BaseAdminController
 		if (entity == null && createIfMissing)
 		{
 			entity = new AppSettings { CustomerId = customerId };
+			await _appSettingsService.Insert(entity);
 		}
 		return entity;
 	}
