@@ -98,7 +98,7 @@ jobs:
               UNION ALL SELECT 'app_settings', COUNT_BIG(*) FROM [vamcity_stage].dbo.AppSettings
               UNION ALL SELECT 'users', COUNT_BIG(*) FROM [vamcity_stage].dbo.AspNetUsers
               UNION ALL SELECT 'user_roles', COUNT_BIG(*) FROM [vamcity_stage].dbo.AspNetUserRoles
-              UNION ALL SELECT 'customer_purchase_plans', COUNT_BIG(*) FROM [vamcity_stage].dbo.CustomerPurchasePlans
+              UNION ALL SELECT 'customer_purchase_plans', COUNT_BIG(*) FROM [vamcity_stage].dbo.CustomerPurchasePlan
               UNION ALL SELECT 'purchases', COUNT_BIG(*) FROM [vamcity_stage].dbo.Purchases
               UNION ALL SELECT 'migration_records', COUNT_BIG(*) FROM [vamcity_stage].dbo.__EFMigrationsHistory;
               SELECT 'AppSettings.CustomerId' AS expected_column, CASE WHEN COL_LENGTH('vamcity_stage.dbo.AppSettings','CustomerId') IS NULL THEN 'MISSING' ELSE 'OK' END AS status
