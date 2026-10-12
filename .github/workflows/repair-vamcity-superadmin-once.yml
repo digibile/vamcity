@@ -67,36 +67,36 @@ jobs:
           BEGIN TRY
             BEGIN TRANSACTION;
             DECLARE @roles bigint = (
-              SELECT COUNT_BIG(*) FROM [$DB_NAME].dbo.AspNetRoles WHERE UPPER(Name)=N'SUPERADMIN'
+              SELECT COUNT_BIG(*) FROM [$DB_NAME].dbo.AspNetRoles WHERE UPPER(LTRIM(RTRIM(Name)))=N'SUPERADMIN'
             );
             DECLARE @assigned bigint = (
               SELECT COUNT_BIG(*)
               FROM [$DB_NAME].dbo.AspNetUsers u
               JOIN [$DB_NAME].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
               JOIN [$DB_NAME].dbo.AspNetRoles r ON r.Id=ur.RoleId
-              WHERE UPPER(r.Name)=N'SUPERADMIN'
+              WHERE UPPER(LTRIM(RTRIM(r.Name)))=N'SUPERADMIN'
             );
             DECLARE @active bigint = (
               SELECT COUNT_BIG(*)
               FROM [$DB_NAME].dbo.AspNetUsers u
               JOIN [$DB_NAME].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
               JOIN [$DB_NAME].dbo.AspNetRoles r ON r.Id=ur.RoleId
-              WHERE UPPER(r.Name)=N'SUPERADMIN' AND u.IsActive=1
+              WHERE UPPER(LTRIM(RTRIM(r.Name)))=N'SUPERADMIN' AND u.IsActive=1
             );
             DECLARE @inactive bigint = (
               SELECT COUNT_BIG(*)
               FROM [$DB_NAME].dbo.AspNetUsers u
               JOIN [$DB_NAME].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
               JOIN [$DB_NAME].dbo.AspNetRoles r ON r.Id=ur.RoleId
-              WHERE UPPER(r.Name)=N'SUPERADMIN' AND u.IsActive=0
+              WHERE UPPER(LTRIM(RTRIM(r.Name)))=N'SUPERADMIN' AND u.IsActive=0
             );
             IF @roles <> 1 THROW 51001, 'Expected exactly one SuperAdmin role; no change made.', 1;
             IF @assigned <> 1 THROW 51002, 'Expected exactly one existing SuperAdmin assignment; no change made.', 1;
             IF @active <> 0 THROW 51003, 'A SuperAdmin is already active; no change made.', 1;
             IF @inactive <> 1 THROW 51004, 'The inactive SuperAdmin account is ambiguous; no change made.', 1;
             IF EXISTS (
-              SELECT UPPER(Name) FROM [$DB_NAME].dbo.AspNetRoles
-              WHERE Name IS NOT NULL GROUP BY UPPER(Name) HAVING COUNT_BIG(*) > 1
+              SELECT UPPER(LTRIM(RTRIM(Name))) FROM [$DB_NAME].dbo.AspNetRoles
+              WHERE Name IS NOT NULL GROUP BY UPPER(LTRIM(RTRIM(Name))) HAVING COUNT_BIG(*) > 1
             ) THROW 51006, 'Role names collide after normalization; no changes made.', 1;
             IF EXISTS (
               SELECT UPPER(UserName) FROM [$DB_NAME].dbo.AspNetUsers
@@ -104,8 +104,10 @@ jobs:
             ) THROW 51007, 'User names collide after normalization; no changes made.', 1;
 
             UPDATE [$DB_NAME].dbo.AspNetRoles
-              SET NormalizedName=UPPER(Name)
-              WHERE Name IS NOT NULL AND (NormalizedName IS NULL OR NormalizedName<>UPPER(Name));
+              SET Name=LTRIM(RTRIM(Name)),
+                  NormalizedName=UPPER(LTRIM(RTRIM(Name)))
+              WHERE Name IS NOT NULL
+                AND (Name<>LTRIM(RTRIM(Name)) OR NormalizedName IS NULL OR NormalizedName<>UPPER(LTRIM(RTRIM(Name))));
             UPDATE [$DB_NAME].dbo.AspNetUsers
               SET NormalizedUserName=UPPER(UserName)
               WHERE UserName IS NOT NULL AND (NormalizedUserName IS NULL OR NormalizedUserName<>UPPER(UserName));
@@ -116,7 +118,7 @@ jobs:
               FROM [$DB_NAME].dbo.AspNetUsers u
               JOIN [$DB_NAME].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
               JOIN [$DB_NAME].dbo.AspNetRoles r ON r.Id=ur.RoleId
-              WHERE UPPER(r.Name)=N'SUPERADMIN' AND u.IsActive=0;
+              WHERE UPPER(LTRIM(RTRIM(r.Name)))=N'SUPERADMIN' AND u.IsActive=0;
             IF @@ROWCOUNT <> 1 THROW 51005, 'Could not activate exactly one existing account.', 1;
             COMMIT TRANSACTION;
           END TRY
@@ -128,6 +130,6 @@ jobs:
             FROM [$DB_NAME].dbo.AspNetUsers u
             JOIN [$DB_NAME].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
             JOIN [$DB_NAME].dbo.AspNetRoles r ON r.Id=ur.RoleId
-            WHERE UPPER(r.Name)=N'SUPERADMIN' AND u.IsActive=1;
+            WHERE UPPER(LTRIM(RTRIM(r.Name)))=N'SUPERADMIN' AND u.IsActive=1;
           "
           REMOTE
