@@ -31,6 +31,24 @@ jobs:
           npm install --no-save playwright
           npx playwright install --with-deps chromium
 
+      - name: Verify deployed customer and plan UI assets
+        run: |
+          set -euo pipefail
+          HTML="$(curl -fsSL --retry 3 --max-time 30 https://roofixo.ir/)"
+          printf '%s' "$HTML" | grep -Fq '/js/app.e76ab352.js?v=79da940b'
+          APP="$(curl -fsSL --retry 3 --max-time 30 'https://roofixo.ir/js/app.e76ab352.js?v=79da940b')"
+          printf '%s' "$APP" | grep -Fq '"views-superAdmin-Customers":"e95d8252"'
+          CUSTOMERS="$(curl -fsSL --retry 3 --max-time 30 https://roofixo.ir/js/views-superAdmin-Customers.e95d8252.js)"
+          printf '%s' "$CUSTOMERS" | grep -Fq 'superadmin/customer/list/'
+          if printf '%s' "$CUSTOMERS" | grep -Fq 'value:"affCode"},,{text:"آمار"'; then
+            echo "CUSTOMER_LIST_HAS_BROKEN_HEADER"
+            exit 1
+          fi
+          PLANS="$(curl -fsSL --retry 3 --max-time 30 https://roofixo.ir/cl/plans/)"
+          printf '%s' "$PLANS" | grep -Fq 'وام سیتی'
+          echo "CUSTOMER_LIST_ASSET_OK"
+          echo "PLAN_PAGE_HTTP_AND_CONTENT_OK"
+
       - name: Compare the real rendered plans pages
         run: |
           mkdir -p artifacts
