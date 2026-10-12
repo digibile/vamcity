@@ -52,7 +52,7 @@ jobs:
           PLANS="$(curl -fsSL --retry 3 --max-time 30 https://roofixo.ir/cl/plans/)"
           printf '%s' "$PLANS" | grep -Fq 'وام سیتی'
           LEGACY_HEADERS="$(mktemp)"
-          LEGACY_CODE="$(curl -sS -L --max-time 30 -D "$LEGACY_HEADERS" -o /dev/null -w '%{http_code}' https://roofixo.ir/plans/0/)"
+          LEGACY_CODE="$(curl -sS -L --max-time 30 -D "$LEGACY_HEADERS" -o /dev/null -w '%{http_code}' https://roofixo.ir/clplans/0/)"
           echo "LEGACY_PLANS_ROUTE_HTTP=$LEGACY_CODE"
           grep -Eqi '^location: */cl/plans/' "$LEGACY_HEADERS"
           rm -f "$LEGACY_HEADERS"
