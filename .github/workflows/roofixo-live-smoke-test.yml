@@ -1,4 +1,5 @@
 name: VamCity roofixo.ir live smoke test
+# Diagnostic refresh: trigger a fresh live check after the SSH-key fix.
 run-name: Verify VamCity HTML and assets on roofixo.ir
 
 on:
