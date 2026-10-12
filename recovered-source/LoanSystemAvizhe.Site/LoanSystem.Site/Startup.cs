@@ -216,7 +216,7 @@ public class Startup
 				}
 				context.Response.StatusCode = 401;
 				context.Response.ContentType = "application/json; charset=utf-8";
-				await context.Response.WriteAsync("{\\"success\\":false,\\"message\\":\\"نشست شما منقضی شده است؛ دوباره وارد شوید.\\",\\"messageType\\":1,\\"data\\":null}");
+				await context.Response.WriteAsync("{\"success\":false,\"message\":\"نشست شما منقضی شده است؛ دوباره وارد شوید.\",\"messageType\":1,\"data\":null}");
 			};
 			options.Events.OnRedirectToAccessDenied = async context =>
 			{
@@ -235,7 +235,7 @@ public class Startup
 				}
 				context.Response.StatusCode = 403;
 				context.Response.ContentType = "application/json; charset=utf-8";
-				await context.Response.WriteAsync("{\\"success\\":false,\\"message\\":\\"دسترسی به این بخش برای حساب شما مجاز نیست.\\",\\"messageType\\":1,\\"data\\":null}");
+				await context.Response.WriteAsync("{\"success\":false,\"message\":\"دسترسی به این بخش برای حساب شما مجاز نیست.\",\"messageType\":1,\"data\":null}");
 			};
 		});
 		services.AddSpaStaticFiles((SpaStaticFilesOptions options) =>
