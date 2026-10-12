@@ -62,7 +62,7 @@ jobs:
           if [ -z "$VHOST_TEST_IPV4" ] || ! ip -o -4 addr show 2>/dev/null | grep -Fq "$VHOST_TEST_IPV4"; then VHOST_TEST_IPV4="$SERVER_INTERFACE_IPV4"; fi
           echo "ROOFIXO_VHOST_TEST_IP_ASSIGNED=$([ -n "$VHOST_TEST_IPV4" ] && ip -o -4 addr show 2>/dev/null | grep -Fq "$VHOST_TEST_IPV4" && echo yes || echo no)"
           echo "=== LOCAL HTTPS VHOST PROBES (NO PUBLIC DNS DEPENDENCY) ==="
-          for path in / /superadmin/dashboard/get /admin/appSettings/get /superadmin/customer/list/; do
+          for path in / /superadmin/dashboard/get /admin/appSettings/get /superadmin/customer/list/ /admin/CustomerPurchasePlan/list/; do
             printf 'LOCAL_VHOST path=%s ' "$path"
             curl -k -sS --max-time 8 --resolve "roofixo.ir:443:$VHOST_TEST_IPV4" -H 'Accept: application/json' -o /tmp/vamcity-probe-body -D /tmp/vamcity-probe-headers -w 'HTTP=%{http_code} SIZE=%{size_download}\\n' "https://roofixo.ir$path" || true
             sed -n '1,4p' /tmp/vamcity-probe-headers 2>/dev/null || true
@@ -98,6 +98,8 @@ jobs:
               UNION ALL SELECT 'app_settings', COUNT_BIG(*) FROM [vamcity_stage].dbo.AppSettings
               UNION ALL SELECT 'users', COUNT_BIG(*) FROM [vamcity_stage].dbo.AspNetUsers
               UNION ALL SELECT 'user_roles', COUNT_BIG(*) FROM [vamcity_stage].dbo.AspNetUserRoles
+              UNION ALL SELECT 'customer_purchase_plans', COUNT_BIG(*) FROM [vamcity_stage].dbo.CustomerPurchasePlans
+              UNION ALL SELECT 'purchases', COUNT_BIG(*) FROM [vamcity_stage].dbo.Purchases
               UNION ALL SELECT 'migration_records', COUNT_BIG(*) FROM [vamcity_stage].dbo.__EFMigrationsHistory;
               SELECT 'AppSettings.CustomerId' AS expected_column, CASE WHEN COL_LENGTH('vamcity_stage.dbo.AppSettings','CustomerId') IS NULL THEN 'MISSING' ELSE 'OK' END AS status
               UNION ALL SELECT 'AppSettings.DashboardSettingsJson', CASE WHEN COL_LENGTH('vamcity_stage.dbo.AppSettings','DashboardSettingsJson') IS NULL THEN 'MISSING' ELSE 'OK' END
