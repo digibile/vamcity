@@ -31,9 +31,9 @@ jobs:
         run: |
           set -euo pipefail
           HTML="$(curl -fsSL --retry 3 --max-time 30 https://roofixo.ir/)"
-          APP_PATH="$(printf '%s' "$HTML" | grep -oE '/js/app\\.[a-f0-9]+\\.js(\\?[^"]*)?' | tail -1)"
-          VENDORS_PATH="$(printf '%s' "$HTML" | grep -oE '/js/chunk-vendors\\.[a-f0-9]+\\.js' | tail -1)"
-          CUSTOMER_PATH="$(printf '%s' "$HTML" | grep -oE '/js/views-superAdmin-Customers\\.[a-f0-9]+\\.js' | head -1)"
+          APP_PATH="$(printf '%s' "$HTML" | grep -oE '/js/app\.[a-f0-9]+\.js(\?[^"]*)?' | tail -1)"
+          VENDORS_PATH="$(printf '%s' "$HTML" | grep -oE '/js/chunk-vendors\.[a-f0-9]+\.js' | tail -1)"
+          CUSTOMER_PATH="$(printf '%s' "$HTML" | grep -oE '/js/views-superAdmin-Customers\.[a-f0-9]+\.js' | head -1)"
           test -n "$APP_PATH"
           test -n "$VENDORS_PATH"
           test -n "$CUSTOMER_PATH"
