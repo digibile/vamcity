@@ -1,0 +1,99 @@
+name: One-time VamCity SuperAdmin activation
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/repair-vamcity-superadmin-once.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: vamcity-superadmin-activation
+  cancel-in-progress: false
+jobs:
+  activate-existing-account:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_deploy_key
+          chmod 600 ~/.ssh/vamcity_deploy_key
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          echo "DEPLOY_PORT_EFFECTIVE=$PORT" >> "$GITHUB_ENV"
+          echo "DEPLOY_HOST_EFFECTIVE=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "DEPLOY_USER_EFFECTIVE=$DEPLOY_USER" >> "$GITHUB_ENV"
+
+      - name: Activate exactly one existing inactive SuperAdmin account
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/vamcity_deploy_key -p "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          PRIVATE=/home/roofixo/domains/roofixo.ir/vamcity-app/private
+          SQL_CONTAINER=vamcity-stage-sql
+          DB_NAME=vamcity_stage
+          test -s "$PRIVATE/sql.env"
+          SQL_PASSWORD="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' "$PRIVATE/sql.env" | head -1)"
+          test -n "$SQL_PASSWORD"
+          SQLCMD="$(docker exec "$SQL_CONTAINER" bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' | tail -1)"
+          test -n "$SQLCMD"
+          docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "
+          SET NOCOUNT ON;
+          BEGIN TRY
+            BEGIN TRANSACTION;
+            DECLARE @assigned bigint = (
+              SELECT COUNT_BIG(*)
+              FROM [$DB_NAME].dbo.AspNetUsers u
+              JOIN [$DB_NAME].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
+              JOIN [$DB_NAME].dbo.AspNetRoles r ON r.Id=ur.RoleId
+              WHERE r.NormalizedName=N'SUPERADMIN'
+            );
+            DECLARE @active bigint = (
+              SELECT COUNT_BIG(*)
+              FROM [$DB_NAME].dbo.AspNetUsers u
+              JOIN [$DB_NAME].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
+              JOIN [$DB_NAME].dbo.AspNetRoles r ON r.Id=ur.RoleId
+              WHERE r.NormalizedName=N'SUPERADMIN' AND u.IsActive=1
+            );
+            DECLARE @inactive bigint = (
+              SELECT COUNT_BIG(*)
+              FROM [$DB_NAME].dbo.AspNetUsers u
+              JOIN [$DB_NAME].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
+              JOIN [$DB_NAME].dbo.AspNetRoles r ON r.Id=ur.RoleId
+              WHERE r.NormalizedName=N'SUPERADMIN' AND u.IsActive=0
+            );
+            IF @assigned <> 1 THROW 51001, 'Expected exactly one existing SuperAdmin assignment; no change made.', 1;
+            IF @active <> 0 THROW 51002, 'A SuperAdmin is already active; no change made.', 1;
+            IF @inactive <> 1 THROW 51003, 'The inactive SuperAdmin account is ambiguous; no change made.', 1;
+            UPDATE u SET IsActive=1
+            FROM [$DB_NAME].dbo.AspNetUsers u
+            JOIN [$DB_NAME].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
+            JOIN [$DB_NAME].dbo.AspNetRoles r ON r.Id=ur.RoleId
+            WHERE r.NormalizedName=N'SUPERADMIN' AND u.IsActive=0;
+            IF @@ROWCOUNT <> 1 THROW 51004, 'Could not activate exactly one existing account.', 1;
+            COMMIT TRANSACTION;
+          END TRY
+          BEGIN CATCH
+            IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+            THROW;
+          END CATCH;
+          SELECT 'SUPERADMIN_ACTIVE_COUNT' AS check_name, COUNT_BIG(*) AS value
+          FROM [$DB_NAME].dbo.AspNetUsers u
+          JOIN [$DB_NAME].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
+          JOIN [$DB_NAME].dbo.AspNetRoles r ON r.Id=ur.RoleId
+          WHERE r.NormalizedName=N'SUPERADMIN' AND u.IsActive=1;
+          "
+          REMOTE
