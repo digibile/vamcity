@@ -34,7 +34,7 @@ public class TokenProviderMiddleware
 
 	public Task Invoke(HttpContext context)
 	{
-		if (!context.Request.Path.Equals(_options.Path, StringComparison.Ordinal))
+		if (!context.Request.Path.Equals(_options.Path, StringComparison.OrdinalIgnoreCase))
 		{
 			return _next(context);
 		}
