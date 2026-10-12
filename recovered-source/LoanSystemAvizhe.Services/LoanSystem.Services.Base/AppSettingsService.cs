@@ -70,51 +70,68 @@ public class AppSettingsService : BaseService, IAppSettingsService
 
 	public Task<AppSettings> GetAppSettings()
 	{
-		return Table<AppSettings>().Include((AppSettings x) => x.NewUserLoanSmsPattern).Include((AppSettings x) => x.ThanksPaymentSmsPattern).Include((AppSettings x) => x.DueDateRememberSmsPattern)
-			.Include((AppSettings x) => x.OverDueDateSmsPattern)
-			.Include((AppSettings x) => x.BeforeDueDateSmsPattern)
-			.Include((AppSettings x) => x.LoginSmsPattern)
-			.Include((AppSettings x) => x.LoginEmailPattern)
-			.Include((AppSettings x) => x.RegisterSmsPattern)
-			.Include((AppSettings x) => x.RegisterOtpSmsPattern)
-			.Include((AppSettings x) => x.WalletChargeSmsPattern)
-			.Include((AppSettings x) => x.NewOrderSmsPattern)
-			.Include((AppSettings x) => x.NewOrderEmailPattern)
-			.Include((AppSettings x) => x.OverDueDateEmailPattern)
-			.Include((AppSettings x) => x.RegisterEmailPattern)
-			.Include((AppSettings x) => x.RegisterOtpEmailPattern)
-			.Include((AppSettings x) => x.ThanksPaymentEmailPattern)
-			.Include((AppSettings x) => x.WalletChargeEmailPattern)
-			.Include((AppSettings x) => x.DueDateRememberEmailPattern)
-			.Include((AppSettings x) => x.BeforeDueDateEmailPattern)
-			.Include((AppSettings x) => x.WalletWithdrawOtpSmsPattern)
-			.Include((AppSettings x) => x.WalletWithdrawNotificationSmsPattern)
-			.Include((AppSettings x) => x.AgentFactorPaymentLinkSmsPattern)
-			.Include((AppSettings x) => x.DigitalSignLinkSmsPattern)
-			.Include((AppSettings x) => x.DigitalSignCompleteSmsPattern)
-			.Include((AppSettings x) => x.DigitalSignOtpSmsPattern)
-			.Include((AppSettings x) => x.ThirdPersonDigitalSignLinkSmsPattern)
-			.Include((AppSettings x) => x.ThirdPersonDigitalSignCompleteSmsPattern)
-			.Include((AppSettings x) => x.ThirdPersonDigitalSignOtpSmsPattern)
-			.AsSplitQuery()
-			.FirstOrDefaultAsync((AppSettings x) => x.CustomerId == (Guid)_currentUserService.CustomerId);
+		if (!_currentUserService.CustomerId.HasValue)
+		{
+			return Task.FromResult<AppSettings>(null);
+		}
+		return GetAppSettings(_currentUserService.CustomerId.Value);
 	}
 
 	public Task<AppSettings> GetAppSettings(Guid customerId)
 	{
-		return Table<AppSettings>().Include((AppSettings x) => x.ThanksPaymentSmsPattern).Include((AppSettings x) => x.DueDateRememberSmsPattern).Include((AppSettings x) => x.OverDueDateSmsPattern)
-			.Include((AppSettings x) => x.BeforeDueDateSmsPattern)
-			.Include((AppSettings x) => x.LoginSmsPattern)
-			.Include((AppSettings x) => x.RegisterSmsPattern)
-			.Include((AppSettings x) => x.RegisterOtpSmsPattern)
-			.Include((AppSettings x) => x.WalletChargeSmsPattern)
-			.Include((AppSettings x) => x.NewOrderSmsPattern)
-			.FirstOrDefaultAsync((AppSettings x) => x.CustomerId == customerId);
+		IQueryable<AppSettings> query = Table<AppSettings>();
+		if (_currentUserService.IsInRole("SuperAdmin"))
+		{
+			query = query.IgnoreQueryFilters();
+		}
+		else if (!_currentUserService.CustomerId.HasValue || _currentUserService.CustomerId.Value != customerId)
+		{
+			throw new UnauthorizedAccessException("You cannot access another customer's application settings.");
+		}
+
+		return query
+			.Include(x => x.NewUserLoanSmsPattern)
+			.Include(x => x.ThanksPaymentSmsPattern)
+			.Include(x => x.DueDateRememberSmsPattern)
+			.Include(x => x.OverDueDateSmsPattern)
+			.Include(x => x.BeforeDueDateSmsPattern)
+			.Include(x => x.LoginSmsPattern)
+			.Include(x => x.LoginEmailPattern)
+			.Include(x => x.RegisterSmsPattern)
+			.Include(x => x.RegisterOtpSmsPattern)
+			.Include(x => x.WalletChargeSmsPattern)
+			.Include(x => x.NewOrderSmsPattern)
+			.Include(x => x.NewOrderEmailPattern)
+			.Include(x => x.OverDueDateEmailPattern)
+			.Include(x => x.RegisterEmailPattern)
+			.Include(x => x.RegisterOtpEmailPattern)
+			.Include(x => x.ThanksPaymentEmailPattern)
+			.Include(x => x.WalletChargeEmailPattern)
+			.Include(x => x.DueDateRememberEmailPattern)
+			.Include(x => x.BeforeDueDateEmailPattern)
+			.Include(x => x.WalletWithdrawOtpSmsPattern)
+			.Include(x => x.WalletWithdrawNotificationSmsPattern)
+			.Include(x => x.AgentFactorPaymentLinkSmsPattern)
+			.Include(x => x.DigitalSignLinkSmsPattern)
+			.Include(x => x.DigitalSignCompleteSmsPattern)
+			.Include(x => x.DigitalSignOtpSmsPattern)
+			.Include(x => x.ThirdPersonDigitalSignLinkSmsPattern)
+			.Include(x => x.ThirdPersonDigitalSignCompleteSmsPattern)
+			.Include(x => x.ThirdPersonDigitalSignOtpSmsPattern)
+			.AsSplitQuery()
+			.FirstOrDefaultAsync(x => x.CustomerId == customerId);
 	}
 
 	public Task Update(AppSettings entity)
 	{
-		entity.CustomerId = _currentUserService.CustomerId.Value;
+		if (_currentUserService.CustomerId.HasValue)
+		{
+			entity.CustomerId = _currentUserService.CustomerId.Value;
+		}
+		else if (!_currentUserService.IsInRole("SuperAdmin") || entity.CustomerId == Guid.Empty)
+		{
+			throw new UnauthorizedAccessException("A customer must be selected before saving application settings.");
+		}
 		if (entity.Id == Guid.Empty)
 		{
 			Insert(entity);
