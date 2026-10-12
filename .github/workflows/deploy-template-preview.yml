@@ -1,0 +1,89 @@
+name: Deploy standalone template preview
+run-name: Publish independent template preview
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "template-preview/index.html"
+      - ".github/workflows/deploy-template-preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: standalone-template-preview
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate independent HTML
+        run: |
+          set -euo pipefail
+          test -s template-preview/index.html
+          grep -qi '<html' template-preview/index.html
+          ! grep -qi 'وام‌سیتی\|vamcity' template-preview/index.html
+          echo "Independent template HTML validated."
+
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          : "${DEPLOY_HOST:?Missing DEPLOY_HOST secret}"
+          : "${DEPLOY_USER:?Missing DEPLOY_USER secret}"
+          : "${DEPLOY_SSH_KEY:?Missing DEPLOY_SSH_KEY secret}"
+          PORT="${DEPLOY_PORT:-22}"
+          umask 077
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/template_preview_key
+          chmod 600 ~/.ssh/template_preview_key
+          ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          echo "PORT=$PORT" >> "$GITHUB_ENV"
+          echo "HOST=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "USER=$DEPLOY_USER" >> "$GITHUB_ENV"
+
+      - name: Upload independent page
+        run: |
+          set -euo pipefail
+          scp -i ~/.ssh/template_preview_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            template-preview/index.html "$USER@$HOST:/tmp/template-preview-$GITHUB_SHA.html"
+
+      - name: Publish to separate web directory
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/template_preview_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST" \
+            "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
+          set -euo pipefail
+          SHA="$1"
+          ROOT="/home/roofixo/domains/roofixo.ir/public_html/template-preview"
+          SRC="/tmp/template-preview-$SHA.html"
+          test -s "$SRC"
+          install -d -m 755 "$ROOT"
+          install -m 644 "$SRC" "$ROOT/index.html.new"
+          grep -qi '<html' "$ROOT/index.html.new"
+          ! grep -qi 'وام‌سیتی\|vamcity' "$ROOT/index.html.new"
+          mv -f "$ROOT/index.html.new" "$ROOT/index.html"
+          rm -f "$SRC"
+          echo "PUBLISHED=$ROOT/index.html"
+          REMOTE
+
+      - name: Verify independent public URL
+        run: |
+          set -euo pipefail
+          URL="https://roofixo.ir/template-preview/"
+          CODE="$(curl -k -sS -L --max-time 20 -o /tmp/template-preview-check.html -w '%{http_code}' "$URL" || true)"
+          echo "$URL HTTP $CODE"
+          test "$CODE" = "200"
+          grep -qi '<html' /tmp/template-preview-check.html
+          ! grep -qi 'وام‌سیتی\|vamcity' /tmp/template-preview-check.html
+          echo "PUBLIC_URL_VERIFIED=$URL"
