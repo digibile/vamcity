@@ -121,6 +121,19 @@ jobs:
           location = / {
               return 302 /cl/plans/;
           }
+          # Legacy routes rendered an empty page; route them to the existing login UI.
+          location = /cl/login {
+              return 302 /login/;
+          }
+          location = /cl/login/ {
+              return 302 /login/;
+          }
+          location = /cl/register {
+              return 302 /login/;
+          }
+          location = /cl/register/ {
+              return 302 /login/;
+          }
           location / {
               proxy_pass http://127.0.0.1:5187;
               proxy_http_version 1.1;
