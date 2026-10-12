@@ -343,6 +343,18 @@ public class Startup
 				branch.UseStatusCodePagesWithReExecute("/home/error/{0}");
 			});
 		}
+		// Preserve the owner's exact legacy plans URL while serving the current Vue plans page.
+		app.Use(async (context, next) =>
+		{
+			string path = context.Request.Path.Value ?? string.Empty;
+			if (string.Equals(path, "/c/lplans/0/", StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(path, "/c/lplans/0", StringComparison.OrdinalIgnoreCase))
+			{
+				context.Response.Redirect("/cl/plans/", permanent: false);
+				return;
+			}
+			await next();
+		});
 		app.UseForwardedHeaders();
 		app.UseStaticFiles();
 		app.UseStaticFiles(new StaticFileOptions
