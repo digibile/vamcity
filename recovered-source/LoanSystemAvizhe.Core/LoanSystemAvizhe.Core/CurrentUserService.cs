@@ -113,23 +113,65 @@ public class CurrentUserService : ICurrentUserService
 		{
 			return _customerId;
 		}
-		if (_httpContextAccessor.HttpContext.Request.Headers.TryGetValue("JETAQSAAT_APP_CID", out var value))
+
+		var httpContext = _httpContextAccessor.HttpContext;
+		if (httpContext == null)
 		{
-			if (Guid.TryParse(value, out var result))
-			{
-				_customerId = result;
-			}
+			return null;
 		}
-		else
+
+		// Tenant identity from a signed access token is authoritative for ordinary
+		// users. The SPA also sends JETAQSAAT_APP_CID; stale/empty client headers
+		// must not override the token and silently filter every database query.
+		Claim tenantClaim = httpContext.User?.FindFirst("JETAQSAAT_APP_CID");
+		if (tenantClaim != null && Guid.TryParse(tenantClaim.Value, out var tokenCustomerId))
 		{
-			foreach (Claim claim in _httpContextAccessor.HttpContext.User.Claims)
+			if (httpContext.User.IsInRole("SuperAdmin") &&
+				httpContext.Request.Headers.TryGetValue(CUSTOMER_HEADER_KEY, out var adminHeader) &&
+				Guid.TryParse(adminHeader, out var selectedCustomerId))
 			{
-				if (claim.Type == "JETAQSAAT_APP_CID" && Guid.TryParse(claim.Value, out var result2))
+				_customerId = selectedCustomerId;
+			}
+			else
+			{
+				_customerId = tokenCustomerId;
+			}
+			return _customerId;
+		}
+
+		// Older tokens may only contain the serialized userData claim.
+		Claim userDataClaim = httpContext.User?.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/userdata");
+		if (!string.IsNullOrWhiteSpace(userDataClaim?.Value))
+		{
+			try
+			{
+				using JsonDocument document = JsonDocument.Parse(userDataClaim.Value);
+				if (document.RootElement.TryGetProperty("customer", out var customer) &&
+					customer.ValueKind == JsonValueKind.Object &&
+					customer.TryGetProperty("id", out var id) &&
+					Guid.TryParse(id.ToString(), out var parsedCustomerId))
 				{
-					_customerId = result2;
-					break;
+					_customerId = parsedCustomerId;
+					return _customerId;
 				}
 			}
+			catch (JsonException)
+			{
+				// Fall through to the safe legacy-header path below.
+			}
+		}
+
+		// Never accept a client-supplied tenant header as identity for an
+		// authenticated account when the signed token has no tenant claim.
+		if (httpContext.User?.Identity?.IsAuthenticated == true)
+		{
+			return null;
+		}
+
+		if (httpContext.Request.Headers.TryGetValue(CUSTOMER_HEADER_KEY, out var value) &&
+			Guid.TryParse(value, out var anonymousCustomerId))
+		{
+			_customerId = anonymousCustomerId;
 		}
 		return _customerId;
 	}
@@ -140,23 +182,51 @@ public class CurrentUserService : ICurrentUserService
 		{
 			return _userId;
 		}
-		if (_httpContextAccessor.HttpContext.Request.Headers.TryGetValue("JETAQSAAT_APP_UID", out var value))
+
+		var httpContext = _httpContextAccessor.HttpContext;
+		if (httpContext == null)
 		{
-			if (long.TryParse(value, out var _))
-			{
-				_userId = long.Parse(value);
-			}
+			return null;
 		}
-		else
+
+		// The user ID must come from the signed token, not from a mutable SPA
+		// header. This prevents a stale browser value from breaking user-scoped
+		// queries and prevents callers from impersonating another user by header.
+		Claim userClaim = httpContext.User?.FindFirst(USER_HEADER_KEY);
+		if (userClaim != null && long.TryParse(userClaim.Value, out var tokenUserId))
 		{
-			foreach (Claim claim in _httpContextAccessor.HttpContext.User.Claims)
+			_userId = tokenUserId;
+			return _userId;
+		}
+
+		Claim userDataClaim = httpContext.User?.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/userdata");
+		if (!string.IsNullOrWhiteSpace(userDataClaim?.Value))
+		{
+			try
 			{
-				if (claim.Type == "JETAQSAAT_APP_UID" && long.TryParse(claim.Value, out var result2))
+				using JsonDocument document = JsonDocument.Parse(userDataClaim.Value);
+				if (document.RootElement.TryGetProperty("id", out var id) &&
+					long.TryParse(id.ToString(), out var parsedUserId))
 				{
-					_userId = result2;
-					break;
+					_userId = parsedUserId;
+					return _userId;
 				}
 			}
+			catch (JsonException)
+			{
+				// Fall through to the unauthenticated legacy-header path below.
+			}
+		}
+
+		if (httpContext.User?.Identity?.IsAuthenticated == true)
+		{
+			return null;
+		}
+
+		if (httpContext.Request.Headers.TryGetValue(USER_HEADER_KEY, out var value) &&
+			long.TryParse(value, out var anonymousUserId))
+		{
+			_userId = anonymousUserId;
 		}
 		return _userId;
 	}
