@@ -96,7 +96,7 @@ jobs:
               --env-file "$PRIVATE/app.env" \
               -v "$RELEASE:/app" -v "$PRIVATE/uploads:/app/uploads" \
               -w /app --entrypoint dotnet \
-              mcr.microsoft.com/dotnet/aspnet:10.0 LoanSystemAvizhe.Site.dll 2>&1 || true
+              mcr.microsoft.com/dotnet/aspnet:9.0 LoanSystemAvizhe.Site.dll 2>&1 || true
           fi
           echo "=== END DIAGNOSTICS ==="
           REMOTE
