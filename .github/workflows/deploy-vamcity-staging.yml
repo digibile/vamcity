@@ -36,10 +36,13 @@ jobs:
           set -euo pipefail
           test -f wwwroot/ui/index.html
           mkdir -p recovered-source/LoanSystemAvizhe.Site/wwwroot
-          # Vue bundle references /js/*, /css/* and /myStyle.css. Put assets at web root, not /ui.
+          # Preserve original root assets (logos/fonts) and also publish Vue assets at /js and /css.
+          cp -a wwwroot/. recovered-source/LoanSystemAvizhe.Site/wwwroot/
           cp -a wwwroot/ui/. recovered-source/LoanSystemAvizhe.Site/wwwroot/
           test -s recovered-source/LoanSystemAvizhe.Site/wwwroot/index.html
           test -s recovered-source/LoanSystemAvizhe.Site/wwwroot/js/app.e76ab352.js
+          test -s recovered-source/LoanSystemAvizhe.Site/wwwroot/logo-wide.png
+          test -s recovered-source/LoanSystemAvizhe.Site/wwwroot/iranyekanweb.ttf
           dotnet publish recovered-source/LoanSystemAvizhe.Site/LoanSystemAvizhe.Site.csproj \
             --configuration Release --output ./artifacts/vamcity --verbosity minimal
           cp deployment/linux-postgresql/nlog.staging.config ./artifacts/vamcity/nlog.config
@@ -341,6 +344,13 @@ jobs:
           fi
           PLAN_JSON="$(curl -fsS --max-time 20 -H 'Accept: application/json' "http://127.0.0.1:5187/Loan/List/$CUSTOMER_CODE")"
           printf '%s' "$PLAN_JSON" | python3 -c 'import json,sys; d=json.load(sys.stdin); ok=d.get("success",d.get("Success")); data=d.get("data",d.get("Data")); assert ok is True, "public plan API returned unsuccessful response"; assert isinstance(data,list), "public plan API data is not a list"; print("VAMCITY_PUBLIC_PLAN_API_OK count=%d" % len(data))'
+          LANDING_JSON="$(curl -fsS --max-time 15 -H 'Accept: application/json' "http://127.0.0.1:5187/appSettings/GetLandingSettings/0")"
+          printf '%s' "$LANDING_JSON" | python3 -c 'import json,sys; d=json.load(sys.stdin); ok=d.get("success",d.get("Success")); assert ok is True, "landing settings API returned unsuccessful response"; print("VAMCITY_LANDING_SETTINGS_API_OK")'
+          for ASSET_PATH in /logo-wide.png /iranyekanweb.ttf; do
+            ASSET_CODE="$(curl -sS -o /dev/null --max-time 8 -w '%{http_code}' "http://127.0.0.1:5187$ASSET_PATH")"
+            echo "VAMCITY_STATIC_ASSET path=$ASSET_PATH http=$ASSET_CODE"
+            [ "$ASSET_CODE" = "200" ] || { echo "VAMCITY_STATIC_ASSET_FAILED path=$ASSET_PATH"; exit 1; }
+          done
           echo "VAMCITY_TENANT_CONFIG_OK customer_code=$CUSTOMER_CODE"
 
           echo "=== CONFIGURE ROOFIXO.IR AS VAMCITY PRIMARY DOMAIN ==="
