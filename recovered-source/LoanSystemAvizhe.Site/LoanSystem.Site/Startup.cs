@@ -243,7 +243,7 @@ public class Startup
 		services.AddHangfireServer();
 		services.AddMvc((MvcOptions option) =>
 		{
-			option.EnableEndpointRouting = false;
+			option.EnableEndpointRouting = true;
 		}).AddJsonOptions((JsonOptions options) =>
 		{
 			options.JsonSerializerOptions.PropertyNameCaseInsensitive = false;
@@ -306,7 +306,6 @@ public class Startup
 		app.UseCors("VueCorsPolicy");
 		UseAthentication(app);
 		app.UseAuthorization();
-		app.UseMvc();
 		app.UseHangfireDashboard("/jetaqsaat_hangfire", new DashboardOptions
 		{
 			Authorization = new HangfireAuthorizationFilter[1]
@@ -314,11 +313,15 @@ public class Startup
 				new HangfireAuthorizationFilter(_tokenValidationParameters, "SuperAdmin")
 			}
 		});
-		app.UseHangfireDashboard("/jetaqsaat_hangfire");
 		app.UseEndpoints((IEndpointRouteBuilder endpoints) =>
 		{
 			endpoints.MapControllers();
-			endpoints.MapHangfireDashboard();
+			endpoints.MapControllerRoute(
+				name: "areas",
+				pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+			endpoints.MapControllerRoute(
+				name: "default",
+				pattern: "{controller=Home}/{action=Index}/{id?}");
 		});
 		app.UseSpaStaticFiles();
 		app.UseSpa((ISpaBuilder builder) =>
