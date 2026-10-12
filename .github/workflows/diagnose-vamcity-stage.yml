@@ -118,7 +118,18 @@ jobs:
               SELECT ClaimType, COUNT_BIG(*) AS claim_count
               FROM [vamcity_stage].dbo.AspNetUserClaims
               WHERE ClaimType NOT LIKE '%userdata%' AND ClaimType NOT LIKE '%email%' AND ClaimType NOT LIKE '%mobile%' AND ClaimType NOT LIKE '%name%'
-              GROUP BY ClaimType ORDER BY ClaimType;" 2>&1
+              GROUP BY ClaimType ORDER BY ClaimType;
+              SELECT ClaimValue AS permission_name, COUNT_BIG(*) AS assignments
+              FROM [vamcity_stage].dbo.AspNetUserClaims
+              WHERE ClaimType=N'Permission'
+              GROUP BY ClaimValue ORDER BY ClaimValue;
+              SELECT r.Name AS role_name, COUNT(DISTINCT u.Id) AS active_users,
+                     COUNT(uc.Id) AS permission_assignments
+              FROM [vamcity_stage].dbo.AspNetRoles r
+              LEFT JOIN [vamcity_stage].dbo.AspNetUserRoles ur ON ur.RoleId=r.Id
+              LEFT JOIN [vamcity_stage].dbo.AspNetUsers u ON u.Id=ur.UserId AND u.IsActive=1
+              LEFT JOIN [vamcity_stage].dbo.AspNetUserClaims uc ON uc.UserId=u.Id AND uc.ClaimType=N'Permission'
+              GROUP BY r.Name ORDER BY r.Name;" 2>&1
           fi
           echo "=== ONE-SHOT APP DIAGNOSTIC (isolated network, no host port) ==="
           BASE=/home/roofixo/domains/roofixo.ir/vamcity-app
