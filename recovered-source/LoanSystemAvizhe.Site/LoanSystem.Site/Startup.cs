@@ -348,7 +348,9 @@ public class Startup
 		{
 			string path = context.Request.Path.Value ?? string.Empty;
 			if (string.Equals(path, "/c/lplans/0/", StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(path, "/c/lplans/0", StringComparison.OrdinalIgnoreCase))
+				string.Equals(path, "/c/lplans/0", StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(path, "/clplans/0/", StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(path, "/clplans/0", StringComparison.OrdinalIgnoreCase))
 			{
 				context.Response.Redirect("/cl/plans/", permanent: false);
 				return;
