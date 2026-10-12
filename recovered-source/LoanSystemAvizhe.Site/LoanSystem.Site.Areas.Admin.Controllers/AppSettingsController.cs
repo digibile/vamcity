@@ -51,7 +51,7 @@ public class AppSettingsController : BaseAdminController
 	[HttpGet("[action]")]
 	public Task<ResponseState<AppSettingsModel>> Get()
 	{
-		return TryCatch(async () =>
+		return TryCatch<AppSettingsModel>(async () =>
 		{
 			AppSettings appSettings = await GetCurrentAppSettingsAsync(false);
 			if (appSettings == null)
