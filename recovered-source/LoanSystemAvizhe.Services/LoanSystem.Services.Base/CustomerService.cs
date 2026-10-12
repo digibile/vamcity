@@ -19,7 +19,15 @@ public class CustomerService : BaseService, ICustomerService
 
 	public Task<List<Customer>> GetAllCustomers()
 	{
-		return Table<Customer>().ToListAsync();
+		IQueryable<Customer> query = Table<Customer>();
+		// Tenant query filters are correct for ordinary users, but the SuperAdmin
+		// customer registry must show every tenant or the customer/plan screens
+		// appear empty even when the restored database contains customer rows.
+		if (_currentUserService.IsInRole("SuperAdmin"))
+		{
+			query = query.IgnoreQueryFilters();
+		}
+		return query.OrderByDescending(x => x.RegDate).ToListAsync();
 	}
 
 	public Task<Customer> GetById(Guid entityId, params string[] includs)
