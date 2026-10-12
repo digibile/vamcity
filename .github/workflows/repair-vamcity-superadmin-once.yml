@@ -52,6 +52,13 @@ jobs:
           test -n "$SQLCMD"
           docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "
           SET NOCOUNT ON;
+          SET QUOTED_IDENTIFIER ON;
+          SET ANSI_NULLS ON;
+          SET ANSI_PADDING ON;
+          SET ANSI_WARNINGS ON;
+          SET CONCAT_NULL_YIELDS_NULL ON;
+          SET ARITHABORT ON;
+          SET NUMERIC_ROUNDABORT OFF;
           BEGIN TRY
             BEGIN TRANSACTION;
             DECLARE @assigned bigint = (
