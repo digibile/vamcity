@@ -76,8 +76,14 @@ jobs:
           else
             echo "CUSTOM_NGINX_FILE_MISSING"
           fi
-          echo "=== GENERATED PROXY CONFIG CONTEXT ==="
-          grep -n -B 8 -A 18 'proxy_pass http://127.0.0.1:5187' /usr/local/directadmin/data/users/roofixo/nginx.conf 2>/dev/null | head -100 || true
+          echo "=== GENERATED CONFIG FILES ==="
+          ls -l /usr/local/directadmin/data/users/roofixo/nginx*.conf 2>/dev/null || true
+          for cfg in /usr/local/directadmin/data/users/roofixo/nginx.conf /usr/local/directadmin/data/users/roofixo/nginx_secure.conf /usr/local/directadmin/data/users/roofixo/nginx_ssl.conf; do
+            if [ -f "$cfg" ]; then
+              echo "CONFIG_FILE=$cfg"
+              grep -n -B 8 -A 18 'proxy_pass http://127.0.0.1:5187' "$cfg" | head -80 || true
+            fi
+          done
           echo "=== APP LOOPBACK ROUTES ==="
           for path in / /cl/plans/ /login/ /cl/login/ /cl/register/; do
             status="$(curl -sS -o /tmp/vamcity-check-body --max-time 8 -w '%{http_code}' "http://127.0.0.1:5187$path" || true)"
@@ -88,7 +94,8 @@ jobs:
             set -- $spec; port="$1"; scheme="$2"
             for path in / /cl/plans/ /login/ /cl/login/ /cl/register/; do
               status="$(curl --resolve "roofixo.ir:$port:127.0.0.1" -k -sS -o /tmp/vamcity-check-body --max-time 8 -w '%{http_code}' "$scheme://roofixo.ir$path" || true)"
-              echo "VHOST_LOCAL $scheme $status $path BODY_BYTES=$(wc -c < /tmp/vamcity-check-body 2>/dev/null || echo 0)"
+              prefix="$(head -c 160 /tmp/vamcity-check-body 2>/dev/null | tr '\n' ' ' || true)"
+              echo "VHOST_LOCAL $scheme $status $path BODY_BYTES=$(wc -c < /tmp/vamcity-check-body 2>/dev/null || echo 0) BODY_PREFIX=$prefix"
             done
           done
           echo "=== RECENT NGINX ERRORS ==="
