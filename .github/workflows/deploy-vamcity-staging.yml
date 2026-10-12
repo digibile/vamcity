@@ -259,6 +259,20 @@ jobs:
           echo "=== VALIDATE RESTORED BUSINESS SCHEMA BEFORE STARTING APP ==="
           docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "USE [$DB_NAME]; SET NOCOUNT ON; DECLARE @missing nvarchar(max)=N''; SELECT @missing=@missing+name+N', ' FROM (VALUES (N'Customers'),(N'AppSettings'),(N'AspNetUsers'),(N'AspNetRoles'),(N'Loans'),(N'UserLoans')) AS required(name) WHERE OBJECT_ID(N'dbo.'+name,N'U') IS NULL; IF @missing<>N'' THROW 51001, @missing, 1; SELECT N'Customers' AS Entity, COUNT_BIG(*) AS TotalRows FROM dbo.Customers UNION ALL SELECT N'AppSettings', COUNT_BIG(*) FROM dbo.AppSettings UNION ALL SELECT N'AspNetUsers', COUNT_BIG(*) FROM dbo.AspNetUsers UNION ALL SELECT N'AspNetRoles', COUNT_BIG(*) FROM dbo.AspNetRoles UNION ALL SELECT N'Loans', COUNT_BIG(*) FROM dbo.Loans UNION ALL SELECT N'UserLoans', COUNT_BIG(*) FROM dbo.UserLoans UNION ALL SELECT N'CustomerPurchasePlan', COUNT_BIG(*) FROM dbo.CustomerPurchasePlan UNION ALL SELECT N'Purchases', COUNT_BIG(*) FROM dbo.Purchases; SELECT N'EF_Migration_History_Rows' AS CheckName, COUNT_BIG(*) AS TotalRows FROM dbo.__EFMigrationsHistory;" 
 
+          # Resolve the dedicated installation's tenant from the restored database.
+          # CustomerCode=0 silently empties tenant-specific panels and breaks settings/plans lookup.
+          TENANT_COUNT="$(docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -h -1 -W -Q "SET NOCOUNT ON; SELECT COUNT_BIG(*) FROM [$DB_NAME].dbo.Customers;" | tr -d '[:space:]')"
+          if [ "$TENANT_COUNT" != "1" ]; then
+            echo "EXPECTED_EXACTLY_ONE_TENANT_FOR_DEDICATED_ROOFIXO_INSTALLATION; TENANT_COUNT=$TENANT_COUNT"
+            exit 1
+          fi
+          CUSTOMER_CODE="$(docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -h -1 -W -Q "SET NOCOUNT ON; SELECT TOP (1) Code FROM [$DB_NAME].dbo.Customers;" | tr -d '[:space:]')"
+          if ! [[ "$CUSTOMER_CODE" =~ ^[0-9]+$ ]] || [ "$CUSTOMER_CODE" -le 0 ]; then
+            echo "INVALID_TENANT_CUSTOMER_CODE=$CUSTOMER_CODE"
+            exit 1
+          fi
+          echo "VAMCITY_CONFIGURED_CUSTOMER_CODE=$CUSTOMER_CODE"
+
           # Keep the JWT signing key stable across releases so existing login tokens remain valid.
           APP_SECRET=""
           if [ -s "$PRIVATE/app.env" ]; then
@@ -266,8 +280,8 @@ jobs:
           fi
           if [ -z "$APP_SECRET" ]; then APP_SECRET="$(openssl rand -hex 32)"; fi
           umask 077
-          printf 'ASPNETCORE_URLS=http://+:8080\nASPNETCORE_ENVIRONMENT=Production\nConnectionStrings__DefaultConnection=Server=%s,1433;Database=%s;User Id=sa;Password=%s;Encrypt=False;TrustServerCertificate=True;\nAppConfig__JwtSecretKey=%s\nAppConfig__BaseUrl=https://roofixo.ir\nAppConfig__FrontUrl=https://roofixo.ir\n' \
-            "$SQL_CONTAINER" "$DB_NAME" "$SQL_PASSWORD" "$APP_SECRET" > "$PRIVATE/app.env"
+          printf 'ASPNETCORE_URLS=http://+:8080\nASPNETCORE_ENVIRONMENT=Production\nConnectionStrings__DefaultConnection=Server=%s,1433;Database=%s;User Id=sa;Password=%s;Encrypt=False;TrustServerCertificate=True;\nAppConfig__JwtSecretKey=%s\nAppConfig__IsCloud=false\nAppConfig__CustomerCode=%s\nAppConfig__BaseUrl=https://roofixo.ir\nAppConfig__FrontUrl=https://roofixo.ir\n' \
+            "$SQL_CONTAINER" "$DB_NAME" "$SQL_PASSWORD" "$APP_SECRET" "$CUSTOMER_CODE" > "$PRIVATE/app.env"
           chmod 600 "$PRIVATE/app.env"
 
           if docker container inspect "$APP_CONTAINER" >/dev/null 2>&1; then docker rm -f "$APP_CONTAINER" >/dev/null; fi
