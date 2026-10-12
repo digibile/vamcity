@@ -30,8 +30,16 @@ jobs:
             const browser = await chromium.launch({headless:true});
             const context = await browser.newContext({ignoreHTTPSErrors:true});
             const page = await context.newPage();
-            const queue = [...starts], visited = new Set(), bad = [], errors = [];
+            const queue = [...starts], visited = new Set(), bad = [], errors = [], httpErrors = [], authRequired = [];
             page.on('pageerror', e => errors.push('PAGEERROR '+e.message));
+            page.on('console', msg => { if (msg.type() === 'error') errors.push('CONSOLE '+msg.text()); });
+            page.on('response', response => {
+              const url = response.url();
+              if (!url.startsWith(base)) return;
+              const status = response.status();
+              if (status === 401 || status === 403) authRequired.push({status,url});
+              else if (status === 404 || status >= 500) httpErrors.push({status,url});
+            });
             while (queue.length && visited.size < 80) {
               const path = queue.shift();
               if (visited.has(path)) continue;
@@ -65,9 +73,11 @@ jobs:
             }
             console.log('PAGES_VISITED',visited.size);
             console.log('BROWSER_PAGE_ERRORS',JSON.stringify(errors));
+            console.log('HTTP_404_AND_5XX',JSON.stringify([...new Map(httpErrors.map(x => [x.status+' '+x.url,x])).values()]));
+            console.log('AUTH_REQUIRED_401_AND_403',JSON.stringify([...new Map(authRequired.map(x => [x.status+' '+x.url,x])).values()]));
             console.log('BROKEN_LINKS',JSON.stringify(bad));
             await browser.close();
-            if (bad.length || errors.length) process.exitCode = 1;
+            if (bad.length || errors.length || httpErrors.length) process.exitCode = 1;
           })();
           NODE
           node audit.cjs
