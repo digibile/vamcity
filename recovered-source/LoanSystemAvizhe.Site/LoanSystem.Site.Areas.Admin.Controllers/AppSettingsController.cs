@@ -395,7 +395,7 @@ public class AppSettingsController : BaseAdminController
 	{
 		return TryCatch(async () =>
 		{
-			AppSettings entity = await _appSettingsService.GetAppSettings();
+			AppSettings entity = await GetCurrentAppSettingsAsync(true);
 			if (entity == null)
 			{
 				entity = new AppSettings();
