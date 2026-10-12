@@ -396,13 +396,19 @@ jobs:
             exit 1
           fi
           systemctl reload nginx
+          SERVER_INTERFACE_IP="$(ip route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
+          DOMAIN_IP="$(sed -n 's/^ip=//p' /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf 2>/dev/null | head -1)"
+          VHOST_TEST_IP="$DOMAIN_IP"
+          if [ -z "$VHOST_TEST_IP" ] || ! ip -o -4 addr show 2>/dev/null | grep -Fq "$VHOST_TEST_IP"; then VHOST_TEST_IP="$SERVER_INTERFACE_IP"; fi
+          test -n "$VHOST_TEST_IP" || { echo "ROOFIXO_VHOST_TEST_IP_UNAVAILABLE"; exit 1; }
+          echo "ROOFIXO_LOCAL_VHOST_TEST_IP_ASSIGNED=yes"
           echo "=== API TRANSPORT CHECK (local Roofixo vhost; anonymous protected routes should return 401/403) ==="
           for API_PATH in /superadmin/dashboard/get /admin/appSettings/get; do
             API_CODE="000"
             # ASP.NET may still be applying EF migrations immediately after the container starts.
             # Retry transient 000/404/5xx responses instead of racing application startup.
             for ATTEMPT in $(seq 1 24); do
-              API_CODE="$(curl -k -sS --max-time 8 --resolve roofixo.ir:443:127.0.0.1 -H 'Accept: application/json' -o /dev/null -w '%{http_code}' "https://roofixo.ir$API_PATH" 2>/dev/null || true)"
+              API_CODE="$(curl -k -sS --max-time 8 --resolve "roofixo.ir:443:$VHOST_TEST_IP" -H 'Accept: application/json' -o /dev/null -w '%{http_code}' "https://roofixo.ir$API_PATH" 2>/dev/null || true)"
               echo "API_TRANSPORT_ATTEMPT path=$API_PATH attempt=$ATTEMPT http=$API_CODE"
               case "$API_CODE" in
                 200|204|301|302|307|308|401|403) break ;;
@@ -439,7 +445,7 @@ jobs:
             CODE="$(curl -k -sS --max-time 8 --resolve "roofixo.ir:443:$IP" -o /dev/null -w '%{http_code}' https://roofixo.ir/ || true)"
             echo "LOCAL_INTERFACE_VHOST_TEST_IP=$IP HTTP=$CODE"
           done
-          DOMAIN_HTTP="$(curl -k -sS -o /dev/null --max-time 12 -w '%{http_code}' --resolve roofixo.ir:443:127.0.0.1 https://roofixo.ir/ || true)"
+          DOMAIN_HTTP="$(curl -k -sS -o /dev/null --max-time 12 -w '%{http_code}' --resolve "roofixo.ir:443:$VHOST_TEST_IP" https://roofixo.ir/ || true)"
           echo "ROOFIXO_HTTPS_LOCAL_HTTP=$DOMAIN_HTTP"
           case "$DOMAIN_HTTP" in
             200|301|302|307|308) echo "ROOFIXO_PRIMARY_DOMAIN_PROXY_OK" ;;
