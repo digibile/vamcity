@@ -53,7 +53,7 @@ public class AppSettingsController : BaseAdminController
 	{
 		return TryCatch<AppSettingsModel>(async () =>
 		{
-			AppSettings appSettings = await GetCurrentAppSettingsAsync(false);
+			AppSettings appSettings = await GetCurrentAppSettingsAsync(true);
 			if (appSettings == null)
 			{
 				return Error<AppSettingsModel>(default, "تنظیمات برای مشتری انتخاب‌شده پیدا نشد.");
