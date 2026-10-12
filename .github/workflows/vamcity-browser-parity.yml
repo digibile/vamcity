@@ -6,6 +6,10 @@ on:
   workflow_run:
     workflows: ["Deploy VamCity Linux staging on Roofixo"]
     types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/vamcity-browser-parity.yml"
   workflow_dispatch:
 
 permissions:
