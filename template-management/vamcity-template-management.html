@@ -134,7 +134,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
   <a class="navbtn" href="/cl/agentregister/0/" style="text-decoration:none"><span class="ico">＋</span>ثبت درخواست همکاری پذیرنده</a>
   <a class="navbtn" href="/admin/loanPaymentRequests" style="text-decoration:none"><span class="ico">⇄</span>پرداخت‌ها و درخواست‌های تسویه</a>
   <div class="side-label">مدیریت</div>
-  <a class="navbtn" href="/vamcity-template-management/" style="text-decoration:none"><span class="ico">▧</span>مدیریت قالب و صفحات</a>
+  <a class="navbtn" href="/admin/appSettings" style="text-decoration:none"><span class="ico">▧</span>تنظیمات قالب و صفحات</a>
   <a class="navbtn" href="/admin/appSettings" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات و دسترسی‌ها</a>
   <div class="side-label">امکانات موجود سامانه</div>
   <a class="navbtn" href="/admin/appSettings" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات اپلیکیشن</a>
@@ -187,7 +187,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
 <main class="main">
 <section class="section active" id="overview">
   <div class="crumb">مدیریت قالب / نمای کلی</div>
-  <div class="pagehead"><div><h1>مرکز مدیریت وام‌سیتی</h1><p>نمای کلی تجربه وام، فروشگاه‌های همکار و عملیات پذیرندگان، در سه فضای مستقل.</p></div><div class="actions"><button class="btn" onclick="toast('گزارش نمونه آماده شد؛ اتصال خروجی واقعی در نسخه اجرایی انجام می‌شود.')">↓ دریافت گزارش</button><button class="btn primary" onclick="go('template')">مدیریت قالب</button></div></div>
+  <div class="pagehead"><div><h1>مرکز مدیریت وام‌سیتی</h1><p>نمای کلی تجربه وام، فروشگاه‌های همکار و عملیات پذیرندگان، در سه فضای مستقل.</p></div><div class="actions"><button class="btn" onclick="openLegacy('/admin/reports/','مرکز گزارش‌ها')">↓ دریافت گزارش</button><button class="btn primary" onclick="openLegacy('/admin/appSettings','تنظیمات اپلیکیشن')">مدیریت قالب</button></div></div>
   <div class="banner"><div><h2>مرکز مدیریت <span class="gold">وام‌سیتی</span></h2><p>رابط جدید مدیریتی در کنار امکانات عملیاتی قبلی؛ آمار ساختگی نمایش داده نمی‌شود و مسیرهای موجود حفظ شده‌اند.</p></div><a class="btn primary" href="/admin/userLoanRequests/">درخواست‌های تسهیلات ←</a></div>
   <div class="notice" role="note"><strong>وضعیت اتصال:</strong> این پنل جدید در حال جایگزینی رابط قدیمی است. آمار و فعالیت‌های ماژول‌های جدید تا زمان اتصال API عمداً نمایش داده نمی‌شوند. عملیات واقعی سامانه از پیوندهای «امکانات موجود سامانه» در همین سایدبار باز می‌شود؛ تنظیمات اپلیکیشن و پشتیبان‌گیری نیز حفظ شده‌اند.</div>
   <div class="metrics">
@@ -203,7 +203,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
       <div class="activity-item"><div class="activity-icon">▤</div><div><b>درخواست‌های تسهیلات</b><small id="live-requests-check">در حال بررسی اتصال به API واقعی</small></div></div>
       <div class="activity-item"><div class="activity-icon">⚙</div><div><b>ابزارهای قدیمی سامانه</b><small>از همین سایدبار و بدون حذف قابلیت‌های قبلی در دسترس هستند.</small><a class="btn small" href="/admin/appSettings">تنظیمات اپلیکیشن</a> <a class="btn small" href="/admin/appBackup">پشتیبان‌گیری و بازیابی</a></div></div>
     </div></div>
-    <div class="card"><div class="cardhead"><h3>اقدامات و بررسی‌های اخیر</h3><button class="btn small" onclick="go('applications')">مشاهده همه</button></div><div class="activity">
+    <div class="card"><div class="cardhead"><h3>اقدامات و بررسی‌های اخیر</h3><button class="btn small" onclick="openLegacy('/admin/userLoanRequests/','درخواست‌های وام')">مشاهده همه</button></div><div class="activity">
       <div class="activity-item"><div class="activity-icon">◈</div><div><b>مدیریت وام‌ها</b><small>نمایش اطلاعات زنده از سامانه فعلی</small></div><a class="btn small" href="/admin/loans/">بازکردن</a></div>
       <div class="activity-item"><div class="activity-icon">♙</div><div><b>اعضا و مشتریان</b><small>مدیریت از مسیر اصلی سامانه</small></div><a class="btn small" href="/admin/members/">بازکردن</a></div>
       <div class="activity-item"><div class="activity-icon">▤</div><div><b>درخواست‌های تسهیلات</b><small>پیوند به صفحه عملیاتی موجود</small></div><a class="btn small" href="/admin/userLoanRequests/">بازکردن</a></div>
@@ -211,9 +211,9 @@ img,svg,video,canvas{max-width:100%;height:auto}
     </div></div>
   </div>
   <div class="grid3">
-    <div class="card"><div class="cardhead"><h3>سامانه تسهیلات</h3><span class="tag">مستقل</span></div><p class="muted">طرح‌ها، محاسبات، مقایسه و درخواست‌های وام.</p><button class="btn dark" style="width:100%" onclick="go('loans')">مدیریت تسهیلات ←</button></div>
-    <div class="card"><div class="cardhead"><h3>شبکه فروشگاه‌ها</h3><span class="tag blue">مستقل</span></div><p class="muted">پروفایل فروشگاه، محصولات، سفارش‌ها و خرید اعتباری.</p><button class="btn dark" style="width:100%" onclick="go('stores')">مدیریت فروشگاه‌ها ←</button></div>
-    <div class="card"><div class="cardhead"><h3>پذیرندگان پرداخت‌یاری</h3><span class="tag gold">مستقل</span></div><p class="muted">ثبت‌نام پذیرنده، بررسی پرونده، تراکنش و تسویه.</p><button class="btn dark" style="width:100%" onclick="go('pay-merchants')">مدیریت پذیرندگان ←</button></div>
+    <div class="card"><div class="cardhead"><h3>سامانه تسهیلات</h3><span class="tag">مستقل</span></div><p class="muted">طرح‌ها، محاسبات، مقایسه و درخواست‌های وام.</p><button class="btn dark" style="width:100%" onclick="openLegacy('/admin/loans/','مدیریت طرح‌های تسهیلات')">مدیریت تسهیلات ←</button></div>
+    <div class="card"><div class="cardhead"><h3>شبکه فروشگاه‌ها</h3><span class="tag blue">مستقل</span></div><p class="muted">پروفایل فروشگاه، محصولات، سفارش‌ها و خرید اعتباری.</p><button class="btn dark" style="width:100%" onclick="openLegacy('/admin/contacts/','مخاطبان و پذیرندگان')">مدیریت فروشگاه‌ها ←</button></div>
+    <div class="card"><div class="cardhead"><h3>پذیرندگان پرداخت‌یاری</h3><span class="tag gold">مستقل</span></div><p class="muted">ثبت‌نام پذیرنده، بررسی پرونده، تراکنش و تسویه.</p><button class="btn dark" style="width:100%" onclick="openLegacy('/admin/contacts/','پرونده پذیرندگان')">مدیریت پذیرندگان ←</button></div>
   </div>
 </section>
 <section class="section" id="loans">
@@ -346,8 +346,9 @@ img,svg,video,canvas{max-width:100%;height:auto}
 </main></div></div>
 <div class="toast" id="toast"></div>
 <script>
-const pages={overview:"داشبورد مدیریت",loans:"طرح‌های تسهیلات",calculator:"محاسبه‌گر و مقایسه",applications:"درخواست‌های وام",stores:"فروشگاه‌های همکار","store-register":"ثبت‌نام فروشگاه",products:"محصولات و سفارش‌ها","pay-merchants":"پذیرندگان پرداخت","pay-register":"ثبت‌نام پذیرنده",transactions:"تراکنش و تسویه",template:"مدیریت قالب و صفحات",settings:"تنظیمات و دسترسی‌ها"};
-function go(id){if(typeof legacyWorkspace!=="undefined"&&legacyWorkspace){legacyWorkspace.hidden=true;if(legacyFrame)legacyFrame.src="about:blank";if(typeof mainSections!=="undefined")mainSections.forEach(section=>section.style.display="");}document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active",b.dataset.page===id));if(!pages[id])return;window.scrollTo({top:0,behavior:"smooth"});}
+const pages={overview:"داشبورد مدیریت",calculator:"محاسبه‌گر و مقایسه"};
+const operationalPages={loans:["/admin/loans/","مدیریت طرح‌های تسهیلات"],applications:["/admin/userLoanRequests/","درخواست‌های وام"],stores:["/admin/contacts/","مخاطبان و پذیرندگان"],"store-register":["/cl/agentregister/0/","درخواست همکاری و نمایندگی"],products:["/admin/customerOrders/","سفارش‌های مشتریان"],"pay-merchants":["/admin/contacts/","پرونده پذیرندگان"],"pay-register":["/cl/agentregister/0/","درخواست همکاری پذیرندگان"],transactions:["/admin/loanPaymentRequests","پرداخت‌ها و درخواست‌های تسویه"],settings:["/admin/appSettings","تنظیمات اپلیکیشن"]};
+function go(id){if(operationalPages[id]){openLegacy(operationalPages[id][0],operationalPages[id][1]);return;}if(typeof legacyWorkspace!=="undefined"&&legacyWorkspace){legacyWorkspace.hidden=true;if(legacyFrame)legacyFrame.src="about:blank";if(typeof mainSections!=="undefined")mainSections.forEach(section=>section.style.display="");}document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active",b.dataset.page===id));if(!pages[id])return;window.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll(".navbtn[data-page]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
 let toastTimer;function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),3200)}
 const fa=n=>Math.round(n).toLocaleString("fa-IR");const toman=n=>fa(n)+" تومان";
