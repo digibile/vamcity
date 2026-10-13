@@ -370,7 +370,7 @@ jobs:
           CERT_SUMMARY="$(echo | openssl s_client -connect "$DOMAIN_IP:443" -servername roofixo.ir 2>/dev/null | openssl x509 -noout -subject -issuer -dates -ext subjectAltName 2>&1 || true)"
           printf '%s\n' "$CERT_SUMMARY"
           HTTPS_BODY="$(mktemp)"
-          HTTPS_STATUS="$(curl --resolve "roofixo.ir:443:$DOMAIN_IP" -k -sS -o "$HTTPS_BODY" --max-time 15 -w '%{http_code}' https://roofixo.ir/cl/plans/ || true)"
+          HTTPS_STATUS="$(curl --resolve "roofixo.ir:443:$DOMAIN_IP" -k -sS -L -o "$HTTPS_BODY" --max-time 25 -w '%{http_code}' https://roofixo.ir/cl/plans/ || true)"
           echo "ROOFIXO_HTTPS_PLANS_STATUS=$HTTPS_STATUS"
           echo "ROOFIXO_HTTPS_BODY_BYTES=$(wc -c < "$HTTPS_BODY")"
           echo "ROOFIXO_HTTPS_TITLE=$(grep -oE '<title>[^<]*</title>' "$HTTPS_BODY" | head -1 || true)"
@@ -394,7 +394,7 @@ jobs:
           echo "ROOFIXO_ROOT_TITLE=$(grep -oE '<title>[^<]*</title>' "$ROOT_BODY" | head -1 || true)"
           test "$ROOT_STATUS" = "200"
           grep -Eqi '<html' "$ROOT_BODY"
-          grep -Eqi '<title>وام‌سیتی | راهکارهای تأمین مالی و خرید اقساطی</title>' "$ROOT_BODY"
+          grep -Fq '<title>وام‌سیتی | طرح‌های واقعی و خرید اقساطی</title>' "$ROOT_BODY"
           grep -q 'id="principal"' "$ROOT_BODY"
           rm -f "$ROOT_BODY"
 
