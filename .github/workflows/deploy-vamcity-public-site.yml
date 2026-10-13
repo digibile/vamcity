@@ -135,7 +135,7 @@ jobs:
           PY
           chown roofixo:roofixo "$CUSTOM"
           chmod 644 "$CUSTOM"
-          printf 'action=rewrite&value=nginx&user=roofixo\\n' >> /usr/local/directadmin/data/task.queue
+          printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
           /usr/local/directadmin/dataskq d
           nginx -t
           grep -Fq 'location = / {' "$GENERATED"
