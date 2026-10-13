@@ -341,7 +341,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
 <div class="toast" id="toast"></div>
 <script>
 const pages={overview:"داشبورد مدیریت",loans:"طرح‌های تسهیلات",calculator:"محاسبه‌گر و مقایسه",applications:"درخواست‌های وام",stores:"فروشگاه‌های همکار","store-register":"ثبت‌نام فروشگاه",products:"محصولات و سفارش‌ها","pay-merchants":"پذیرندگان پرداخت","pay-register":"ثبت‌نام پذیرنده",transactions:"تراکنش و تسویه",template:"مدیریت قالب و صفحات",settings:"تنظیمات و دسترسی‌ها"};
-function go(id){document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active",b.dataset.page===id));if(!pages[id])return;window.scrollTo({top:0,behavior:"smooth"});}
+function go(id){if(typeof legacyWorkspace!=="undefined"&&legacyWorkspace){legacyWorkspace.hidden=true;if(legacyFrame)legacyFrame.src="about:blank";if(typeof mainSections!=="undefined")mainSections.forEach(section=>section.style.display="");}document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active",b.dataset.page===id));if(!pages[id])return;window.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll(".navbtn").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
 let toastTimer;function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),3200)}
 const fa=n=>Math.round(n).toLocaleString("fa-IR");const toman=n=>fa(n)+" تومان";
