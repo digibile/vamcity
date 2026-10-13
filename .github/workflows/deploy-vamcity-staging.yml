@@ -6,10 +6,8 @@ on:
   push:
     branches: [main]
     paths:
-      - ".github/workflows/deploy-vamcity-staging.yml"
       - ".github/workflows/verify-vamcity-landing.yml"
       - "recovered-source/**"
-      - "wwwroot/ui/**"
       - "docs/linux-migration.md"
   workflow_dispatch:
 
