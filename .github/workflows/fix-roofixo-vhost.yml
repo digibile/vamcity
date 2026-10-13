@@ -50,7 +50,7 @@ jobs:
           test -s template-preview/index.html
           grep -qi '<html' template-preview/index.html
           scp -i "$RUNNER_TEMP/deploy_key" -P "${DEPLOY_PORT:-22}" -o BatchMode=yes -o StrictHostKeyChecking=yes \\
-            template-preview/index.html "$DEPLOY_USER@$DEPLOY_HOST:/tmp/vamcity-public-template.html"
+            template-preview/index.html "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE:/tmp/vamcity-public-template.html"
       - name: Configure persistent per-domain Nginx template and SSL
         shell: bash
         run: |
