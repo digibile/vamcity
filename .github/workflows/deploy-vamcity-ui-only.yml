@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "wwwroot/ui/index.html"
+      - "wwwroot/ui/js/app.e76ab352.js"
       - "wwwroot/ui/css/vamcity-modern-theme.css"
       - "wwwroot/ui/css/vamcity/**"
       - ".github/workflows/deploy-vamcity-ui-only.yml"
@@ -37,9 +38,12 @@ jobs:
             grep -Fq "$file.css?v=6" wwwroot/ui/css/vamcity-modern-theme.css
           done
           grep -Fq '/js/chunk-vendors.0d0536ea.js' wwwroot/ui/index.html
-          grep -Fq '/js/app.e76ab352.js?v=d1664791' wwwroot/ui/index.html
+          grep -Fq '/js/app.e76ab352.js?v=otp-ui1' wwwroot/ui/index.html
+          test -s wwwroot/ui/js/app.e76ab352.js
+          grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' wwwroot/ui/js/app.e76ab352.js
           tar -czf /tmp/vamcity-ui-only.tar.gz \
             wwwroot/ui/index.html \
+            wwwroot/ui/js/app.e76ab352.js \
             wwwroot/ui/css/vamcity-modern-theme.css \
             wwwroot/ui/css/vamcity/*.css
           tar -tzf /tmp/vamcity-ui-only.tar.gz
@@ -98,9 +102,10 @@ jobs:
           test -n "$APP_ROOT"
           test -s "$APP_ROOT/wwwroot/index.html"
           test -d "$APP_ROOT/wwwroot/css"
-          mkdir -p "$BACKUP/css" "$TMP"
+          mkdir -p "$BACKUP/css" "$BACKUP/js" "$TMP"
           chmod 700 "$BASE/private" "$BASE/private/ui-backups" "$BACKUP"
           cp -p "$APP_ROOT/wwwroot/index.html" "$BACKUP/index.html"
+          cp -p "$APP_ROOT/wwwroot/js/app.e76ab352.js" "$BACKUP/js/app.e76ab352.js"
           if [ -s "$APP_ROOT/wwwroot/css/vamcity-modern-theme.css" ]; then
             cp -p "$APP_ROOT/wwwroot/css/vamcity-modern-theme.css" "$BACKUP/css/vamcity-modern-theme.css"
             echo present > "$BACKUP/manifest.state"
@@ -113,14 +118,17 @@ jobs:
           else
             echo absent > "$BACKUP/modules.state"
           fi
-          chmod 600 "$BACKUP/index.html" "$BACKUP/manifest.state" "$BACKUP/modules.state"
+          chmod 600 "$BACKUP/index.html" "$BACKUP/js/app.e76ab352.js" "$BACKUP/manifest.state" "$BACKUP/modules.state"
           tar -xzf "$ARCHIVE" -C "$TMP"
           test -s "$TMP/wwwroot/ui/index.html"
           test -s "$TMP/wwwroot/ui/css/vamcity-modern-theme.css"
           grep -Fq '/css/vamcity-modern-theme.css?v=6' "$TMP/wwwroot/ui/index.html"
+          grep -Fq '/js/app.e76ab352.js?v=otp-ui1' "$TMP/wwwroot/ui/index.html"
+          grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' "$TMP/wwwroot/ui/js/app.e76ab352.js"
 
           rollback() {
             cp -p "$BACKUP/index.html" "$APP_ROOT/wwwroot/index.html"
+            cp -p "$BACKUP/js/app.e76ab352.js" "$APP_ROOT/wwwroot/js/app.e76ab352.js"
             if [ "$(cat "$BACKUP/manifest.state")" = present ]; then
               cp -p "$BACKUP/css/vamcity-modern-theme.css" "$APP_ROOT/wwwroot/css/vamcity-modern-theme.css"
             else
@@ -145,6 +153,8 @@ jobs:
           trap on_exit EXIT
 
           DEPLOY_STARTED=1
+          install -m 644 "$TMP/wwwroot/ui/js/app.e76ab352.js" "$APP_ROOT/wwwroot/js/.app.e76ab352-$SHA.tmp"
+          mv "$APP_ROOT/wwwroot/js/.app.e76ab352-$SHA.tmp" "$APP_ROOT/wwwroot/js/app.e76ab352.js"
           install -m 644 "$TMP/wwwroot/ui/index.html" "$APP_ROOT/.index.html-$SHA.tmp"
           mv "$APP_ROOT/.index.html-$SHA.tmp" "$APP_ROOT/wwwroot/index.html"
           install -m 644 "$TMP/wwwroot/ui/css/vamcity-modern-theme.css" "$APP_ROOT/wwwroot/css/.vamcity-modern-theme-$SHA.tmp"
@@ -160,7 +170,9 @@ jobs:
           curl --retry 4 --retry-delay 2 --fail --silent --show-error --max-time 10 \
             "http://127.0.0.1:5187/css/vamcity-modern-theme.css?v=6" -o /dev/null
           curl --retry 4 --retry-delay 2 --fail --silent --show-error --max-time 10 \
-            "http://127.0.0.1:5187/js/app.e76ab352.js?v=d1664791" -o /dev/null
+            "http://127.0.0.1:5187/js/app.e76ab352.js?v=otp-ui1" -o /tmp/vamcity-otp-bundle-check.js
+          grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' /tmp/vamcity-otp-bundle-check.js
+          rm -f /tmp/vamcity-otp-bundle-check.js
           echo "UI_ONLY_DEPLOY_OK"
           echo "APP_ROOT=$APP_ROOT"
           echo "BACKUP=$BACKUP"
@@ -175,5 +187,7 @@ jobs:
             "https://roofixo.ir/css/vamcity-modern-theme.css?v=6" -o /tmp/vamcity-public-theme.css
           grep -Fq "tokens-base.css?v=6" /tmp/vamcity-public-theme.css
           curl --retry 3 --retry-delay 2 --fail --silent --show-error --max-time 15 \
-            "https://roofixo.ir/js/app.e76ab352.js?v=d1664791" -o /dev/null
+            "https://roofixo.ir/js/app.e76ab352.js?v=otp-ui1" -o /tmp/vamcity-public-otp-bundle.js
+          grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' /tmp/vamcity-public-otp-bundle.js
+          rm -f /tmp/vamcity-public-otp-bundle.js
           echo "PUBLIC_UI_ASSETS_OK"
