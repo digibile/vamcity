@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
+<!-- 2026-10-13 navigation refresh: expose every verified public entry point from the main header and footer. -->
 <!-- Release refresh 2026-10-13: full-width homepage layout; verify live homepage, modern plans page, login, registration, and cooperation links after routing repair. -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -115,8 +116,8 @@ html{scroll-padding-top:88px;scroll-behavior:smooth}
 <body>
 <header class="top"><div class="wrap nav">
 <a class="brand" href="/"><span class="mark">◈</span><span>وام‌سیتی<small style="display:block;font-size:10px;color:#758397;font-weight:normal">راهکارهای تأمین مالی و خرید اقساطی</small></span></a>
-<nav class="links" id="site-links"><a href="/plans.html">طرح‌های تسهیلات</a><a href="/#calculator">محاسبه اقساط</a><a href="/#services">خدمات</a><a href="/#apply">درخواست وام</a><a href="/cl/agentregister/0/">درخواست نمایندگی و همکاری</a></nav><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-links" id="menu-toggle">منو ☰</button>
-<div class="actions"><a class="btn" href="/login/">ورود</a><a class="btn primary" href="/register/0/">ثبت‌نام</a></div>
+<nav class="links" id="site-links"><a href="/">صفحه اصلی</a><a href="/plans.html">طرح‌های تسهیلات</a><a href="/#calculator">محاسبه اقساط</a><a href="/#services">خدمات</a><a href="/#apply">درخواست وام</a><a href="/cl/agentregister/0/">درخواست نمایندگی و همکاری</a></nav><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-links" id="menu-toggle">منو ☰</button>
+<div class="actions"><a class="btn" href="/login/">ورود به حساب</a><a class="btn primary" href="/register/0/">عضویت</a></div>
 </div></header>
 <main class="wrap">
 <section class="hero">
@@ -136,7 +137,7 @@ html{scroll-padding-top:88px;scroll-behavior:smooth}
 </div></section>
 <section class="banner" id="apply"><div><h2>خرید اقساطی یا همکاری با وام‌سیتی</h2><p>درخواست خرید اقساطی و ثبت‌نام همکار باید به فرم‌های واقعی سامانه متصل بمانند.</p></div><a class="btn dark" href="/register/0/">شروع ثبت‌نام</a><a class="btn" href="/login/">ورود به حساب</a></section>
 </main>
-<footer class="foot"><div class="wrap footrow"><div><b>وام‌سیتی</b><br><small>راهکارهای تأمین مالی و خرید اقساطی</small><p style="max-width:360px;color:#9eb0bf;font-size:12px;margin:8px 0 0">مشاهده شرایط طرح‌ها، برآورد اقساط و ورود به فرایندهای واقعی سامانه در یک مسیر یکپارچه.</p></div><div><b>دسترسی سریع</b><p><a href="/">صفحه اصلی</a>　·　<a href="/plans.html">طرح‌های تسهیلات</a>　·　<a href="/#calculator">محاسبه اقساط</a></p><p><a href="/login/">ورود</a>　·　<a href="/register/0/">عضویت</a>　·　<a href="/cl/agentregister/0/">درخواست نمایندگی و همکاری</a></p></div><small>اطلاعات طرح‌ها از سامانه اصلی دریافت می‌شود؛ شرایط نهایی در صفحه هر طرح مشخص خواهد شد.</small></div></footer>
+<footer class="foot"><div class="wrap footrow"><div><b>وام‌سیتی</b><br><small>راهکارهای تأمین مالی و خرید اقساطی</small><p style="max-width:360px;color:#9eb0bf;font-size:12px;margin:8px 0 0">مشاهده شرایط طرح‌ها، برآورد اقساط و ورود به فرایندهای واقعی سامانه در یک مسیر یکپارچه.</p></div><div><b>دسترسی سریع</b><p><a href="/">صفحه اصلی</a>　·　<a href="/plans.html">فهرست کامل طرح‌ها</a>　·　<a href="/#plans">طرح‌های فعال همین صفحه</a>　·　<a href="/#calculator">محاسبه اقساط</a></p><p><a href="/#services">خدمات</a>　·　<a href="/#apply">شروع درخواست</a>　·　<a href="/cl/agentregister/0/">درخواست نمایندگی و همکاری</a></p><p><a href="/login/">ورود به حساب</a>　·　<a href="/register/0/">عضویت و ایجاد حساب</a></p></div><small>اطلاعات طرح‌ها از سامانه اصلی دریافت می‌شود؛ شرایط نهایی در صفحه هر طرح مشخص خواهد شد.</small></div></footer>
 <script>
 const $=id=>document.getElementById(id);
 const menuToggle=$('menu-toggle');if(menuToggle){menuToggle.addEventListener('click',()=>{const links=$('site-links');const open=links.classList.toggle('open');menuToggle.setAttribute('aria-expanded',String(open));menuToggle.textContent=open?'بستن ×':'منو ☰'});$('site-links').querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{$('site-links').classList.remove('open');menuToggle.setAttribute('aria-expanded','false');menuToggle.textContent='منو ☰'}));}
