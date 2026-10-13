@@ -1,0 +1,173 @@
+/* VamCity sign-in and OTP surfaces. Presentation only; preserve existing Vue state and auth methods. */
+#login-view {
+  min-height: 100vh;
+  color: #17283a;
+  background:
+    radial-gradient(ellipse at 12% 12%, rgba(215,173,101,.20), transparent 34%),
+    radial-gradient(ellipse at 88% 82%, rgba(32,75,104,.12), transparent 36%),
+    linear-gradient(145deg, #f8fafc 0%, #f1f5f9 48%, #fbf7f0 100%) !important;
+}
+#login-view .v-app-bar {
+  max-height: 72px !important;
+  min-height: 72px;
+  padding: 0 clamp(16px, 4vw, 54px);
+  background: rgba(16,35,55,.97) !important;
+  box-shadow: 0 8px 28px rgba(16,35,55,.12) !important;
+}
+#login-view .v-app-bar strong { font-size: 1rem; font-weight: 800; letter-spacing: -.2px; }
+#login-view .v-app-bar .warning--text { color: #f0d5a5 !important; }
+#login-view > .container,
+#login-view > .v-container {
+  max-width: 100%;
+  padding: clamp(20px, 4vw, 52px) 16px 44px;
+}
+#login-view .v-card {
+  overflow: hidden;
+  border: 1px solid rgba(220,228,236,.95);
+  border-radius: 26px !important;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 24px 70px rgba(18,42,63,.12), 0 2px 8px rgba(18,42,63,.04) !important;
+}
+#login-view .v-container .v-card {
+  max-width: 510px;
+  margin: 0 auto !important;
+}
+#login-view .v-card .v-image {
+  height: 164px !important;
+  background: linear-gradient(120deg,#102337,#244d65) !important;
+}
+#login-view .v-card .v-image:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(110deg,rgba(16,35,55,.92),rgba(16,35,55,.24)), radial-gradient(circle at 80% 20%,rgba(215,173,101,.48),transparent 36%);
+}
+#login-view .v-card .v-image .v-card__title {
+  position: relative;
+  z-index: 2;
+  min-height: 164px;
+  align-items: flex-end;
+  padding: 22px 26px !important;
+  background: transparent !important;
+  color: #fff;
+  font-size: clamp(1.05rem,2.5vw,1.3rem);
+  line-height: 1.8;
+  font-weight: 800;
+  white-space: normal;
+}
+#login-view .v-card .v-btn-toggle {
+  display: flex;
+  width: calc(100% - 40px);
+  margin: 0 auto;
+  padding: 5px;
+  gap: 5px;
+  border: 1px solid #e5eaf0;
+  border-radius: 16px;
+  background: #f4f7fa;
+}
+#login-view .v-card .v-btn-toggle > .v-btn {
+  flex: 1 1 50%;
+  min-width: 0;
+  min-height: 44px;
+  height: auto;
+  padding: 8px 10px;
+  border-radius: 12px !important;
+  font-family: inherit;
+  font-size: .83rem;
+  letter-spacing: 0;
+  white-space: normal;
+}
+#login-view .v-card .v-btn-toggle > .v-btn--active {
+  color: #fff !important;
+  background: linear-gradient(115deg,#102337,#244d65) !important;
+  box-shadow: 0 5px 14px rgba(16,35,55,.18);
+}
+#login-view .v-card .v-form { padding: 0 8px 6px; }
+#login-view .v-card .v-input { margin-top: 8px; }
+#login-view .v-card .v-input__slot {
+  min-height: 52px;
+  border-radius: 13px;
+}
+#login-view .v-card .v-input--is-focused .v-input__slot,
+#login-view .v-card .v-input--is-focused fieldset {
+  border-color: #b68a4a !important;
+}
+#login-view .v-card .v-input__control,
+#login-view .v-card .v-label,
+#login-view .v-card input { font-family: inherit; }
+#login-view .v-card .v-label { font-size: .9rem; }
+#login-view .v-card .v-messages { min-height: 16px; }
+#login-view .v-card .v-card__actions {
+  padding: 12px 24px 8px;
+}
+#login-view .v-card .v-btn:not(.v-btn--icon):not(.v-btn--text) {
+  min-height: 44px;
+  border-radius: 13px;
+  font-family: inherit;
+  font-weight: 800;
+  letter-spacing: 0;
+  box-shadow: none;
+}
+#login-view .v-card .v-btn.secondary {
+  color: #fff !important;
+  background: linear-gradient(115deg,#102337,#244d65) !important;
+}
+#login-view .v-card .text-center.my-3 { padding: 0 14px 16px; }
+#login-view .v-card .text-center.my-3 .v-btn--text {
+  min-height: 36px;
+  color: #496477;
+  font-size: .84rem;
+}
+#login-view .v-card .form-group,
+#login-view .v-card .v-alert { margin: 12px 24px; border-radius: 12px; }
+#login-view .v-card .otp-container {
+  gap: 9px;
+  direction: ltr;
+  margin: 12px auto 18px;
+}
+#login-view .v-card .otp-container .code-inputs {
+  flex: 0 1 48px;
+  width: 48px;
+  max-width: 48px;
+  min-width: 0;
+  margin: 0;
+}
+#login-view .v-card .otp-container .code-inputs .v-input__slot {
+  min-height: 54px;
+  border: 1px solid #dce4ec;
+  border-radius: 13px;
+  background: #f8fafc;
+}
+#login-view .v-card .otp-container .code-inputs input {
+  color: #102337;
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-align: center;
+}
+#login-view .v-card .center-input input { text-align: center; }
+#login-view .v-card .v-btn:focus-visible,
+#login-view .v-card input:focus-visible {
+  outline: 3px solid rgba(215,173,101,.55);
+  outline-offset: 2px;
+}
+@media (max-width: 600px) {
+  #login-view .v-app-bar { min-height: 60px; max-height: 60px !important; padding: 0 12px; }
+  #login-view .v-app-bar strong { font-size: .9rem; }
+  #login-view > .v-container { padding: 20px 12px 30px; }
+  #login-view .v-container .v-card { border-radius: 20px !important; }
+  #login-view .v-card .v-image,
+  #login-view .v-card .v-image .v-card__title { height: 136px !important; min-height: 136px; }
+  #login-view .v-card .v-image .v-card__title { padding: 18px !important; }
+  #login-view .v-card .v-form { margin-left: 12px !important; margin-right: 12px !important; }
+  #login-view .v-card .v-btn-toggle { width: calc(100% - 24px); }
+  #login-view .v-card .v-btn-toggle > .v-btn { font-size: .76rem; }
+  #login-view .v-card .v-card__actions { padding-left: 16px; padding-right: 16px; }
+  #login-view .v-card .otp-container { gap: 6px; }
+  #login-view .v-card .otp-container .code-inputs { flex-basis: 42px; width: 42px; max-width: 42px; }
+  #login-view .v-card .otp-container .code-inputs .v-input__slot { min-height: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #login-view *, #login-view *::before, #login-view *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
