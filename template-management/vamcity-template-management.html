@@ -29,7 +29,7 @@
 <body>
 <div class="shell">
 <header class="topbar">
-  <div class="brand"><div class="brand-mark">◈</div><div><strong>وام‌سیتی</strong><small>مدیریت قالب و تجربه دیجیتال</small></div></div>
+  <div class="brand"><div class="brand-mark">◈</div><div><strong>وام‌سیتی</strong><small>مرکز مدیریت وام و عملیات سامانه</small></div></div>
   <div class="top-actions"><span class="top-pill">پنل مدیریت</span><a class="top-pill" href="/admin/appSettings" style="text-decoration:none">تنظیمات اپلیکیشن</a><div class="avatar">م</div></div>
 </header>
 <div class="layout">
@@ -60,7 +60,23 @@
   <a class="navbtn" href="/admin/members" style="text-decoration:none"><span class="ico">♙</span>اعضا و مشتریان</a>
   <a class="navbtn" href="/admin/users" style="text-decoration:none"><span class="ico">♧</span>کاربران سامانه</a>
   <a class="navbtn" href="/admin/purchasedPlans" style="text-decoration:none"><span class="ico">▦</span>طرح‌های خریداری‌شده</a>
-  <div class="side-foot">ورود این صفحه با نشست واقعی سامانه و نقش مدیر کنترل می‌شود. بخش‌های متصل‌نشده در این مرحله فقط نمای UI هستند و دادهٔ آزمایشی دارند.</div>
+  <div class="side-label">عملیات و پشتیبانی</div>
+  <a class="navbtn" href="/admin/tickets" style="text-decoration:none"><span class="ico">✉</span>تیکت‌ها و پشتیبانی</a>
+  <a class="navbtn" href="/admin/customerOrders" style="text-decoration:none"><span class="ico">▤</span>سفارش‌های مشتریان</a>
+  <a class="navbtn" href="/admin/inquirymanagement" style="text-decoration:none"><span class="ico">⌕</span>مدیریت استعلام‌ها</a>
+  <a class="navbtn" href="/admin/smsList" style="text-decoration:none"><span class="ico">◉</span>پیامک‌ها و گزارش ارسال</a>
+  <a class="navbtn" href="/admin/emailList" style="text-decoration:none"><span class="ico">✉</span>ایمیل‌ها</a>
+  <a class="navbtn" href="/admin/expense" style="text-decoration:none"><span class="ico">▥</span>هزینه‌ها</a>
+  <div class="side-label">گزارش‌ها</div>
+  <a class="navbtn" href="/admin/reports" style="text-decoration:none"><span class="ico">▤</span>مرکز گزارش‌ها</a>
+  <a class="navbtn" href="/admin/loanStatistics" style="text-decoration:none"><span class="ico">▥</span>آمار تسهیلات</a>
+  <a class="navbtn" href="/admin/report-member-loans" style="text-decoration:none"><span class="ico">♙</span>گزارش وام اعضا</a>
+  <a class="navbtn" href="/admin/report-installments-month" style="text-decoration:none"><span class="ico">▦</span>اقساط ماهانه</a>
+  <a class="navbtn" href="/admin/wallet-transactions" style="text-decoration:none"><span class="ico">⇄</span>گزارش پرداخت‌های آنلاین</a>
+  <div class="side-label">ابزارهای مدیریتی</div>
+  <a class="navbtn" href="/admin/buy" style="text-decoration:none"><span class="ico">▣</span>خرید و تمدید سرویس</a>
+  <a class="navbtn" href="/admin/memberProfile" style="text-decoration:none"><span class="ico">♙</span>پروفایل اعضا</a>
+  <div class="side-foot">ورود این صفحه با نشست واقعی سامانه و نقش مدیر کنترل می‌شود. لینک‌های امکانات قدیمی به مسیرهای اصلی برنامه متصل‌اند؛ بخش‌های جدیدِ فروشگاه، پذیرنده و مدیریت قالب هنوز رابط مستقل‌اند و تا اتصال API دادهٔ نمایشی دارند.</div>
 </aside>
 <main class="main">
 <section class="section active" id="overview">
@@ -204,7 +220,7 @@
   <div class="notice">این صفحه مجوز واقعی ایجاد یا تغییر نمی‌دهد. در نسخه عملیاتی، دسترسی باید در API و سمت سرور کنترل شود، نه صرفاً با مخفی کردن اجزای UI.</div>
   <div class="card tablewrap"><table><thead><tr><th>نقش نمونه</th><th>تسهیلات</th><th>فروشگاه‌ها</th><th>پرداخت‌یاری</th><th>تنظیمات</th></tr></thead><tbody><tr><td><b>مدیر سامانه</b></td><td><span class="tag">مدیریت</span></td><td><span class="tag">مدیریت</span></td><td><span class="tag">مدیریت</span></td><td><span class="tag">مدیریت</span></td></tr><tr><td><b>کارشناس تسهیلات</b></td><td><span class="tag">بررسی پرونده</span></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag gray">بدون دسترسی</span></td></tr><tr><td><b>مدیر فروشگاه</b></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag">فروشگاه خود</span></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag gray">بدون دسترسی</span></td></tr><tr><td><b>کارشناس پذیرندگان</b></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag">پرونده پذیرنده</span></td><td><span class="tag gray">بدون دسترسی</span></td></tr></tbody></table></div>
 </section>
-<div class="footer">وام‌سیتی · فایل مستقل مدیریت قالب · پیش‌نمایش UI بدون اتصال به سرویس‌های واقعی</div>
+<div class="footer">وام‌سیتی · مرکز مدیریت یکپارچه · ماژول‌های قدیمی از مسیر اصلی سامانه باز می‌شوند</div>
 </main></div></div>
 <div class="toast" id="toast"></div>
 <script>
