@@ -1,0 +1,58 @@
+name: Diagnose VamCity login route behavior
+run-name: Trace login routes without changing production configuration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-vamcity-auth-routes.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-routes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect direct app and public route responses
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          chmod 600 "$RUNNER_TEMP/deploy_key"
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -T 10 -p "$PORT" "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          chmod 600 ~/.ssh/known_hosts
+          ssh -i "$RUNNER_TEMP/deploy_key" -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          for ROUTE in / /login/ /cl/login /cl/register /cl/plans/; do
+            BODY="$(mktemp)"
+            HEADERS="$(mktemp)"
+            STATUS="$(curl -sS -D "$HEADERS" -L -o "$BODY" --max-time 15 -w '%{http_code}' "http://127.0.0.1:5187$ROUTE" || true)"
+            FINAL_URL="$(grep -i '^location:' "$HEADERS" | tail -1 | tr -d '\r' || true)"
+            TITLE="$(grep -oE '<title>[^<]*</title>' "$BODY" | head -1 || true)"
+            BUNDLE="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$BODY" | head -1 || true)"
+            echo "DIRECT_APP_ROUTE=$ROUTE HTTP=$STATUS LAST_LOCATION=${FINAL_URL:-none} TITLE=${TITLE:-none} BUNDLE=${BUNDLE:-missing} BYTES=$(wc -c < "$BODY")"
+            rm -f "$BODY" "$HEADERS"
+          done
+          for ROUTE in / /login/ /cl/login /cl/register /cl/plans/; do
+            BODY="$(mktemp)"
+            HEADERS="$(mktemp)"
+            STATUS="$(curl -k -sS -D "$HEADERS" -L -o "$BODY" --max-time 15 -w '%{http_code}' "https://roofixo.ir$ROUTE" || true)"
+            FINAL_URL="$(grep -i '^location:' "$HEADERS" | tail -1 | tr -d '\r' || true)"
+            TITLE="$(grep -oE '<title>[^<]*</title>' "$BODY" | head -1 || true)"
+            BUNDLE="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$BODY" | head -1 || true)"
+            echo "PUBLIC_ROUTE=$ROUTE HTTP=$STATUS LAST_LOCATION=${FINAL_URL:-none} TITLE=${TITLE:-none} BUNDLE=${BUNDLE:-missing} BYTES=$(wc -c < "$BODY")"
+            rm -f "$BODY" "$HEADERS"
+          done
+          REMOTE
