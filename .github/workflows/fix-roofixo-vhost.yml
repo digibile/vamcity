@@ -116,13 +116,9 @@ jobs:
               alias /var/www/html/.well-known/acme-challenge/;
               default_type text/plain;
           }
-          # Match the reference VamCity plans page at the domain root.
-          # Exact-match location leaves every other original application route untouched.
-          location = / {
-              root /home/roofixo/domains/roofixo.ir/public_html;
-              try_files /vamcity-template-management/index.html =404;
-              default_type text/html;
-          }
+          # The domain root must serve the actual VamCity public landing page,
+          # including the installment calculator and all original landing sections.
+          # The default location below proxies the application on port 5187.
           # Legacy routes rendered an empty page; route them to the existing login UI.
           location = /cl/login {
               return 302 /login/;
