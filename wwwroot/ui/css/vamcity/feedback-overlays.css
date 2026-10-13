@@ -1,0 +1,4 @@
+/* POLICY: Alerts, snackbars, dialogs, and transient feedback only. Do not alter visibility or workflow behavior. */
+.v-application .v-alert { border-radius: 12px; }
+.v-application .v-dialog { box-shadow: none; }
+.v-application .v-snack__content { line-height: 1.8; }

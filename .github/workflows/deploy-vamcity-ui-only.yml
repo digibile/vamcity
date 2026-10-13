@@ -1,0 +1,168 @@
+name: Deploy VamCity UI only (preserve app and database)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "wwwroot/ui/index.html"
+      - "wwwroot/ui/css/vamcity-modern-theme.css"
+      - "wwwroot/ui/css/vamcity/**"
+      - ".github/workflows/deploy-vamcity-ui-only.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vamcity-roofixo-ui-only
+  cancel-in-progress: false
+
+jobs:
+  deploy-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate and package UI-only files
+        run: |
+          set -euo pipefail
+          test -s wwwroot/ui/index.html
+          test -s wwwroot/ui/css/vamcity-modern-theme.css
+          grep -Fq '/css/vamcity-modern-theme.css?v=5' wwwroot/ui/index.html
+          for file in tokens-base shell-navigation surfaces-actions forms-tables feedback-overlays responsive public-landing accessibility; do
+            test -s "wwwroot/ui/css/vamcity/$file.css"
+            grep -Fq "$file.css?v=5" wwwroot/ui/css/vamcity-modern-theme.css
+          done
+          grep -Fq '/js/chunk-vendors.0d0536ea.js' wwwroot/ui/index.html
+          grep -Fq '/js/app.e76ab352.js?v=d1664791' wwwroot/ui/index.html
+          tar -czf /tmp/vamcity-ui-only.tar.gz \
+            wwwroot/ui/index.html \
+            wwwroot/ui/css/vamcity-modern-theme.css \
+            wwwroot/ui/css/vamcity/*.css
+          tar -tzf /tmp/vamcity-ui-only.tar.gz
+
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          install -m 700 -d ~/.ssh
+          printf '%s\\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_deploy_key
+          chmod 600 ~/.ssh/vamcity_deploy_key
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          echo "DEPLOY_PORT_EFFECTIVE=$PORT" >> "$GITHUB_ENV"
+          echo "DEPLOY_HOST_EFFECTIVE=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "DEPLOY_USER_EFFECTIVE=$DEPLOY_USER" >> "$GITHUB_ENV"
+
+      - name: Copy UI archive
+        run: |
+          set -euo pipefail
+          scp -i ~/.ssh/vamcity_deploy_key -P "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            /tmp/vamcity-ui-only.tar.gz \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE:/tmp/vamcity-ui-only-$GITHUB_SHA.tar.gz"
+
+      - name: Backup and atomically install UI assets without restarting the app
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/vamcity_deploy_key -p "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE" \
+            "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
+          set -euo pipefail
+          SHA="$1"
+          DOMAIN_ROOT=/home/roofixo/domains/roofixo.ir
+          BASE="$DOMAIN_ROOT/vamcity-app"
+          APP_CONTAINER=vamcity-stage-app
+          ARCHIVE="/tmp/vamcity-ui-only-$SHA.tar.gz"
+          BACKUP="$BASE/private/ui-backups/$SHA"
+          TMP="/tmp/vamcity-ui-only-extract-$SHA"
+          APP_ROOT=""
+
+          test -s "$ARCHIVE"
+          docker inspect "$APP_CONTAINER" >/dev/null
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' "$APP_CONTAINER")"
+          test -n "$APP_ROOT"
+          test -s "$APP_ROOT/index.html"
+          test -d "$APP_ROOT/css"
+          mkdir -p "$BACKUP/css" "$TMP"
+          chmod 700 "$BASE/private" "$BASE/private/ui-backups" "$BACKUP"
+          cp -p "$APP_ROOT/index.html" "$BACKUP/index.html"
+          if [ -s "$APP_ROOT/css/vamcity-modern-theme.css" ]; then
+            cp -p "$APP_ROOT/css/vamcity-modern-theme.css" "$BACKUP/css/vamcity-modern-theme.css"
+            echo present > "$BACKUP/manifest.state"
+          else
+            echo absent > "$BACKUP/manifest.state"
+          fi
+          if [ -d "$APP_ROOT/css/vamcity" ]; then
+            cp -a "$APP_ROOT/css/vamcity" "$BACKUP/css/vamcity"
+            echo present > "$BACKUP/modules.state"
+          else
+            echo absent > "$BACKUP/modules.state"
+          fi
+          chmod 600 "$BACKUP/index.html" "$BACKUP/manifest.state" "$BACKUP/modules.state"
+          tar -xzf "$ARCHIVE" -C "$TMP"
+          test -s "$TMP/wwwroot/ui/index.html"
+          test -s "$TMP/wwwroot/ui/css/vamcity-modern-theme.css"
+          grep -Fq '/css/vamcity-modern-theme.css?v=5' "$TMP/wwwroot/ui/index.html"
+
+          rollback() {
+            cp -p "$BACKUP/index.html" "$APP_ROOT/index.html"
+            if [ "$(cat "$BACKUP/manifest.state")" = present ]; then
+              cp -p "$BACKUP/css/vamcity-modern-theme.css" "$APP_ROOT/css/vamcity-modern-theme.css"
+            else
+              rm -f "$APP_ROOT/css/vamcity-modern-theme.css"
+            fi
+            rm -rf "$APP_ROOT/css/vamcity"
+            if [ "$(cat "$BACKUP/modules.state")" = present ]; then
+              cp -a "$BACKUP/css/vamcity" "$APP_ROOT/css/vamcity"
+            fi
+          }
+          DEPLOY_STARTED=0
+          on_exit() {
+            RC=$?
+            if [ "$RC" -ne 0 ] && [ "$DEPLOY_STARTED" = 1 ]; then
+              echo "UI validation failed; restoring previous files"
+              rollback || true
+            fi
+            rm -rf "$TMP"
+            rm -f "$ARCHIVE"
+            exit "$RC"
+          }
+          trap on_exit EXIT
+
+          DEPLOY_STARTED=1
+          install -m 644 "$TMP/wwwroot/ui/index.html" "$APP_ROOT/.index.html-$SHA.tmp"
+          mv "$APP_ROOT/.index.html-$SHA.tmp" "$APP_ROOT/index.html"
+          install -m 644 "$TMP/wwwroot/ui/css/vamcity-modern-theme.css" "$APP_ROOT/css/.vamcity-modern-theme-$SHA.tmp"
+          mv "$APP_ROOT/css/.vamcity-modern-theme-$SHA.tmp" "$APP_ROOT/css/vamcity-modern-theme.css"
+          mkdir -p "$APP_ROOT/css/vamcity"
+          for file in "$TMP"/wwwroot/ui/css/vamcity/*.css; do
+            name="$(basename "$file")"
+            install -m 644 "$file" "$APP_ROOT/css/vamcity/.$name-$SHA.tmp"
+            mv "$APP_ROOT/css/vamcity/.$name-$SHA.tmp" "$APP_ROOT/css/vamcity/$name"
+          done
+
+          grep -Fq '/css/vamcity-modern-theme.css?v=5' "$APP_ROOT/index.html"
+          curl --retry 4 --retry-delay 2 --fail --silent --show-error --max-time 10 \
+            "http://127.0.0.1:5187/css/vamcity-modern-theme.css?v=5" -o /dev/null
+          curl --retry 4 --retry-delay 2 --fail --silent --show-error --max-time 10 \
+            "http://127.0.0.1:5187/js/app.e76ab352.js?v=d1664791" -o /dev/null
+          echo "UI_ONLY_DEPLOY_OK"
+          echo "APP_ROOT=$APP_ROOT"
+          echo "BACKUP=$BACKUP"
+          echo "DATABASE_UNTOUCHED=1"
+          echo "APP_CONTAINER_RESTARTED=0"
+          REMOTE

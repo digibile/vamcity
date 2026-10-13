@@ -1,0 +1,39 @@
+/* POLICY: Reusable visual surfaces and buttons only. No route or state-dependent behavior belongs in CSS. */
+.v-application .v-card,
+.v-application .v-sheet:not(.v-toolbar):not(.v-navigation-drawer):not(.v-list),
+.v-application .v-data-table,
+.v-application .v-dialog > .v-card { border-color: var(--vc-line); }
+.v-application .v-card {
+  border-radius: 16px !important;
+  box-shadow: var(--vc-shadow) !important;
+  overflow: hidden;
+}
+.v-application .v-card__title {
+  color: var(--vc-ink);
+  font-weight: 700;
+  line-height: 1.8;
+}
+.v-application .v-card__text,
+.v-application .v-card__subtitle { color: #536477; }
+.v-application .v-btn {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-weight: 700;
+  border-radius: 10px !important;
+  box-shadow: none;
+}
+.v-application .v-btn.v-btn--contained.primary,
+.v-application .v-btn.primary {
+  background: var(--vc-navy) !important;
+  color: #fff !important;
+}
+.v-application .v-btn.accent {
+  background: var(--vc-gold) !important;
+  color: var(--vc-navy) !important;
+}
+.v-application .v-btn:not(.v-btn--icon):not(.v-btn--fab) { min-height: 38px; }
+.v-application .v-chip { border-radius: 999px; font-weight: 600; }
+.v-application .v-expansion-panels { border-radius: 14px; overflow: hidden; }
+.v-application .v-expansion-panel { border-bottom: 1px solid var(--vc-line); }
+.v-application .v-expansion-panel-header { font-weight: 700; }
+.v-application .v-table { border-radius: 12px; }

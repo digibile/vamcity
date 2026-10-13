@@ -1,0 +1,7 @@
+/* POLICY: Small-screen presentation only. Avoid changing desktop behavior or hiding functional controls. */
+@media (max-width: 600px) {
+  .v-application .v-card { border-radius: 13px !important; }
+  .v-application .v-card__title { font-size: 1rem; }
+  .v-application .v-data-table { overflow-x: auto; }
+  .v-application .v-btn:not(.v-btn--icon):not(.v-btn--fab) { padding-inline: 12px; }
+}

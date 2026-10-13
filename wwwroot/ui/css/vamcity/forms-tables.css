@@ -1,0 +1,31 @@
+/* POLICY: Input and tabular data presentation only. Validation and data handling remain in the existing app. */
+.v-application .v-text-field,
+.v-application .v-select,
+.v-application .v-textarea { border-radius: 10px; }
+.v-application .v-input__slot { border-radius: 10px !important; }
+.v-application .v-input--is-focused .v-input__slot:before,
+.v-application .v-input--is-focused .v-input__slot:after { border-color: var(--vc-gold) !important; }
+.v-application .v-label,
+.v-application .v-messages,
+.v-application .caption { line-height: 1.8; }
+.v-application .v-data-table {
+  border: 1px solid var(--vc-line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.v-application .v-data-table thead th {
+  background: #f7f9fb;
+  color: #536477 !important;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.v-application .v-data-table tbody tr:hover { background: #fbf7ef !important; }
+.v-application .v-pagination__item,
+.v-application .v-pagination__navigation { box-shadow: none; border: 1px solid var(--vc-line); }
+.v-application .v-pagination__item--active { background: var(--vc-navy) !important; }
+.v-application .v-tabs > .v-tabs-bar { background: transparent !important; }
+.v-application .v-tab { letter-spacing: 0; font-weight: 700; }
+.v-application .v-tab--active { color: var(--vc-navy) !important; }
+.v-application .v-tabs-slider { background: var(--vc-gold) !important; }
+.v-application .v-progress-linear__determinate { background: var(--vc-gold) !important; }
+.v-application .v-progress-circular { color: var(--vc-gold) !important; }
