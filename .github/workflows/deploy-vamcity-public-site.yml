@@ -142,6 +142,12 @@ jobs:
           systemctl reload nginx
           STATUS="$(curl -k -sS --resolve roofixo.ir:443:127.0.0.1 -o "/tmp/vamcity-home-check-$SHA.html" -w '%{http_code}' https://roofixo.ir/)"
           echo "LOCAL_HOME_HTTP=$STATUS"
+          echo "HOME_BYTES=$(wc -c < "/tmp/vamcity-home-check-$SHA.html")"
+          echo "HOME_TITLE=$(grep -oE '<title>[^<]*</title>' "/tmp/vamcity-home-check-$SHA.html" | head -1 || true)"
+          echo "HOME_LINKS=$(grep -oE 'href="[^"]+"' "/tmp/vamcity-home-check-$SHA.html" | head -12 | tr '\\n' ' ' || true)"
+          echo "HOME_PREFIX=$(head -c 320 "/tmp/vamcity-home-check-$SHA.html" | tr '\\n' ' ' || true)"
+          echo "CUSTOM_HOME_ROUTE=$(grep -n -A9 -B1 'VAMCITY_PUBLIC_HOME_BEGIN' "$CUSTOM" || true)"
+          echo "GENERATED_HOME_ROUTE=$(grep -n -A9 -B1 'location = / {' "$GENERATED" | head -20 || true)"
           test "$STATUS" = 200
           grep -q 'href="/login/"' "/tmp/vamcity-home-check-$SHA.html"
           grep -q 'href="/register/0/"' "/tmp/vamcity-home-check-$SHA.html"
