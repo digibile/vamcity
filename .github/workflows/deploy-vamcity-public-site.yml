@@ -69,10 +69,20 @@ jobs:
       - name: Upload homepage
         run: |
           set -euo pipefail
-          scp -i ~/.ssh/vamcity_public_home_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            vamcity-public-home.html "$USER@$HOST:/tmp/vamcity-public-home-$GITHUB_SHA.html"
-          scp -i ~/.ssh/vamcity_public_home_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            public-site/plans/index.html "$USER@$HOST:/tmp/vamcity-public-plans-$GITHUB_SHA.html"
+          retry_scp() {
+            local source="$1" destination="$2" attempt
+            for attempt in 1 2 3 4 5; do
+              if scp -o ConnectTimeout=20 -o ConnectionAttempts=2 -i ~/.ssh/vamcity_public_home_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$source" "$destination"; then
+                return 0
+              fi
+              echo "SCP attempt $attempt failed; retrying after temporary SSH reset"
+              sleep 8
+            done
+            echo "SCP_FAILED_AFTER_RETRIES"
+            return 1
+          }
+          retry_scp vamcity-public-home.html "$USER@$HOST:/tmp/vamcity-public-home-$GITHUB_SHA.html"
+          retry_scp public-site/plans/index.html "$USER@$HOST:/tmp/vamcity-public-plans-$GITHUB_SHA.html"
 
       - name: Backup and atomically publish homepage
         shell: bash
