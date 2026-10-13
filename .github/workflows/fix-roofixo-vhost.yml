@@ -1,5 +1,6 @@
 name: Repair Roofixo VamCity vhost and SSL
 run-name: Install persistent Roofixo VamCity routing and valid HTTPS
+# Refresh 2026-10-13: re-assert exact /admin/dashboard routes to serve the new management UI after login.
 
 on:
   push:
