@@ -51,7 +51,7 @@ jobs:
           test -n "$DEPLOY_SSH_KEY"
           PORT="${DEPLOY_PORT:-22}"
           install -m 700 -d ~/.ssh
-          printf '%s\\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_public_home_key
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_public_home_key
           chmod 600 ~/.ssh/vamcity_public_home_key
           ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           echo "PORT=$PORT" >> "$GITHUB_ENV"
