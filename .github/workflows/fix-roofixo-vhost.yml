@@ -43,14 +43,6 @@ jobs:
           echo "DEPLOY_PORT_EFFECTIVE=$PORT" >> "$GITHUB_ENV"
           echo "DEPLOY_HOST_EFFECTIVE=$DEPLOY_HOST" >> "$GITHUB_ENV"
           echo "DEPLOY_USER_EFFECTIVE=$DEPLOY_USER" >> "$GITHUB_ENV"
-      - name: Upload production template
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -s template-preview/index.html
-          grep -qi '<html' template-preview/index.html
-          scp -i "$RUNNER_TEMP/deploy_key" -P "$DEPLOY_PORT_EFFECTIVE" -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            template-preview/index.html "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE:/tmp/vamcity-public-template.html"
       - name: Configure persistent per-domain Nginx template and SSL
         shell: bash
         run: |
@@ -75,12 +67,6 @@ jobs:
           TS="$(date -u +%Y%m%dT%H%M%SZ)"
           BACKUP="$PRIVATE/rollback/roofixo-vhost-$TS"
           mkdir -p "$BACKUP" "$TEMPLATE_DIR"
-          PUBLIC_ROOT=/home/roofixo/domains/roofixo.ir/public_html
-          test -s /tmp/vamcity-public-template.html
-          if [ -e "$PUBLIC_ROOT/index.html" ]; then cp -a "$PUBLIC_ROOT/index.html" "$BACKUP/public-index.html.before"; fi
-          install -m 644 /tmp/vamcity-public-template.html "$PUBLIC_ROOT/index.html.new"
-          mv -f "$PUBLIC_ROOT/index.html.new" "$PUBLIC_ROOT/index.html"
-          rm -f /tmp/vamcity-public-template.html
           chmod 700 "$PRIVATE" "$PRIVATE/rollback" "$BACKUP"
 
           echo "=== PRECHECKS ==="
@@ -167,12 +153,16 @@ jobs:
           location = /c/lplans/0/ {
               return 302 /cl/plans/;
           }
-          # Serve the requested production template at the domain root; keep the application routes proxied below.
+          # Public home must render the real VamCity landing page, not the template-management dashboard.
           location = / {
-              root /home/roofixo/domains/roofixo.ir/public_html;
-              try_files /index.html =404;
-              default_type text/html;
-              add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+              proxy_pass http://127.0.0.1:5187/plans/0/;
+              proxy_http_version 1.1;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header X-Forwarded-Host $host;
+              proxy_redirect off;
           }
           location / {
               proxy_pass http://127.0.0.1:5187;
@@ -260,8 +250,8 @@ jobs:
           echo "ROOFIXO_ROOT_TITLE=$(grep -oE '<title>[^<]*</title>' "$ROOT_BODY" | head -1 || true)"
           test "$ROOT_STATUS" = "200"
           grep -Eqi '<html' "$ROOT_BODY"
-          grep -Eqi 'قالب مستقل مدیریت' "$ROOT_BODY"
-          grep -q 'id="overview"' "$ROOT_BODY"
+          grep -Eqi 'وام سیتی|VamCity' "$ROOT_BODY"
+          grep -Eqi 'app\.[a-f0-9]+\.js|/js/app\.' "$ROOT_BODY"
           rm -f "$ROOT_BODY"
 
           API_BODY="$(mktemp)"
@@ -280,5 +270,5 @@ jobs:
           PY
           rm -f "$API_BODY"
           echo "ROOFIXO_ROOT_AND_PUBLIC_DATA_VERIFIED=true"
-          echo "ROOFIXO_PRODUCTION_TEMPLATE_AT_ROOT=true"
+          echo "ROOFIXO_PUBLIC_LANDING_AT_ROOT=true"
           REMOTE
