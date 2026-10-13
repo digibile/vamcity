@@ -1,5 +1,6 @@
 name: Deploy independent VamCity template management
 run-name: Publish VamCity template management preview
+# Refresh after the dedicated preview route was installed in the domain vhost.
 
 on:
   push:
