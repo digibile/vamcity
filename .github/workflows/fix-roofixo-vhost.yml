@@ -175,6 +175,8 @@ jobs:
           printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
           /usr/local/directadmin/dataskq d
           if ! nginx -t; then rollback_config; exit 1; fi
+          echo "=== ACTIVE AUTH LOCATIONS AFTER REWRITE ==="
+          grep -n -E -A2 -B1 'location = /(login|cl/login|cl/register)|return 302 /;' "$GENERATED" || true
           if ! grep -q 'proxy_pass http://127.0.0.1:5187' "$GENERATED"; then
             echo "PER_DOMAIN_CUST_NGINX_NOT_INSERTED_IN_GENERATED_CONFIG"
             echo "CUSTOM_FILE_OWNER=$(stat -c '%U:%G %a' "$CUSTOM")"
@@ -189,7 +191,7 @@ jobs:
             AUTH_BODY="$(mktemp)"
             AUTH_STATUS="$(curl -k --resolve "roofixo.ir:443:$DOMAIN_IP" -sS -L -o "$AUTH_BODY" --max-time 20 -w '%{http_code}' "https://roofixo.ir$ROUTE" || true)"
             AUTH_HAS_APP="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$AUTH_BODY" | head -1 || true)"
-            echo "AUTH_ROUTE=$ROUTE HTTP=$AUTH_STATUS APP_BUNDLE=\${AUTH_HAS_APP:-missing}"
+            echo "AUTH_ROUTE=$ROUTE HTTP=$AUTH_STATUS APP_BUNDLE=$AUTH_HAS_APP"
             if [ "$AUTH_STATUS" != "200" ] || [ -z "$AUTH_HAS_APP" ]; then AUTH_FAILED=1; fi
             rm -f "$AUTH_BODY"
           done
