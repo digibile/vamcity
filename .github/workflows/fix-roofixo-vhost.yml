@@ -203,9 +203,13 @@ jobs:
           AUTH_FAILED=0
           for ROUTE in /login/ /cl/login /cl/register; do
             AUTH_BODY="$(mktemp)"
+            AUTH_FIRST_STATUS="$(curl -k --resolve "roofixo.ir:443:$DOMAIN_IP" -sS -o /dev/null --max-time 20 -w '%{http_code}' "https://roofixo.ir$ROUTE?route-check=$TS" || true)"
+            echo "AUTH_FIRST_RESPONSE=$ROUTE HTTP=$AUTH_FIRST_STATUS"
             AUTH_STATUS="$(curl -k --resolve "roofixo.ir:443:$DOMAIN_IP" -sS -L -o "$AUTH_BODY" --max-time 20 -w '%{http_code}' "https://roofixo.ir$ROUTE?route-check=$TS" || true)"
             AUTH_HAS_APP="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$AUTH_BODY" | head -1 || true)"
             echo "AUTH_ROUTE=$ROUTE HTTP=$AUTH_STATUS APP_BUNDLE=$AUTH_HAS_APP"
+            echo "AUTH_BODY_TITLE=$(grep -oE '<title>[^<]*</title>' "$AUTH_BODY" | head -1 || true)"
+            echo "AUTH_BODY_BYTES=$(wc -c < "$AUTH_BODY")"
             if [ "$AUTH_STATUS" != "200" ] || [ -z "$AUTH_HAS_APP" ]; then AUTH_FAILED=1; fi
             rm -f "$AUTH_BODY"
           done
