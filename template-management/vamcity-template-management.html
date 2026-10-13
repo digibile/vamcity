@@ -6,7 +6,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#102337">
-<meta name="vamcity-admin-ui-release" content="2026-10-13-integrated-admin-v2">
+<meta name="vamcity-admin-ui-release" content="2026-10-13-integrated-admin-v3">
 <title>مرکز مدیریت وام‌سیتی</title>
 <!-- Production republish 2026-10-13: refresh the admin replacement at /admin/dashboard and verify the same login session, legacy modules, settings and backup routes. -->
 <!-- Final publish retry 2026-10-13: force deployment of the integrated new admin shell to the existing admin URL; preserve legacy business modules and database. -->
@@ -117,7 +117,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
 <body>
 <div class="shell">
 <header class="topbar">
-  <div class="brand"><div class="brand-mark">◈</div><div><strong>وام‌سیتی</strong><small>مرکز مدیریت وام و عملیات سامانه</small></div></div>
+  <div class="brand"><div class="brand-mark">◈</div><div><strong>وام‌سیتی</strong><small>پنل یکپارچه مدیریت و عملیات سامانه</small></div></div>
   <div class="top-actions"><a class="top-pill top-link" href="/" target="_blank" rel="noopener" title="سایت عمومی در زبانه جدید باز می‌شود تا نشست مدیریت حفظ شود">مشاهده سایت ↗</a><a class="top-pill top-link" href="/plans.html">طرح‌های تسهیلات</a><a class="top-pill top-link" href="/login/">ورود کاربران</a><a class="top-pill top-link" href="/register/0/">عضویت</a><a class="top-pill top-link" href="/cl/agentregister/0/">درخواست همکاری و نمایندگی</a><a class="top-pill top-link" href="/admin/dashboard" aria-current="page">پنل مدیریت</a><a class="top-pill top-link" href="#settings" onclick="go('settings');return false;">تنظیمات اپلیکیشن</a><a class="top-pill top-link" href="#backup" onclick="go('backup');return false;">پشتیبان‌گیری</a><a class="top-pill top-link" id="account-link" href="/admin/dashboard" title="حساب کاربری"><span id="account-name">حساب کاربری</span></a><div class="avatar" id="account-avatar" title="کاربر واردشده">م</div></div>
 </header>
 <div class="layout">
@@ -192,7 +192,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
   <div class="crumb">مدیریت قالب / نمای کلی</div>
   <div class="pagehead"><div><h1>مرکز مدیریت وام‌سیتی</h1><p>نمای کلی تجربه وام، فروشگاه‌های همکار و عملیات پذیرندگان، در سه فضای مستقل.</p></div><div class="actions"><button class="btn" onclick="openLegacy('/admin/reports/','مرکز گزارش‌ها')">↓ دریافت گزارش</button><button class="btn primary" onclick="go('settings')">مدیریت قالب</button></div></div>
   <div class="banner"><div><h2>مرکز مدیریت <span class="gold">وام‌سیتی</span></h2><p>رابط جدید مدیریتی در کنار امکانات عملیاتی قبلی؛ آمار ساختگی نمایش داده نمی‌شود و مسیرهای موجود حفظ شده‌اند.</p></div><a class="btn primary" href="/admin/userLoanRequests/">درخواست‌های تسهیلات ←</a></div>
-  <div class="notice" role="note"><strong>وضعیت اتصال:</strong> این پنل جدید در حال جایگزینی رابط قدیمی است. آمار و فعالیت‌های ماژول‌های جدید تا زمان اتصال API عمداً نمایش داده نمی‌شوند. عملیات واقعی سامانه از پیوندهای «امکانات موجود سامانه» در همین سایدبار باز می‌شود؛ تنظیمات اپلیکیشن و پشتیبان‌گیری نیز حفظ شده‌اند.</div>
+  <div class="notice" role="note"><strong>پنل مدیریت جدید فعال است.</strong> این پوسته، داشبورد اصلی مدیریت است و پس از ورود مدیر باز می‌شود. عملیات واقعی موجود از بخش «امکانات موجود سامانه» در سایدبار در دسترس است؛ تنظیمات اپلیکیشن، پشتیبان‌گیری و بازیابی حذف نشده‌اند. شاخص‌ها فقط از API سامانه خوانده می‌شوند و داده ساختگی جایگزین آن‌ها نمی‌شود.</div>
   <div class="metrics">
     <div class="metric"><div class="metric-top">طرح‌های تسهیلات <span class="metric-icon">◈</span></div><strong id="metric-loans-value" aria-live="polite">در حال دریافت…</strong><small id="metric-loans-status">از سامانه اصلی</small><a class="btn small" href="/admin/loans/">مدیریت طرح‌ها</a></div>
     <div class="metric"><div class="metric-top">اعضا و مشتریان <span class="metric-icon">♙</span></div><strong id="metric-members-value" aria-live="polite">در حال دریافت…</strong><small id="metric-members-status">از سامانه اصلی</small><a class="btn small" href="/admin/members/">مدیریت اعضا</a></div>
