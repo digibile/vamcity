@@ -126,16 +126,16 @@ img,svg,video,canvas{max-width:100%;height:auto}
   <button class="navbtn" data-page="calculator"><span class="ico">▤</span>محاسبه‌گر و مقایسه</button>
   <a class="navbtn" href="/admin/userLoanRequests/" style="text-decoration:none"><span class="ico">▣</span>درخواست‌های وام</a>
   <div class="side-label">فروشگاه‌های همکار</div>
-  <button class="navbtn" data-page="stores"><span class="ico">▧</span>فروشگاه‌های همکار <span class="count">پیش‌نمایش</span></button>
-  <button class="navbtn" data-page="store-register"><span class="ico">＋</span>ثبت‌نام فروشگاه</button>
-  <button class="navbtn" data-page="products"><span class="ico">◇</span>محصولات و سفارش‌ها <span class="count">پیش‌نمایش</span></button>
+  <a class="navbtn" href="/admin/contacts/" style="text-decoration:none"><span class="ico">▧</span>مخاطبان و پذیرندگان ثبت‌شده</a>
+  <a class="navbtn" href="/cl/agentregister/0/" style="text-decoration:none"><span class="ico">＋</span>درخواست همکاری و نمایندگی</a>
+  <a class="navbtn" href="/admin/customerOrders/" style="text-decoration:none"><span class="ico">◇</span>محصولات و سفارش‌های مشتریان</a>
   <div class="side-label">پذیرندگان و پرداخت‌یاری</div>
-  <button class="navbtn" data-page="pay-merchants"><span class="ico">▣</span>پذیرندگان پرداخت <span class="count">پیش‌نمایش</span></button>
-  <button class="navbtn" data-page="pay-register"><span class="ico">＋</span>ثبت‌نام پذیرنده</button>
-  <button class="navbtn" data-page="transactions"><span class="ico">⇄</span>تراکنش و تسویه <span class="count">پیش‌نمایش</span></button>
+  <a class="navbtn" href="/admin/contacts/" style="text-decoration:none"><span class="ico">▣</span>پرونده پذیرندگان و مخاطبان</a>
+  <a class="navbtn" href="/cl/agentregister/0/" style="text-decoration:none"><span class="ico">＋</span>ثبت درخواست همکاری پذیرنده</a>
+  <a class="navbtn" href="/admin/loanPaymentRequests" style="text-decoration:none"><span class="ico">⇄</span>پرداخت‌ها و درخواست‌های تسویه</a>
   <div class="side-label">مدیریت</div>
-  <button class="navbtn" data-page="template"><span class="ico">▧</span>مدیریت قالب و صفحات <span class="count">پیش‌نمایش</span></button>
-  <button class="navbtn" data-page="settings"><span class="ico">⚙</span>تنظیمات و دسترسی‌ها</button>
+  <a class="navbtn" href="/vamcity-template-management/" style="text-decoration:none"><span class="ico">▧</span>مدیریت قالب و صفحات</a>
+  <a class="navbtn" href="/admin/appSettings" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات و دسترسی‌ها</a>
   <div class="side-label">امکانات موجود سامانه</div>
   <a class="navbtn" href="/admin/appSettings" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات اپلیکیشن</a>
   <a class="navbtn" href="/admin/appBackup" style="text-decoration:none"><span class="ico">▣</span>پشتیبان‌گیری و بازیابی</a>
@@ -182,7 +182,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
   <a class="navbtn" href="/admin/reports/" style="text-decoration:none"><span class="ico">▤</span>سررسیدهای سازمان</a>
   <a class="navbtn" href="/admin/reports/" style="text-decoration:none"><span class="ico">▤</span>گزارش ضمانت‌ها</a>
   <a class="navbtn" href="/admin/reports/" style="text-decoration:none"><span class="ico">▤</span>فاکتورهای نمایندگان</a>
-  <div class="side-foot">ورود این صفحه با نشست واقعی سامانه و نقش مدیر کنترل می‌شود. لینک‌های امکانات قدیمی به مسیرهای اصلی برنامه متصل‌اند؛ بخش‌های جدیدِ فروشگاه، پذیرنده و مدیریت قالب هنوز رابط مستقل‌اند و تا اتصال API دادهٔ نمایشی دارند.</div>
+  <div class="side-foot">پنل مدیریتی یکپارچه وام‌سیتی. بخش‌های عملیاتی از مسیرهای اصلی سامانه در همین پوسته باز می‌شوند؛ ثبت درخواست همکاری و نمایندگی از فرم موجود سامانه استفاده می‌کند. امکاناتی که API مستقل ندارند به‌عنوان دادهٔ واقعی نمایش داده نمی‌شوند.</div>
 </aside>
 <main class="main">
 <section class="section active" id="overview">
@@ -348,7 +348,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
 <script>
 const pages={overview:"داشبورد مدیریت",loans:"طرح‌های تسهیلات",calculator:"محاسبه‌گر و مقایسه",applications:"درخواست‌های وام",stores:"فروشگاه‌های همکار","store-register":"ثبت‌نام فروشگاه",products:"محصولات و سفارش‌ها","pay-merchants":"پذیرندگان پرداخت","pay-register":"ثبت‌نام پذیرنده",transactions:"تراکنش و تسویه",template:"مدیریت قالب و صفحات",settings:"تنظیمات و دسترسی‌ها"};
 function go(id){if(typeof legacyWorkspace!=="undefined"&&legacyWorkspace){legacyWorkspace.hidden=true;if(legacyFrame)legacyFrame.src="about:blank";if(typeof mainSections!=="undefined")mainSections.forEach(section=>section.style.display="");}document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active",b.dataset.page===id));if(!pages[id])return;window.scrollTo({top:0,behavior:"smooth"});}
-document.querySelectorAll(".navbtn").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
+document.querySelectorAll(".navbtn[data-page]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
 let toastTimer;function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),3200)}
 const fa=n=>Math.round(n).toLocaleString("fa-IR");const toman=n=>fa(n)+" تومان";
 function calc(){const amount=+document.getElementById("amount").value,months=+document.getElementById("months").value,rate=+document.getElementById("rate").value/1200,fees=Math.max(0,+document.getElementById("fees").value||0),down=Math.min(amount,Math.max(0,+document.getElementById("down").value||0)),net=amount-down,payment=rate===0?net/months:net*rate/(1-Math.pow(1+rate,-months)),total=payment*months,grand=total+fees;document.getElementById("amountLabel").textContent=toman(amount);document.getElementById("monthsLabel").textContent=fa(months)+" ماه";document.getElementById("rateLabel").textContent=fa(rate*1200)+"٪";document.getElementById("monthly").textContent=toman(payment);document.getElementById("netAmount").textContent=toman(net);document.getElementById("totalPay").textContent=toman(total);document.getElementById("extraPay").textContent=toman(total-net+fees);document.getElementById("grandTotal").textContent=toman(grand);const body=document.querySelector("#amortTable tbody");body.innerHTML="";let balance=net;for(let i=1;i<=months;i++){const interest=balance*rate,principal=Math.min(balance,payment-interest);balance=Math.max(0,balance-principal);if(i<=12||i===months){const tr=document.createElement("tr");tr.innerHTML="<td>"+fa(i)+"</td><td>"+toman(payment)+"</td><td>"+toman(principal)+"</td><td>"+toman(interest)+"</td><td>"+toman(balance)+"</td>";body.appendChild(tr)}}}
