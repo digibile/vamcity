@@ -74,6 +74,9 @@ jobs:
           SHA="$1"
           DOMAIN_ROOT=/home/roofixo/domains/roofixo.ir
           PUBLIC="$DOMAIN_ROOT/public_html"
+          DOMAIN_CONF=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf
+          DOMAIN_IP="$(awk -F= '$1=="ip" {print $2; exit}' "$DOMAIN_CONF")"
+          test -n "$DOMAIN_IP"
           PRIVATE="$DOMAIN_ROOT/vamcity-app/private"
           CUSTOM=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx
           GENERATED=/usr/local/directadmin/data/users/roofixo/nginx.conf
