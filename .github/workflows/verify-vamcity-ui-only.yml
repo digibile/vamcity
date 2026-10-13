@@ -32,11 +32,19 @@ jobs:
           API="$(mktemp)"
           trap 'rm -f "$HTML" "$CSS" "$API"' EXIT
 
-          STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS -L --max-time 30 -o "$HTML" -w '%{http_code}' "$BASE/cl/plans/")"
+          STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS -L --max-time 30 -o "$HTML" -w '%{http_code}' "$BASE/plans.html")"
           echo "PLANS_PAGE_HTTP=$STATUS"
           test "$STATUS" = 200
-          grep -Fq '/css/vamcity-modern-theme.css?v=7' "$HTML"
-          grep -Fq '/js/app.e76ab352.js?v=otp-ui1' "$HTML"
+          grep -Fq 'طرح‌های تسهیلات | وام‌سیتی' "$HTML"
+          HOME="$(mktemp)"
+          curl --retry 3 --retry-all-errors --retry-delay 2 -sS -L --max-time 25 -o "$HOME" "$BASE/"
+          grep -Fq 'href="/plans.html"' "$HOME"
+          grep -Fq 'href="/login/"' "$HOME"
+          grep -Fq 'href="/register/0/"' "$HOME"
+          LEGACY_URL="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS -L --max-time 25 -o /dev/null -w '%{url_effective}' "$BASE/cl/plans/")"
+          echo "LEGACY_PLANS_FINAL_URL=$LEGACY_URL"
+          test "$LEGACY_URL" = "$BASE/plans.html"
+          rm -f "$HOME"
 
           CSS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 20 -o "$CSS" -w '%{http_code}' "$BASE/css/vamcity-modern-theme.css?v=7")"
           echo "THEME_CSS_HTTP=$CSS_STATUS"
@@ -89,11 +97,11 @@ jobs:
                 }
               });
               try {
-                const response = await page.goto('https://roofixo.ir/cl/plans/', { waitUntil: 'commit', timeout: 20000 });
+                const response = await page.goto('https://roofixo.ir/plans.html', { waitUntil: 'commit', timeout: 20000 });
                 await page.waitForTimeout(6000);
                 const body = (await page.locator('body').innerText().catch(() => '')).replace(/\\s+/g, ' ').trim();
                 const appLength = await page.locator('#app').innerText().then(t => t.length).catch(() => 0);
-                const cards = await page.locator('.v-card, [class*="plan"], [class*="Plan"]').count().catch(() => 0);
+                const cards = await page.locator('.card').count().catch(() => 0);
                 const title = await page.title();
                 console.log('VIEWPORT=' + viewport.name + ' HTTP=' + (response?.status() ?? 'none'));
                 console.log('TITLE=' + title);
@@ -101,7 +109,7 @@ jobs:
                 console.log('BODY_SAMPLE=' + body.slice(0, 700));
                 console.log('BROWSER_ERRORS=' + JSON.stringify(errors.slice(0, 15)));
                 await page.screenshot({ path: 'artifacts/' + viewport.name + '.png', fullPage: true }).catch(() => {});
-                if (!response || response.status() !== 200 || body.length < 100 || !body.includes('وام سیتی')) failed = true;
+                if (!response || response.status() !== 200 || body.length < 100 || !title.includes('طرح‌های تسهیلات')) failed = true;
                 if (errors.some(e => e.startsWith('PAGEERROR') || e.startsWith('HTTP_'))) failed = true;
                 if (cards < 1) failed = true;
               } catch (e) {
