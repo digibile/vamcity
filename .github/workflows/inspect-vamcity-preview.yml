@@ -1,0 +1,51 @@
+name: Inspect VamCity admin template preview source
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-vamcity-preview.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"; test -n "$DEPLOY_USER"; test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          echo "PORT=$PORT" >> "$GITHUB_ENV"
+          echo "HOST=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "USER=$DEPLOY_USER" >> "$GITHUB_ENV"
+      - name: Inspect template preview and app mounts without modifying files
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          ROOT=/home/roofixo/domains/roofixo.ir
+          echo "=== PREVIEW HTTP ==="
+          curl -k -sS -L --max-time 15 -o /tmp/vamcity-preview-inspect.html -w 'PREVIEW_HTTP=%{http_code}\nCONTENT_TYPE=%{content_type}\nSIZE=%{size_download}\nFINAL_URL=%{url_effective}\n' https://roofixo.ir/vamcity-template-preview/
+          grep -Eoi '<title[^>]*>[^<]*|<script[^>]+src=[^ >]+|<link[^>]+href=[^ >]+' /tmp/vamcity-preview-inspect.html | head -80 || true
+          echo "=== MATCHING FILES ==="
+          find "$ROOT/public_html" "$ROOT/vamcity-app" -maxdepth 5 -type f \( -iname '*preview*' -o -iname '*admin*' -o -iname '*dashboard*' -o -iname '*template*' \) -printf '%p %s bytes\n' 2>/dev/null | head -160 || true
+          echo "=== APP MOUNT AND ENTRY ==="
+          docker inspect -f 'APP_RUNNING={{.State.Running}}' vamcity-stage-app
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
+          echo "APP_ROOT=$APP_ROOT"
+          ls -ld "$APP_ROOT/wwwroot" "$APP_ROOT/wwwroot/ui" 2>/dev/null || true
+          echo "=== ROUTE / VHOST REFERENCES ==="
+          grep -RIl 'vamcity-template-preview' /usr/local/directadmin/data/users/roofixo/domains /etc/nginx 2>/dev/null | head -40 || true
+          rm -f /tmp/vamcity-preview-inspect.html
+          REMOTE
