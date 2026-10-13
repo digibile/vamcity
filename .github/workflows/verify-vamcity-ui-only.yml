@@ -76,9 +76,14 @@ jobs:
           test "$CSS_STATUS" = 200
           grep -Fq 'tokens-base.css?v=9' "$CSS"
 
-          JS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 30 -o /dev/null -w '%{http_code}' "$BASE/js/app.e76ab352.js?v=otp-ui1")"
+          JS_BUNDLE="$(mktemp)"
+          JS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 30 -o "$JS_BUNDLE" -w '%{http_code}' "$BASE/js/app.e76ab352.js?v=otp-ui2")"
           echo "LEGACY_APP_BUNDLE_HTTP=$JS_STATUS"
           test "$JS_STATUS" = 200
+          grep -Fq 'window.location.assign(e),Promise.resolve(e)' "$JS_BUNDLE"
+          grep -Fq 'window.location.assign(e),Promise.resolve({roles:null,to:e})' "$JS_BUNDLE"
+          echo "LOGIN_AND_OTP_FORCE_FULL_PAGE_NAVIGATION_OK=true"
+          rm -f "$JS_BUNDLE"
 
           API_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 25 -o "$API" -w '%{http_code}' "$BASE/Loan/List/100")"
           echo "PUBLIC_PLANS_API_HTTP=$API_STATUS"
