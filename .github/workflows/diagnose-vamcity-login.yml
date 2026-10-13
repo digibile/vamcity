@@ -99,6 +99,14 @@ jobs:
             printf 'LOGIN_ENDPOINT=%s HTTP=%s BODY_BYTES=%s\\n' "$API_PATH" "$STATUS" "$(wc -c < "$BODY")"
             rm -f "$BODY"
           done
+          echo "=== LIVE PUBLIC TOKEN ROUTE CHECK ==="
+          grep -n -A8 -B2 'location = /api/token/' /usr/local/directadmin/data/users/roofixo/nginx.conf /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx 2>/dev/null || true
+          for PUBLIC_PATH in /api/token /api/token/; do
+            BODY="$(mktemp)"
+            STATUS="$(curl -k -sS -o "$BODY" --max-time 12 -w '%{http_code}' -X POST -H 'Content-Type: application/x-www-form-urlencoded;charset=utf-8' --data 'username=__diagnostic_invalid_user__&password=__diagnostic_invalid_password__' "https://roofixo.ir$PUBLIC_PATH" 2>/dev/null || echo CURL_ERROR)"
+            printf 'PUBLIC_LOGIN_ENDPOINT=%s HTTP=%s BODY_BYTES=%s\\n' "$PUBLIC_PATH" "$STATUS" "$(wc -c < "$BODY")"
+            rm -f "$BODY"
+          done
           echo "=== RECENT APP HTTP400 SIGNAL COUNT (NO RAW LOGS) ==="
           docker logs --since 90m vamcity-stage-app 2>&1 | grep -Eic '400|BadRequest|ModelState|invalid model|validation failed' | awk '{print "APP_HTTP400_SIGNAL_LINES=" $1}' || true
           echo "=== RECENT ERROR SIGNAL COUNTS (NO LOG CONTENT EXPOSED) ==="
