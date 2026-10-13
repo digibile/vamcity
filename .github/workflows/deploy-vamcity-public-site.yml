@@ -33,7 +33,7 @@ jobs:
           test -s public-site/plans/index.html
           grep -q 'href="/login/"' vamcity-public-home.html
           grep -q 'href="/register/0/"' vamcity-public-home.html
-          grep -q 'href="/plans/"' vamcity-public-home.html
+          grep -q 'href="/plans.html"' vamcity-public-home.html
           grep -q "fetch('/Loan/List/100'" vamcity-public-home.html
           grep -q "fetch('/Loan/List/100'" public-site/plans/index.html
           grep -q "const href='/plan/0/'" vamcity-public-home.html
@@ -81,38 +81,33 @@ jobs:
           DOMAIN_ROOT=/home/roofixo/domains/roofixo.ir
           PUBLIC="$DOMAIN_ROOT/public_html"
           PRIVATE="$DOMAIN_ROOT/vamcity-app/private"
-          CUSTOM=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx
-          GENERATED=/usr/local/directadmin/data/users/roofixo/nginx.conf
+          APP_CONTAINER=vamcity-stage-app
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' "$APP_CONTAINER")"
           HOME_SRC="/tmp/vamcity-public-home-$SHA.html"
           PLANS_SRC="/tmp/vamcity-public-plans-$SHA.html"
-          PLANS_DEST="$PUBLIC/plans.html"
+          PLANS_DEST="$APP_ROOT/wwwroot/plans.html"
           BACKUP="$PRIVATE/rollback/public-site-$SHA"
           mkdir -p "$BACKUP"
           chmod 700 "$PRIVATE" "$PRIVATE/rollback" "$BACKUP"
           test -s "$HOME_SRC"
           test -s "$PLANS_SRC"
-          test -s "$CUSTOM"
-          test -s "$GENERATED"
           test -s "$PUBLIC/vamcity-public-home.html"
+          test -n "$APP_ROOT"
+          test -s "$APP_ROOT/wwwroot/index.html"
           grep -q 'href="/login/"' "$HOME_SRC"
           grep -q 'href="/register/0/"' "$HOME_SRC"
+          grep -q 'href="/plans.html"' "$HOME_SRC"
           grep -q "fetch('/Loan/List/100'" "$PLANS_SRC"
           grep -q "const href='/plan/0/'" "$PLANS_SRC"
 
-          cp -p "$CUSTOM" "$BACKUP/roofixo.ir.cust_nginx.before"
-          cp -p "$GENERATED" "$BACKUP/nginx.conf.before"
           if [ -e "$PUBLIC/vamcity-public-home.html" ]; then cp -p "$PUBLIC/vamcity-public-home.html" "$BACKUP/vamcity-public-home.html.before"; echo existing > "$BACKUP/home.state"; else echo absent > "$BACKUP/home.state"; fi
           if [ -e "$PLANS_DEST" ]; then cp -p "$PLANS_DEST" "$BACKUP/plans.html.before"; echo existing > "$BACKUP/plans.state"; else echo absent > "$BACKUP/plans.state"; fi
           chmod 600 "$BACKUP"/*.before "$BACKUP"/*.state
 
           rollback() {
             echo "ROLLING_BACK_VAMCITY_PUBLIC_SITE"
-            cp -p "$BACKUP/roofixo.ir.cust_nginx.before" "$CUSTOM"
             if [ "$(cat "$BACKUP/home.state")" = existing ]; then cp -p "$BACKUP/vamcity-public-home.html.before" "$PUBLIC/vamcity-public-home.html"; else rm -f "$PUBLIC/vamcity-public-home.html"; fi
             if [ "$(cat "$BACKUP/plans.state")" = existing ]; then cp -p "$BACKUP/plans.html.before" "$PLANS_DEST"; else rm -f "$PLANS_DEST"; fi
-            printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
-            /usr/local/directadmin/dataskq d >/dev/null 2>&1 || true
-            nginx -t && systemctl reload nginx || true
           }
           STARTED=0
           on_exit() {
@@ -124,64 +119,26 @@ jobs:
           trap on_exit EXIT
 
           install -m 644 "$HOME_SRC" "$PUBLIC/.vamcity-public-home-$SHA.tmp"
-          install -m 644 "$PLANS_SRC" "$PUBLIC/.plans-$SHA.tmp"
+          install -m 644 "$PLANS_SRC" "$APP_ROOT/wwwroot/.plans-$SHA.tmp"
           STARTED=1
           mv -f "$PUBLIC/.vamcity-public-home-$SHA.tmp" "$PUBLIC/vamcity-public-home.html"
-          mv -f "$PUBLIC/.plans-$SHA.tmp" "$PLANS_DEST"
+          mv -f "$APP_ROOT/wwwroot/.plans-$SHA.tmp" "$PLANS_DEST"
 
-          python3 - "$CUSTOM" <<'PY'
-          import pathlib, sys
-          config = pathlib.Path(sys.argv[1])
-          text = config.read_text()
-          begin = "# VAMCITY_PUBLIC_PLANS_BEGIN"
-          end = "# VAMCITY_PUBLIC_PLANS_END"
-          if begin in text and end in text:
-              a = text.index(begin)
-              b = text.index(end, a) + len(end)
-              text = text[:a] + text[b:]
-          block = '''# VAMCITY_PUBLIC_PLANS_BEGIN
-          location = /plans {
-              return 301 /plans/;
-          }
-          location = /plans/ {
-              root /home/roofixo/domains/roofixo.ir/public_html;
-              try_files /plans.html =404;
-              default_type text/html;
-              add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
-              add_header Pragma "no-cache" always;
-              expires -1;
-          }
-          location = /cl/plans {
-              return 302 /plans/;
-          }
-          location = /cl/plans/ {
-              return 302 /plans/;
-          }
-          # VAMCITY_PUBLIC_PLANS_END
-          '''
-          marker = "location / {"
-          pos = text.rfind(marker)
-          if pos < 0:
-              raise SystemExit("Could not find generic proxy location; refusing to alter Nginx")
-          text = text[:pos] + block + text[pos:]
-          config.write_text(text)
-          PY
-          chown roofixo:roofixo "$CUSTOM"
-          chmod 644 "$CUSTOM"
-          printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
-          /usr/local/directadmin/dataskq d
-          nginx -t
-          systemctl reload nginx
+          APP_PLANS_STATUS="$(curl -sS -H 'Host: roofixo.ir' -o /tmp/vamcity-app-plans-$SHA.html -w '%{http_code}' --max-time 15 http://127.0.0.1:5187/plans.html)"
+          echo "APP_STATIC_PLANS_HTTP=$APP_PLANS_STATUS"
+          test "$APP_PLANS_STATUS" = 200
+          grep -q 'طرح‌های تسهیلات | وام‌سیتی' /tmp/vamcity-app-plans-$SHA.html
+          rm -f /tmp/vamcity-app-plans-$SHA.html
 
           HOME_STATUS="$(curl -k -sS --resolve roofixo.ir:443:127.0.0.1 -o /tmp/vamcity-home-check-$SHA.html -w '%{http_code}' https://roofixo.ir/)"
-          PLANS_STATUS="$(curl -k -sS --resolve roofixo.ir:443:127.0.0.1 -o /tmp/vamcity-plans-check-$SHA.html -w '%{http_code}' https://roofixo.ir/plans/)"
+          PLANS_STATUS="$(curl -k -sS --resolve roofixo.ir:443:127.0.0.1 -o /tmp/vamcity-plans-check-$SHA.html -w '%{http_code}' https://roofixo.ir/plans.html)"
           echo "LOCAL_HOME_HTTP=$HOME_STATUS"
           echo "LOCAL_PLANS_HTTP=$PLANS_STATUS"
           test "$HOME_STATUS" = 200
           test "$PLANS_STATUS" = 200
           grep -q 'href="/login/"' /tmp/vamcity-home-check-$SHA.html
           grep -q 'href="/register/0/"' /tmp/vamcity-home-check-$SHA.html
-          grep -q 'href="/plans/"' /tmp/vamcity-home-check-$SHA.html
+          grep -q 'href="/plans.html"' /tmp/vamcity-home-check-$SHA.html
           grep -q 'طرح‌های تسهیلات | وام‌سیتی' /tmp/vamcity-plans-check-$SHA.html
           rm -f /tmp/vamcity-home-check-$SHA.html /tmp/vamcity-plans-check-$SHA.html
           echo "PUBLIC_SITE_DEPLOY_OK"
@@ -198,19 +155,15 @@ jobs:
           set -euo pipefail
           BASE=https://roofixo.ir
           HOME_CODE="$(curl --retry 3 --retry-delay 2 -sS -L --max-time 25 -o /tmp/vamcity-home.html -w '%{http_code}' "$BASE/")"
-          PLANS_CODE="$(curl --retry 3 --retry-delay 2 -sS -L --max-time 25 -o /tmp/vamcity-plans.html -w '%{http_code}' "$BASE/plans/")"
-          LEGACY_CODE="$(curl --retry 3 --retry-delay 2 -sS -L --max-time 25 -o /tmp/vamcity-legacy-plans.html -w '%{http_code}' "$BASE/cl/plans/")"
+          PLANS_CODE="$(curl --retry 3 --retry-delay 2 -sS -L --max-time 25 -o /tmp/vamcity-plans.html -w '%{http_code}' "$BASE/plans.html")"
           echo "PUBLIC_HOME_HTTP=$HOME_CODE"
           echo "PUBLIC_PLANS_HTTP=$PLANS_CODE"
-          echo "LEGACY_PLANS_FINAL_HTTP=$LEGACY_CODE"
           test "$HOME_CODE" = 200
           test "$PLANS_CODE" = 200
-          test "$LEGACY_CODE" = 200
           grep -q 'href="/login/"' /tmp/vamcity-home.html
           grep -q 'href="/register/0/"' /tmp/vamcity-home.html
-          grep -q 'href="/plans/"' /tmp/vamcity-home.html
+          grep -q 'href="/plans.html"' /tmp/vamcity-home.html
           grep -q 'طرح‌های تسهیلات | وام‌سیتی' /tmp/vamcity-plans.html
-          grep -q 'طرح‌های تسهیلات | وام‌سیتی' /tmp/vamcity-legacy-plans.html
           API_CODE="$(curl --retry 3 --retry-delay 2 -sS --max-time 25 -o /tmp/vamcity-plans-api.json -w '%{http_code}' "$BASE/Loan/List/100")"
           echo "LIVE_PLANS_API_HTTP=$API_CODE"
           test "$API_CODE" = 200
@@ -243,7 +196,7 @@ jobs:
             for (const href of ['/login/','/register/0/','/plans/']) {
               if (await page.locator('a[href="'+href+'"]').count() === 0) throw new Error('Homepage missing link '+href);
             }
-            await page.goto('https://roofixo.ir/plans/', {waitUntil:'networkidle',timeout:45000});
+            await page.goto('https://roofixo.ir/plans.html', {waitUntil:'networkidle',timeout:45000});
             if (!(await page.title()).includes('طرح‌های تسهیلات')) throw new Error('Modern plans title missing');
             await page.waitForTimeout(1500);
             const cards = await page.locator('.card').count();
