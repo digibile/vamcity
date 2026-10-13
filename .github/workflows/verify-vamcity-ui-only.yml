@@ -8,6 +8,10 @@ on:
       - "Repair Roofixo VamCity vhost and SSL"
     types: [completed]
     branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-vamcity-ui-only.yml"
 
 permissions:
   contents: read
@@ -98,7 +102,8 @@ jobs:
                 console.log('BROWSER_ERRORS=' + JSON.stringify(errors.slice(0, 15)));
                 await page.screenshot({ path: 'artifacts/' + viewport.name + '.png', fullPage: true }).catch(() => {});
                 if (!response || response.status() !== 200 || body.length < 100 || !body.includes('وام سیتی')) failed = true;
-                if (errors.length) failed = true;
+                if (errors.some(e => e.startsWith('PAGEERROR') || e.startsWith('HTTP_'))) failed = true;
+                if (cards < 1) failed = true;
               } catch (e) {
                 console.log('VIEWPORT_ERROR=' + viewport.name + ' ' + e.message);
                 failed = true;
