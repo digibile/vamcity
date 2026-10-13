@@ -1,0 +1,88 @@
+/* Consistent modern workspace patterns for existing admin, agent, member and customer pages. */
+.v-application .v-main > .v-container,
+.v-application .v-main .container[id$="-view"] {
+  padding-top: clamp(18px, 2.6vw, 34px);
+  padding-bottom: 34px;
+}
+.v-application .v-main .v-card:not(#login-view .v-card),
+.v-application .v-main .v-sheet {
+  border-color: #e4eaf0;
+}
+.v-application .v-main .v-card:not(.v-card--flat) {
+  border-radius: 18px;
+}
+.v-application .v-main .v-card__title {
+  gap: 10px;
+  color: var(--vc-ink);
+  font-weight: 800;
+  line-height: 1.8;
+}
+.v-application .v-main .v-card__title .v-icon {
+  color: #b68a4a;
+}
+.v-application .v-main .v-data-table {
+  overflow: hidden;
+  border: 1px solid #e5eaf0;
+  border-radius: 15px;
+  background: #fff;
+}
+.v-application .v-main .v-data-table thead th {
+  height: 54px;
+  color: #516579;
+  background: #f6f8fb;
+  font-size: .82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.v-application .v-main .v-data-table tbody tr:hover {
+  background: #fbf8f2 !important;
+}
+.v-application .v-main .v-data-table td {
+  height: 52px;
+  color: #34485a;
+  border-bottom-color: #edf1f5;
+}
+.v-application .v-main .v-input__slot {
+  border-radius: 11px;
+}
+.v-application .v-main .v-btn {
+  font-family: inherit;
+  letter-spacing: 0;
+  font-weight: 700;
+}
+.v-application .v-main .v-btn:not(.v-btn--text):not(.v-btn--icon) {
+  border-radius: 11px;
+}
+.v-application .v-main .v-chip {
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.v-application .v-main .v-tabs > .v-tabs-bar {
+  border-bottom: 1px solid #e6ebf1;
+  background: transparent;
+}
+.v-application .v-main .v-dialog > .v-card {
+  border-radius: 20px;
+  overflow: hidden;
+}
+.v-application .v-main .v-alert,
+.v-application .v-main .v-snack__wrapper {
+  border-radius: 13px;
+}
+.v-application .v-main .v-pagination__item,
+.v-application .v-main .v-pagination__navigation {
+  border-radius: 10px;
+  box-shadow: none;
+  border: 1px solid #e4eaf0;
+}
+@media (max-width: 600px) {
+  .v-application .v-main > .v-container,
+  .v-application .v-main .container[id$="-view"] {
+    padding: 16px 12px 26px;
+  }
+  .v-application .v-main .v-card:not(.v-card--flat) { border-radius: 15px; }
+  .v-application .v-main .v-card__title { font-size: 1rem; }
+  .v-application .v-main .v-data-table { border-radius: 12px; }
+  .v-application .v-main .v-data-table__wrapper { overflow-x: auto; }
+  .v-application .v-main .v-data-table td { white-space: nowrap; }
+}
