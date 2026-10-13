@@ -81,7 +81,7 @@ jobs:
             -o BatchMode=yes -o StrictHostKeyChecking=yes \
             "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE" \
             "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
-          set -euo pipefail
+          set -euxo pipefail
           SHA="$1"
           DOMAIN_ROOT=/home/roofixo/domains/roofixo.ir
           BASE="$DOMAIN_ROOT/vamcity-app"
