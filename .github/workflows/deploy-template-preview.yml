@@ -137,8 +137,8 @@ jobs:
           grep -q "پشتیبان‌گیری و بازیابی" /tmp/vamcity-admin-check.html
           grep -q "مرکز مدیریت وام‌سیتی" /tmp/vamcity-admin-check.html
           grep -Fq "localStorage.getItem('user')" /tmp/vamcity-admin-check.html
-          grep -q 'href="/admin/reports"' /tmp/vamcity-admin-check.html
-          grep -q 'href="/admin/tickets"' /tmp/vamcity-admin-check.html
+          grep -q 'href="/admin/reports/"' /tmp/vamcity-admin-check.html
+          grep -q 'href="/admin/tickets/"' /tmp/vamcity-admin-check.html
           grep -q 'href="/admin/appBackup"' /tmp/vamcity-admin-check.html
           grep -q 'class="footer-links"' /tmp/vamcity-admin-check.html
           grep -q 'href="/cl/agentregister/0/"' /tmp/vamcity-admin-check.html
