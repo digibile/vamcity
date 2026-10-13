@@ -145,8 +145,7 @@ jobs:
           text = chr(10).join(out)
           block = f'''# VAMCITY_PUBLIC_HOME_BEGIN
           location = / {{
-              root {public};
-              try_files /vamcity-public-home.html =404;
+              alias {public}/vamcity-public-home.html;
               default_type text/html;
               add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
               add_header Pragma "no-cache" always;
@@ -156,8 +155,7 @@ jobs:
           '''
           plans_block = f'''# VAMCITY_PUBLIC_PLANS_BEGIN
           location = /plans.html {{
-              root {public};
-              try_files /plans.html =404;
+              alias {public}/plans.html;
               default_type text/html;
               add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
               add_header Pragma "no-cache" always;
