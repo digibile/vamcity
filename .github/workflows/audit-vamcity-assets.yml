@@ -1,4 +1,4 @@
-name: Audit VamCity assets and feature files
+name: Audit VamCity assets and feature files (blank-page recovery check)
 on:
   push:
     branches: [main]
