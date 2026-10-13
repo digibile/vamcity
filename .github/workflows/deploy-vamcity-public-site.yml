@@ -88,8 +88,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ssh -i ~/.ssh/vamcity_public_home_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST" \
-            "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
+          for attempt in 1 2 3 4 5; do
+            if ssh -o ConnectTimeout=20 -o ConnectionAttempts=2 -i ~/.ssh/vamcity_public_home_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST" \
+              "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
           set -Eeuo pipefail
           SHA="$1"
           DOMAIN_ROOT=/home/roofixo/domains/roofixo.ir
@@ -236,6 +237,14 @@ jobs:
           echo "DATABASE_UNTOUCHED=1"
           echo "APP_CONTAINER_RESTARTED=0"
           REMOTE
+            then
+              exit 0
+            fi
+            echo "SSH deploy attempt $attempt failed; retrying after temporary connection reset"
+            sleep 10
+          done
+          echo "REMOTE_DEPLOY_FAILED_AFTER_RETRIES"
+          exit 1
 
       - name: Verify public homepage, account routes, and live plans API
         shell: bash
