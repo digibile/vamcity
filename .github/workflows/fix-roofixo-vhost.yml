@@ -119,7 +119,9 @@ jobs:
           # Match the reference VamCity plans page at the domain root.
           # Exact-match location leaves every other original application route untouched.
           location = / {
-              return 302 /cl/plans/;
+              root /home/roofixo/domains/roofixo.ir/public_html;
+              try_files /vamcity-template-management/index.html =404;
+              default_type text/html;
           }
           # Legacy routes rendered an empty page; route them to the existing login UI.
           location = /cl/login {
