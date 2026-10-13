@@ -174,11 +174,7 @@ jobs:
               expires -1;
           }
           location = /admin/dashboard/ {
-              alias /home/roofixo/domains/roofixo.ir/public_html/vamcity-admin/index.html;
-              default_type text/html;
-              add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
-              add_header Pragma "no-cache" always;
-              expires -1;
+              return 302 /admin/dashboard;
           }
           # Vue's legacy login redirects administrators to /admin/Dashboard (capital D).
           # Nginx exact locations are case-sensitive, so map both legacy spellings to the new UI.
@@ -190,11 +186,7 @@ jobs:
               expires -1;
           }
           location = /admin/Dashboard/ {
-              alias /home/roofixo/domains/roofixo.ir/public_html/vamcity-admin/index.html;
-              default_type text/html;
-              add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
-              add_header Pragma "no-cache" always;
-              expires -1;
+              return 302 /admin/dashboard;
           }
           location = /admin {
               return 302 /admin/dashboard;
@@ -405,7 +397,7 @@ jobs:
           echo "=== VERIFY NEW ADMIN DASHBOARD ON ALL LOGIN LANDING SPELLINGS ==="
           for ADMIN_PATH in /admin/dashboard /admin/dashboard/ /admin/Dashboard /admin/Dashboard/; do
             ADMIN_BODY="$(mktemp)"
-            ADMIN_STATUS="$(curl --retry 2 --retry-all-errors --retry-delay 1 -sS -o "$ADMIN_BODY" --max-time 15 -w '%{http_code}' "https://roofixo.ir$ADMIN_PATH")"
+            ADMIN_STATUS="$(curl --retry 2 --retry-all-errors --retry-delay 1 -sS -L -o "$ADMIN_BODY" --max-time 15 -w '%{http_code}' "https://roofixo.ir$ADMIN_PATH")"
             ADMIN_BYTES="$(wc -c < "$ADMIN_BODY")"
             echo "ADMIN_PATH=$ADMIN_PATH HTTP=$ADMIN_STATUS BYTES=$ADMIN_BYTES"
             test "$ADMIN_STATUS" = "200"
