@@ -158,7 +158,7 @@ jobs:
           }}
           # VAMCITY_PUBLIC_PLANS_END
           '''
-          text = text.rstrip() + "\\n" + block + "\\n"
+          text = text.rstrip() + chr(10) + block + chr(10)
           config.write_text(text)
           PY
           chown roofixo:roofixo "$CUSTOM"
