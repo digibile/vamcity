@@ -36,33 +36,46 @@ jobs:
           echo "PORT=$PORT" >> "$GITHUB_ENV"
           echo "HOST=$DEPLOY_HOST" >> "$GITHUB_ENV"
           echo "USER=$DEPLOY_USER" >> "$GITHUB_ENV"
-      - name: Check live login, app health, and admin route without changing data
+      - name: Diagnose routes and login API safely
         shell: bash
         run: |
           set -euo pipefail
           ssh -i "$RUNNER_TEMP/vamcity-diagnostic-key" -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST" 'bash -s' <<'REMOTE'
           set -u
-          echo "=== CONTAINER STATE ==="
+          echo "=== SERVICE STATE ==="
           docker inspect -f 'APP_RUNNING={{.State.Running}} APP_STATUS={{.State.Status}}' vamcity-stage-app 2>/dev/null || true
           docker inspect -f 'SQL_RUNNING={{.State.Running}} SQL_STATUS={{.State.Status}}' vamcity-stage-sql 2>/dev/null || true
-          echo "=== NGINX CONFIG ==="
           nginx -t 2>&1 | tail -3
-          echo "=== LOCAL APP ROUTES ==="
-          for route in / /login/ /register/0/ /api/token /admin/dashboard /cl/plans/ /plans.html; do
-            status="$(curl -sS -o /dev/null --max-time 12 -w '%{http_code}' -H 'Host: roofixo.ir' "http://127.0.0.1:5187$route" 2>/dev/null || echo CURL_ERROR)"
-            printf 'LOCAL_ROUTE %s HTTP=%s\n' "$route" "$status"
-          done
-          echo "=== PUBLIC ROUTES ==="
-          for route in / /login/ /register/0/ /admin/dashboard /vamcity-template-preview/ /plans.html; do
+          echo "=== PUBLIC GET ROUTES ==="
+          for route in / /login/ /register/0/ /admin/dashboard /vamcity-template-preview/ /plans.html /cl/plans/; do
             status="$(curl -k -sS -L -o /dev/null --max-time 15 -w '%{http_code}' "https://roofixo.ir$route" 2>/dev/null || echo CURL_ERROR)"
             printf 'PUBLIC_ROUTE %s HTTP=%s\n' "$route" "$status"
           done
-          echo "=== APP API AUTH ENDPOINT (NO CREDENTIALS, NO DATA CHANGES) ==="
+          echo "=== AUTH API RESPONSES FOR A NONEXISTENT DIAGNOSTIC USER ==="
           for path in /api/token /api/token/; do
-            status="$(curl -sS -o /dev/null --max-time 12 -w '%{http_code}' -X POST -H 'Host: roofixo.ir' -H 'Content-Type: application/x-www-form-urlencoded' --data 'username=__diagnostic_invalid_user__&password=__diagnostic_invalid_password__' "http://127.0.0.1:5187$path" 2>/dev/null || echo CURL_ERROR)"
-            printf 'AUTH_API %s HTTP=%s\n' "$path" "$status"
+            body="$(mktemp)"
+            status="$(curl -sS -o "$body" --max-time 12 -w '%{http_code}' -X POST -H 'Host: roofixo.ir' -H 'Content-Type: application/x-www-form-urlencoded' --data 'username=__diagnostic_invalid_user__&password=__diagnostic_invalid_password__' "http://127.0.0.1:5187$path" 2>/dev/null || echo CURL_ERROR)"
+            printf 'AUTH_API %s HTTP=%s ' "$path" "$status"
+            python3 - "$body" <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path(sys.argv[1])
+          raw = p.read_text(errors="replace")[:3000]
+          try:
+              obj = json.loads(raw)
+              print("JSON_KEYS=" + ",".join(sorted(obj.keys())[:20]))
+              for k in ("error", "message", "title", "status", "detail"):
+                  v = obj.get(k)
+                  if isinstance(v, (str, int, float)):
+                      print(k.upper() + "=" + str(v).replace("\\n", " ")[:180], end=" ")
+              print()
+          except Exception:
+              print("BODY_TYPE=non-json BODY_BYTES=" + str(p.stat().st_size))
+          PY
+            rm -f "$body"
           done
-          echo "=== DATABASE CONNECTIVITY SUMMARY ==="
-          docker inspect -f 'SQL_HEALTH={{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' vamcity-stage-sql 2>/dev/null || true
+          echo "=== RECENT ERROR SIGNAL COUNTS (NO LOG CONTENT EXPOSED) ==="
+          docker logs --since 30m vamcity-stage-app 2>&1 | grep -Eic 'exception|unhandled|error|failed|login' | awk '{print "APP_ERROR_SIGNAL_LINES=" $1}' || true
+          echo "=== DATABASE CONTAINER STATE ==="
+          docker inspect -f 'SQL_STATUS={{.State.Status}}' vamcity-stage-sql 2>/dev/null || true
           echo "DIAGNOSTICS_COMPLETE"
           REMOTE
