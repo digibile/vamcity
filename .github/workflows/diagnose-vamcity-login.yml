@@ -82,11 +82,11 @@ jobs:
           path = pathlib.Path(sys.argv[1])
           lines = path.read_text(errors="replace").splitlines()[-4000:]
           counts = collections.Counter()
-          pattern = re.compile(r'"(?:GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD) ([^ ?" ]+)(?:\\?[^ "]*?)? HTTP/[^"]+" (\\d{3})')
+          pattern = re.compile(r'(?:GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+(\S+)\s+HTTP/[^\s"]+[" ]+400\b')
           for line in lines:
               match = pattern.search(line)
-              if match and match.group(2) == "400":
-                  counts[match.group(1)] += 1
+              if match:
+                  counts[match.group(1).split("?", 1)[0]] += 1
           for route, count in sorted(counts.items()):
               print(f"HTTP400_PATH={route} COUNT={count}")
           PY
