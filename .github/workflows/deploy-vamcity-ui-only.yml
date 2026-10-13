@@ -30,8 +30,8 @@ jobs:
           set -euo pipefail
           test -s wwwroot/ui/index.html
           test -s wwwroot/ui/css/vamcity-modern-theme.css
-          grep -Fq '/css/vamcity-modern-theme.css?v=5' wwwroot/ui/index.html
-          for file in tokens-base shell-navigation surfaces-actions forms-tables feedback-overlays responsive public-landing accessibility; do
+          grep -Fq '/css/vamcity-modern-theme.css?v=6' wwwroot/ui/index.html
+          for file in tokens-base shell-navigation surfaces-actions forms-tables feedback-overlays responsive public-landing accessibility login-authentication workspaces; do
             test -s "wwwroot/ui/css/vamcity/$file.css"
             grep -Fq "$file.css?v=5" wwwroot/ui/css/vamcity-modern-theme.css
           done
@@ -116,7 +116,7 @@ jobs:
           tar -xzf "$ARCHIVE" -C "$TMP"
           test -s "$TMP/wwwroot/ui/index.html"
           test -s "$TMP/wwwroot/ui/css/vamcity-modern-theme.css"
-          grep -Fq '/css/vamcity-modern-theme.css?v=5' "$TMP/wwwroot/ui/index.html"
+          grep -Fq '/css/vamcity-modern-theme.css?v=6' "$TMP/wwwroot/ui/index.html"
 
           rollback() {
             cp -p "$BACKUP/index.html" "$APP_ROOT/wwwroot/index.html"
@@ -155,9 +155,9 @@ jobs:
             mv "$APP_ROOT/wwwroot/css/vamcity/.$name-$SHA.tmp" "$APP_ROOT/wwwroot/css/vamcity/$name"
           done
 
-          grep -Fq '/css/vamcity-modern-theme.css?v=5' "$APP_ROOT/wwwroot/index.html"
+          grep -Fq '/css/vamcity-modern-theme.css?v=6' "$APP_ROOT/wwwroot/index.html"
           curl --retry 4 --retry-delay 2 --fail --silent --show-error --max-time 10 \
-            "http://127.0.0.1:5187/css/vamcity-modern-theme.css?v=5" -o /dev/null
+            "http://127.0.0.1:5187/css/vamcity-modern-theme.css?v=6" -o /dev/null
           curl --retry 4 --retry-delay 2 --fail --silent --show-error --max-time 10 \
             "http://127.0.0.1:5187/js/app.e76ab352.js?v=d1664791" -o /dev/null
           echo "UI_ONLY_DEPLOY_OK"
@@ -171,8 +171,8 @@ jobs:
         run: |
           set -euo pipefail
           curl --retry 3 --retry-delay 2 --fail --silent --show-error --max-time 15 \
-            "https://roofixo.ir/css/vamcity-modern-theme.css?v=5" -o /tmp/vamcity-public-theme.css
-          grep -Fq "tokens-base.css?v=5" /tmp/vamcity-public-theme.css
+            "https://roofixo.ir/css/vamcity-modern-theme.css?v=6" -o /tmp/vamcity-public-theme.css
+          grep -Fq "tokens-base.css?v=6" /tmp/vamcity-public-theme.css
           curl --retry 3 --retry-delay 2 --fail --silent --show-error --max-time 15 \
             "https://roofixo.ir/js/app.e76ab352.js?v=d1664791" -o /dev/null
           echo "PUBLIC_UI_ASSETS_OK"
