@@ -152,7 +152,20 @@ jobs:
               add_header Pragma "no-cache" always;
               expires -1;
           }
-          # /login and /login/ are handled by the legacy app through the proxy below.
+          # Login and registration must bypass any generic homepage fallback and reach the existing Vue SPA.
+          location ~ ^/(login|cl/login|cl/register)/?$ {
+              proxy_pass http://127.0.0.1:5187;
+              proxy_http_version 1.1;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header X-Forwarded-Host $host;
+              proxy_connect_timeout 15s;
+              proxy_send_timeout 120s;
+              proxy_read_timeout 120s;
+              proxy_redirect off;
+          }
           location / {
               proxy_pass http://127.0.0.1:5187;
               proxy_http_version 1.1;
@@ -176,7 +189,8 @@ jobs:
           /usr/local/directadmin/dataskq d
           if ! nginx -t; then rollback_config; exit 1; fi
           echo "=== ACTIVE AUTH LOCATIONS AFTER REWRITE ==="
-          grep -n -E -A2 -B1 'location = /(login|cl/login|cl/register)|return 302 /;' "$GENERATED" || true
+          grep -n -E -A2 -B1 'location = /(login|cl/login|cl/register)|location ~.*(login|register)|return 302 /;' "$GENERATED" || true
+          nginx -T 2>/dev/null | grep -n -E -B2 -A4 'location = /(login|cl/login|cl/register)|location ~.*(login|register)|return 302 /;' | head -100 || true
           if ! grep -q 'proxy_pass http://127.0.0.1:5187' "$GENERATED"; then
             echo "PER_DOMAIN_CUST_NGINX_NOT_INSERTED_IN_GENERATED_CONFIG"
             echo "CUSTOM_FILE_OWNER=$(stat -c '%U:%G %a' "$CUSTOM")"
