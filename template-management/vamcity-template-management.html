@@ -410,9 +410,9 @@ function returnToOverview(){
   mainSections.forEach(section=>section.style.display="");
   go("overview");
 }
-document.querySelectorAll('a[href^="/admin/"]').forEach(link=>{
+document.querySelectorAll('.sidebar a.navbtn[href^="/"]').forEach(link=>{
   const href=link.getAttribute("href")||"";
-  if(href==="/admin/dashboard"||href==="/admin/dashboard/")return;
+  if(href==="/dashboard"||href==="/dashboard/")return;
   link.addEventListener("click",event=>{
     if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
     event.preventDefault();
