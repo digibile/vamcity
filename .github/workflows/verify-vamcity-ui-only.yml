@@ -133,7 +133,7 @@ jobs:
           NODE
           node verify-ui.cjs
 
-      - name: Verify login page and both existing sign-in modes
+      - name: Verify existing username/password login and registration routes
         shell: bash
         run: |
           set -euo pipefail
@@ -145,33 +145,38 @@ jobs:
             const errors = [];
             page.on('pageerror', e => errors.push(e.message));
             const response = await page.goto('https://roofixo.ir/login/', { waitUntil: 'domcontentloaded', timeout: 45000 });
-            await page.waitForTimeout(3500);
-            const initialText = (await page.locator('body').innerText()).replace(/\\s+/g, ' ');
+            await page.waitForTimeout(3000);
+            const loginText = (await page.locator('body').innerText()).replace(/\\s+/g, ' ').trim();
+            const inputCount = await page.locator('input').count();
+            const passwordCount = await page.locator('input[type="password"]').count();
             console.log('LOGIN_PAGE_HTTP=' + (response?.status() ?? 'none'));
-            console.log('LOGIN_STATIC_MODE_VISIBLE=' + initialText.includes('ورود با رمز ثابت'));
-            console.log('LOGIN_OTP_MODE_VISIBLE=' + initialText.includes('ورود با رمز پیامکی'));
-            console.log('LOGIN_BODY_SAMPLE=' + initialText.slice(0, 500));
+            console.log('LOGIN_INPUTS=' + inputCount + ' PASSWORD_FIELDS=' + passwordCount);
+            console.log('LOGIN_BODY_SAMPLE=' + loginText.slice(0, 500));
             if (!response || response.status() !== 200 ||
-                !initialText.includes('ورود با رمز ثابت') ||
-                !initialText.includes('ورود با رمز پیامکی')) {
-              throw new Error('The public login page or one of its existing sign-in modes is missing');
+                !loginText.includes('نام کاربری') ||
+                !loginText.includes('کلمه عبور') ||
+                !loginText.includes('کد امنیتی') ||
+                !loginText.includes('ثبت نام کنید') ||
+                inputCount < 3 || passwordCount < 1 || errors.length) {
+              throw new Error('Existing username/password/captcha login form did not render correctly: ' + JSON.stringify(errors));
             }
             await page.screenshot({ path: 'artifacts/login-desktop.png', fullPage: true });
-            await page.getByText('ورود با رمز پیامکی', { exact: false }).first().click();
-            await page.waitForTimeout(400);
-            const otpText = (await page.locator('body').innerText()).replace(/\\s+/g, ' ');
-            const mobileVisible = await page.getByLabel('شماره موبایل', { exact: false }).count().catch(() => 0);
-            console.log('LOGIN_OTP_MOBILE_FIELD_COUNT=' + mobileVisible);
-            console.log('LOGIN_OTP_INPUT_VISIBLE=' + otpText.includes('رمز پیامکی را اینجا وارد کنید'));
-            if (!otpText.includes('رمز پیامکی را اینجا وارد کنید') || errors.length) {
-              throw new Error('OTP UI did not open cleanly: ' + JSON.stringify(errors));
-            }
-            await page.screenshot({ path: 'artifacts/login-otp-desktop.png', fullPage: true });
-            await page.setViewportSize({ width: 390, height: 844 });
-            await page.reload({ waitUntil: 'domcontentloaded' });
+            await page.getByText('ثبت نام کنید', { exact: false }).first().click();
             await page.waitForTimeout(2500);
+            const registerText = (await page.locator('body').innerText()).replace(/\\s+/g, ' ').trim();
+            const registerInputs = await page.locator('input').count();
+            console.log('REGISTER_FINAL_URL=' + page.url());
+            console.log('REGISTER_BODY_LENGTH=' + registerText.length + ' REGISTER_INPUTS=' + registerInputs);
+            console.log('REGISTER_BODY_SAMPLE=' + registerText.slice(0, 500));
+            if (!registerText.includes('ثبت نام') || registerInputs < 2 || errors.length) {
+              throw new Error('Existing registration form did not render correctly: ' + JSON.stringify(errors));
+            }
+            await page.screenshot({ path: 'artifacts/register-desktop.png', fullPage: true });
+            await page.setViewportSize({ width: 390, height: 844 });
+            await page.goto('https://roofixo.ir/login/', { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await page.waitForTimeout(2000);
             await page.screenshot({ path: 'artifacts/login-mobile.png', fullPage: true });
-            console.log('LOGIN_BROWSER_ERRORS=' + JSON.stringify(errors));
+            console.log('LOGIN_REGISTER_BROWSER_ERRORS=' + JSON.stringify(errors));
             await browser.close();
           })().catch(e => { console.error(e); process.exit(1); });
           NODE
