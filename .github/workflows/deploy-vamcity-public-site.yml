@@ -142,8 +142,7 @@ jobs:
               return 301 /plans/;
           }}
           location = /plans/ {{
-              root {public};
-              try_files /plans/index.html =404;
+              alias {public}/plans/index.html;
               default_type text/html;
               add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
               add_header Pragma "no-cache" always;
