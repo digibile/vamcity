@@ -75,6 +75,8 @@ jobs:
           DOMAIN_ROOT=/home/roofixo/domains/roofixo.ir
           PUBLIC="$DOMAIN_ROOT/public_html"
           PRIVATE="$DOMAIN_ROOT/vamcity-app/private"
+          CUSTOM=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx
+          GENERATED=/usr/local/directadmin/data/users/roofixo/nginx.conf
           SRC="/tmp/vamcity-public-home-$SHA.html"
           DEST="$PUBLIC/vamcity-public-home.html"
           BACKUP="$PRIVATE/rollback/public-home-$SHA"
@@ -89,9 +91,43 @@ jobs:
           cp -p "$DEST" "$BACKUP/vamcity-public-home.html.before"
           echo existing > "$BACKUP/home.state"
           chmod 600 "$BACKUP/vamcity-public-home.html.before" "$BACKUP/home.state"
+          cp -p "$CUSTOM" "$BACKUP/roofixo.ir.cust_nginx.before"
+          chmod 600 "$BACKUP/roofixo.ir.cust_nginx.before"
           install -m 644 "$SRC" "$PUBLIC/.vamcity-public-home-$SHA.tmp"
           mv -f "$PUBLIC/.vamcity-public-home-$SHA.tmp" "$DEST"
           rm -f "$SRC"
+          python3 - "$CUSTOM" "$PUBLIC" <<'PY'
+          import pathlib, re, sys
+          config = pathlib.Path(sys.argv[1])
+          public = sys.argv[2]
+          text = config.read_text()
+          begin = "# VAMCITY_PUBLIC_HOME_BEGIN"
+          end = "# VAMCITY_PUBLIC_HOME_END"
+          if begin in text and end in text:
+              a = text.index(begin)
+              b = text.index(end, a) + len(end)
+              text = text[:a] + text[b:]
+          text = re.sub(r"(?ms)^[ \\t]*location = / \\{\\s*.*?^[ \\t]*\\}\\s*", "", text)
+          block = f'''# VAMCITY_PUBLIC_HOME_BEGIN
+          location = / {{
+              root {public};
+              try_files /vamcity-public-home.html =404;
+              default_type text/html;
+              add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+              add_header Pragma "no-cache" always;
+              expires -1;
+          }}
+          # VAMCITY_PUBLIC_HOME_END
+          '''
+          config.write_text(text.rstrip() + chr(10) + block + chr(10))
+          PY
+          chown roofixo:roofixo "$CUSTOM"
+          chmod 644 "$CUSTOM"
+          printf 'action=rewrite&value=nginx&user=roofixo\\n' >> /usr/local/directadmin/data/task.queue
+          /usr/local/directadmin/dataskq d
+          nginx -t
+          grep -Fq 'location = / {' "$GENERATED"
+          systemctl reload nginx
           STATUS="$(curl -k -sS --resolve roofixo.ir:443:127.0.0.1 -o "/tmp/vamcity-home-check-$SHA.html" -w '%{http_code}' https://roofixo.ir/)"
           echo "LOCAL_HOME_HTTP=$STATUS"
           test "$STATUS" = 200
