@@ -121,19 +121,8 @@ jobs:
           # The domain root must serve the actual VamCity public landing page,
           # including the installment calculator and all original landing sections.
           # The default location below proxies the application on port 5187.
-          # Legacy routes rendered an empty page; route them to the existing login UI.
-          location = /cl/login {
-              return 302 /login/;
-          }
-          location = /cl/login/ {
-              return 302 /login/;
-          }
-          location = /cl/register {
-              return 302 /login/;
-          }
-          location = /cl/register/ {
-              return 302 /login/;
-          }
+          # Authentication and registration routes must reach the existing Vue application.
+          # Do not redirect these paths to the public homepage; the app owns their behavior.
           # Legacy plans URLs must land on the working plans listing.
           location = /plans/0 {
               return 302 /cl/plans/;
@@ -163,13 +152,7 @@ jobs:
               add_header Pragma "no-cache" always;
               expires -1;
           }
-          # Old bookmarks/deep links must not replace the public homepage with the legacy login screen.
-          location = /login {
-              return 302 /;
-          }
-          location = /login/ {
-              return 302 /;
-          }
+          # /login and /login/ are handled by the legacy app through the proxy below.
           location / {
               proxy_pass http://127.0.0.1:5187;
               proxy_http_version 1.1;
@@ -199,6 +182,22 @@ jobs:
             exit 1
           fi
           if ! systemctl reload nginx; then rollback_config; exit 1; fi
+
+          echo "=== VERIFY LOGIN AND REGISTRATION ROUTES REACH THE APP ==="
+          AUTH_FAILED=0
+          for ROUTE in /login/ /cl/login /cl/register; do
+            AUTH_BODY="$(mktemp)"
+            AUTH_STATUS="$(curl -k --resolve "roofixo.ir:443:$DOMAIN_IP" -sS -L -o "$AUTH_BODY" --max-time 20 -w '%{http_code}' "https://roofixo.ir$ROUTE" || true)"
+            AUTH_HAS_APP="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$AUTH_BODY" | head -1 || true)"
+            echo "AUTH_ROUTE=$ROUTE HTTP=$AUTH_STATUS APP_BUNDLE=\${AUTH_HAS_APP:-missing}"
+            if [ "$AUTH_STATUS" != "200" ] || [ -z "$AUTH_HAS_APP" ]; then AUTH_FAILED=1; fi
+            rm -f "$AUTH_BODY"
+          done
+          if [ "$AUTH_FAILED" = "1" ]; then
+            echo "AUTH_ROUTE_CHECK_FAILED; restoring previous Nginx configuration"
+            rollback_config
+            exit 1
+          fi
 
           echo "=== VERIFY HTTP AND HTTPS ROUTES WITHOUT HIDING REDIRECTS ==="
           HTTP_BODY="$(mktemp)"
@@ -277,13 +276,6 @@ jobs:
           rm -f "$API_BODY"
           echo "ROOFIXO_ROOT_AND_PUBLIC_DATA_VERIFIED=true"
 
-          LOGIN_HEADERS="$(mktemp)"
-          LOGIN_STATUS="$(curl --retry 2 --retry-all-errors --retry-delay 1 -sS --max-time 20 -D "$LOGIN_HEADERS" -o /dev/null -w '%{http_code}' https://roofixo.ir/login/)"
-          echo "ROOFIXO_LEGACY_LOGIN_STATUS=$LOGIN_STATUS"
-          echo "ROOFIXO_LEGACY_LOGIN_LOCATION=$(grep -i '^location:' "$LOGIN_HEADERS" | tail -1 || true)"
-          test "$LOGIN_STATUS" = "302"
-          grep -Eiq '^location:[[:space:]]*https://roofixo[.]ir/' "$LOGIN_HEADERS"
-          rm -f "$LOGIN_HEADERS"
-          echo "ROOFIXO_LEGACY_LOGIN_REDIRECT_VERIFIED=true"
+          echo "ROOFIXO_AUTH_ROUTES_VERIFIED=true"
           echo "ROOFIXO_PUBLIC_LANDING_AT_ROOT=true"
           REMOTE
