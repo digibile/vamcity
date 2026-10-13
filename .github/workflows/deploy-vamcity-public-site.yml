@@ -149,7 +149,7 @@ jobs:
           echo "APP_CONTAINER_RESTARTED=0"
           REMOTE
 
-      - name: Verify public URLs, legacy plans redirect, and live API
+      - name: Verify public URLs and live API
         shell: bash
         run: |
           set -euo pipefail
@@ -193,7 +193,7 @@ jobs:
             page.on('pageerror', e => errors.push(e.message));
             let response = await page.goto('https://roofixo.ir/', {waitUntil:'networkidle',timeout:45000});
             if (!response || response.status() !== 200) throw new Error('Homepage did not return HTTP 200');
-            for (const href of ['/login/','/register/0/','/plans/']) {
+            for (const href of ['/login/','/register/0/','/plans.html']) {
               if (await page.locator('a[href="'+href+'"]').count() === 0) throw new Error('Homepage missing link '+href);
             }
             await page.goto('https://roofixo.ir/plans.html', {waitUntil:'networkidle',timeout:45000});
