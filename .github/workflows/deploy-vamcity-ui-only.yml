@@ -65,7 +65,16 @@ jobs:
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_deploy_key
           chmod 600 ~/.ssh/vamcity_deploy_key
           PORT="${DEPLOY_PORT:-22}"
-          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          for attempt in 1 2 3 4 5; do
+            if ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null && test -s ~/.ssh/known_hosts; then
+              break
+            fi
+            echo "SSH key scan failed; retrying ($attempt/5)"
+            sleep 3
+          done
+          test -s ~/.ssh/known_hosts
+          grep -Fq '__vamcityAdminRouteBridge' wwwroot/ui/index.html
+          echo "ADMIN_ROUTE_BRIDGE_SOURCE_OK"
           echo "DEPLOY_PORT_EFFECTIVE=$PORT" >> "$GITHUB_ENV"
           echo "DEPLOY_HOST_EFFECTIVE=$DEPLOY_HOST" >> "$GITHUB_ENV"
           echo "DEPLOY_USER_EFFECTIVE=$DEPLOY_USER" >> "$GITHUB_ENV"
