@@ -45,7 +45,7 @@ jobs:
           test -s wwwroot/ui/js/app.e76ab352.js
           grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' wwwroot/ui/js/app.e76ab352.js
           test -s wwwroot/ui/js/views-admin-UserLoanRequests.8e3264fe.js
-          grep -Fq 'e=Array.isArray(e)?e:[]' wwwroot/ui/js/views-admin-UserLoanRequests.8e3264fe.js
+          grep -Fq 'e=Array.isArray(e)?e.filter((function(t){return t&&"object"===typeof t})):[]' wwwroot/ui/js/views-admin-UserLoanRequests.8e3264fe.js
           tar -czf /tmp/vamcity-ui-only.tar.gz \
             wwwroot/ui/index.html \
             wwwroot/ui/js/app.e76ab352.js \
