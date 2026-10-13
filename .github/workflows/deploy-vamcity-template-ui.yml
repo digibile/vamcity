@@ -62,7 +62,7 @@ jobs:
           scp -i ~/.ssh/vamcity_roofixo_key -P "$DEPLOY_PORT_EFFECTIVE" \
             -o BatchMode=yes -o StrictHostKeyChecking=yes \
             template-management/vamcity-template-management.html \
-            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE:/tmp/vamcity-template-management-$GITHUB_SHA.html"
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE:/tmp/vamcity-template-ui-$GITHUB_SHA.html"
 
       - name: Publish without touching the VamCity app
         shell: bash
@@ -75,7 +75,7 @@ jobs:
           set -euo pipefail
           SHA="$1"
           ROOT="/home/roofixo/domains/roofixo.ir/public_html/vamcity-template-management"
-          SRC="/tmp/vamcity-template-management-$SHA.html"
+          SRC="/tmp/vamcity-template-ui-$SHA.html"
           test -s "$SRC"
           install -d -m 755 "$ROOT"
           install -m 644 "$SRC" "$ROOT/index.html.new"
