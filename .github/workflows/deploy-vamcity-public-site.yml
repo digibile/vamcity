@@ -115,7 +115,7 @@ jobs:
             if [ "$(cat "$BACKUP/home.state")" = existing ]; then cp -p "$BACKUP/vamcity-public-home.html.before" "$PUBLIC/vamcity-public-home.html"; else rm -f "$PUBLIC/vamcity-public-home.html"; fi
             if [ "$(cat "$BACKUP/public-plans.state")" = existing ]; then cp -p "$BACKUP/public-plans.html.before" "$PUBLIC_PLANS_DEST"; else rm -f "$PUBLIC_PLANS_DEST"; fi
             if [ "$(cat "$BACKUP/app-plans.state")" = existing ]; then cp -p "$BACKUP/app-plans.html.before" "$APP_PLANS_DEST"; else rm -f "$APP_PLANS_DEST"; fi
-            printf 'action=rewrite&value=nginx&user=roofixo\\n' >> /usr/local/directadmin/data/task.queue
+            printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
             /usr/local/directadmin/dataskq d >/dev/null 2>&1 || true
             nginx -t && systemctl reload nginx || true
           }
@@ -148,14 +148,14 @@ jobs:
               b = text.index(end, a) + len(end)
               text = text[:a] + text[b:]
           block = f'''# VAMCITY_PUBLIC_PLANS_BEGIN
-          location = /plans.html {
+          location = /plans.html {{
               root {public};
               try_files /plans.html =404;
               default_type text/html;
               add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
               add_header Pragma "no-cache" always;
               expires -1;
-          }
+          }}
           # VAMCITY_PUBLIC_PLANS_END
           '''
           match = re.search(r"(?m)^[ \\t]*location / \\{", text)
