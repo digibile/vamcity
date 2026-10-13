@@ -107,7 +107,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
   <div class="side-label">نمای کلی</div>
   <button class="navbtn active" data-page="overview"><span class="ico">▦</span>داشبورد مدیریت</button>
   <div class="side-label">وام و تسهیلات</div>
-  <button class="navbtn" data-page="loans"><span class="ico">◈</span>طرح‌های تسهیلات</button>
+  <a class="navbtn" href="/admin/loans/" style="text-decoration:none"><span class="ico">◈</span>مدیریت طرح‌های تسهیلات</a>
   <button class="navbtn" data-page="calculator"><span class="ico">▤</span>محاسبه‌گر و مقایسه</button>
   <button class="navbtn" data-page="applications"><span class="ico">▣</span>درخواست‌های وام<span class="count">۱۲</span></button>
   <div class="side-label">فروشگاه‌های همکار</div>
@@ -173,20 +173,21 @@ img,svg,video,canvas{max-width:100%;height:auto}
 <section class="section active" id="overview">
   <div class="crumb">مدیریت قالب / نمای کلی</div>
   <div class="pagehead"><div><h1>مرکز مدیریت وام‌سیتی</h1><p>نمای کلی تجربه وام، فروشگاه‌های همکار و عملیات پذیرندگان، در سه فضای مستقل.</p></div><div class="actions"><button class="btn" onclick="toast('گزارش نمونه آماده شد؛ اتصال خروجی واقعی در نسخه اجرایی انجام می‌شود.')">↓ دریافت گزارش</button><button class="btn primary" onclick="go('template')">مدیریت قالب</button></div></div>
-  <div class="banner"><div><h2>تجربه مالی، <span class="gold">شفاف و حرفه‌ای</span></h2><p>یک فضای مدیریتی یکپارچه برای مشاهده وضعیت ماژول‌ها؛ با تفکیک کامل داده‌ها، دسترسی‌ها و فرایندهای هر سامانه.</p></div><button class="btn primary" onclick="go('calculator')">بازکردن محاسبه‌گر ←</button></div>
+  <div class="banner"><div><h2>مرکز مدیریت <span class="gold">وام‌سیتی</span></h2><p>رابط جدید مدیریتی در کنار امکانات عملیاتی قبلی؛ آمار ساختگی نمایش داده نمی‌شود و مسیرهای موجود حفظ شده‌اند.</p></div><a class="btn primary" href="/admin/userLoanRequests/">درخواست‌های تسهیلات ←</a></div>
+  <div class="notice" role="note"><strong>وضعیت اتصال:</strong> این پنل جدید در حال جایگزینی رابط قدیمی است. آمار و فعالیت‌های ماژول‌های جدید تا زمان اتصال API عمداً نمایش داده نمی‌شوند. عملیات واقعی سامانه از پیوندهای «امکانات موجود سامانه» در همین سایدبار باز می‌شود؛ تنظیمات اپلیکیشن و پشتیبان‌گیری نیز حفظ شده‌اند.</div>
   <div class="metrics">
-    <div class="metric"><div class="metric-top">طرح‌های وام <span class="metric-icon">◈</span></div><strong>۲۴</strong><small><span class="positive">۸ فعال</span> · داده نمایشی</small></div>
-    <div class="metric"><div class="metric-top">فروشگاه‌های همکار <span class="metric-icon">▧</span></div><strong>۱۲۸</strong><small>۱۷ درخواست در انتظار بررسی</small></div>
-    <div class="metric"><div class="metric-top">پذیرندگان پرداخت‌یاری <span class="metric-icon">▣</span></div><strong>۸۶</strong><small>۹ پرونده نیازمند تکمیل</small></div>
-    <div class="metric"><div class="metric-top">درخواست‌های وام <span class="metric-icon">▤</span></div><strong>۳۴۶</strong><small>وضعیت‌ها صرفاً نمونه هستند</small></div>
+    <div class="metric"><div class="metric-top">طرح‌های تسهیلات <span class="metric-icon">◈</span></div><strong>—</strong><small>داده زنده از مدیریت وام‌ها</small><a class="btn small" href="/admin/loans/">ورود به بخش واقعی</a></div>
+    <div class="metric"><div class="metric-top">اعضا و مشتریان <span class="metric-icon">♙</span></div><strong>—</strong><small>آمار فقط پس از دریافت API</small><a class="btn small" href="/admin/members/">مدیریت اعضا</a></div>
+    <div class="metric"><div class="metric-top">درخواست‌های تسهیلات <span class="metric-icon">▣</span></div><strong>—</strong><small>بدون داده ساختگی</small><a class="btn small" href="/admin/userLoanRequests/">مشاهده درخواست‌ها</a></div>
+    <div class="metric"><div class="metric-top">پشتیبان‌گیری و تنظیمات <span class="metric-icon">⚙</span></div><strong>فعال</strong><small>اتصال به ابزارهای فعلی</small><a class="btn small" href="/admin/appSettings">تنظیمات اپلیکیشن</a></div>
   </div>
   <div class="grid2">
     <div class="card"><div class="cardhead"><h3>نمای کلی فعالیت ماهانه</h3><span class="tag gold">نمونه نمایشی</span></div><div class="bars"><div class="barwrap"><div class="bar" style="height:42%"></div><small>فروردین</small></div><div class="barwrap"><div class="bar" style="height:56%"></div><small>اردیبهشت</small></div><div class="barwrap"><div class="bar" style="height:48%"></div><small>خرداد</small></div><div class="barwrap"><div class="bar" style="height:72%"></div><small>تیر</small></div><div class="barwrap"><div class="bar" style="height:63%"></div><small>مرداد</small></div><div class="barwrap"><div class="bar" style="height:86%"></div><small>شهریور</small></div><div class="barwrap"><div class="bar" style="height:77%"></div><small>مهر</small></div><div class="barwrap"><div class="bar" style="height:95%"></div><small>آبان</small></div></div><div class="legend"><span>حجم فعالیت نمایشی</span><span style="color:var(--muted)">بدون اتصال به داده زنده</span></div></div>
     <div class="card"><div class="cardhead"><h3>اقدامات و بررسی‌های اخیر</h3><button class="btn small" onclick="go('applications')">مشاهده همه</button></div><div class="activity">
-      <div class="activity-item"><div class="activity-icon">▧</div><div><b>درخواست همکاری فروشگاه آریا</b><small>نیازمند بررسی مدارک · ۲۰ دقیقه پیش</small></div><span class="tag gold">فروشگاه</span></div>
-      <div class="activity-item"><div class="activity-icon">▣</div><div><b>پرونده پذیرندگی تجارت نو</b><small>اطلاعات تسویه ناقص است · ۱ ساعت پیش</small></div><span class="tag blue">پذیرنده</span></div>
-      <div class="activity-item"><div class="activity-icon">◈</div><div><b>به‌روزرسانی طرح خرید کالا</b><small>در انتظار انتشار · امروز</small></div><span class="tag gray">تسهیلات</span></div>
-      <div class="activity-item"><div class="activity-icon">⚙</div><div><b>بازبینی قالب صفحه اصلی</b><small>پیش‌نویس · امروز</small><span class="tag gray">قالب</span></div></div>
+      <div class="activity-item"><div class="activity-icon">◈</div><div><b>مدیریت وام‌ها</b><small>نمایش اطلاعات زنده از سامانه فعلی</small></div><a class="btn small" href="/admin/loans/">بازکردن</a></div>
+      <div class="activity-item"><div class="activity-icon">♙</div><div><b>اعضا و مشتریان</b><small>مدیریت از مسیر اصلی سامانه</small></div><a class="btn small" href="/admin/members/">بازکردن</a></div>
+      <div class="activity-item"><div class="activity-icon">▤</div><div><b>درخواست‌های تسهیلات</b><small>پیوند به صفحه عملیاتی موجود</small></div><a class="btn small" href="/admin/userLoanRequests/">بازکردن</a></div>
+      <div class="activity-item"><div class="activity-icon">⚙</div><div><b>تنظیمات و پشتیبان‌گیری</b><small>امکانات قبلی حذف نشده‌اند</small></div><a class="btn small" href="/admin/appBackup">بازکردن</a></div>
     </div></div>
   </div>
   <div class="grid3">
