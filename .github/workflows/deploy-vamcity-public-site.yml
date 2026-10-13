@@ -65,16 +65,16 @@ jobs:
       - name: Upload validated public pages
         run: |
           set -euo pipefail
-          scp -i ~/.ssh/vamcity_public_site_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \\
+          scp -i ~/.ssh/vamcity_public_site_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
             vamcity-public-home.html "$USER@$HOST:/tmp/vamcity-public-home-$GITHUB_SHA.html"
-          scp -i ~/.ssh/vamcity_public_site_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \\
+          scp -i ~/.ssh/vamcity_public_site_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
             public-site/plans/index.html "$USER@$HOST:/tmp/vamcity-public-plans-$GITHUB_SHA.html"
 
       - name: Backup, publish pages, and install precise plans routes
         shell: bash
         run: |
           set -euo pipefail
-          ssh -i ~/.ssh/vamcity_public_site_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST" \\
+          ssh -i ~/.ssh/vamcity_public_site_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST" \
             "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
           set -Eeuo pipefail
           SHA="$1"
