@@ -90,17 +90,17 @@ jobs:
           echo "PUBLISHED=$PREVIEW/index.html"
           REMOTE
 
-      - name: Verify live URLs and expected content
+      - name: Verify requested preview URL and expected navigation
         run: |
           set -euo pipefail
-          for URL in "https://roofixo.ir/vamcity-template-management/?build=$GITHUB_SHA" "https://roofixo.ir/vamcity-template-management.html?build=$GITHUB_SHA" "https://roofixo.ir/vamcity-template-preview/?build=$GITHUB_SHA"; do
-            CODE="$(curl -k -sS -L --max-time 25 -o /tmp/vamcity-template-check.html -w '%{http_code}' "$URL" || true)"
-            SIZE="$(wc -c < /tmp/vamcity-template-check.html 2>/dev/null || echo 0)"
-            echo "$URL HTTP $CODE bytes=$SIZE"
-            test "$CODE" = "200"
-            test "$SIZE" -gt 10000
-            grep -qi '<html' /tmp/vamcity-template-check.html
-            grep -q 'id="overview"' /tmp/vamcity-template-check.html
-            grep -q 'مرکز مدیریت' /tmp/vamcity-template-check.html
-          done
-          echo "Both isolated VamCity admin-template URLs serve the expected content."
+          URL="https://roofixo.ir/vamcity-template-preview/index.html?build=$GITHUB_SHA"
+          CODE="$(curl -k -sS -L --max-time 25 -o /tmp/vamcity-template-check.html -w '%{http_code}' "$URL" || true)"
+          SIZE="$(wc -c < /tmp/vamcity-template-check.html 2>/dev/null || echo 0)"
+          echo "$URL HTTP $CODE bytes=$SIZE"
+          test "$CODE" = "200"
+          test "$SIZE" -gt 30000
+          grep -qi '<html' /tmp/vamcity-template-check.html
+          grep -q 'id="overview"' /tmp/vamcity-template-check.html
+          grep -q 'تنظیمات اپلیکیشن' /tmp/vamcity-template-check.html
+          grep -q 'پشتیبان‌گیری و بازیابی' /tmp/vamcity-template-check.html
+          echo "REQUESTED_PREVIEW_VERIFIED=$URL"
