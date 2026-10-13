@@ -1,0 +1,124 @@
+name: Verify VamCity UI on Roofixo
+run-name: Check live VamCity plans page, theme assets, and existing data
+
+on:
+  workflow_run:
+    workflows: ["Deploy VamCity UI only (preserve app and database)"]
+    types: [completed]
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-vamcity-ui-only.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-live-ui:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Verify public app HTML, theme CSS, original bundle, and plans API
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=https://roofixo.ir
+          HTML="$(mktemp)"
+          CSS="$(mktemp)"
+          API="$(mktemp)"
+          trap 'rm -f "$HTML" "$CSS" "$API"' EXIT
+
+          STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS -L --max-time 30 -o "$HTML" -w '%{http_code}' "$BASE/cl/plans/")"
+          echo "PLANS_PAGE_HTTP=$STATUS"
+          test "$STATUS" = 200
+          grep -Fq '/css/vamcity-modern-theme.css?v=5' "$HTML"
+          grep -Fq '/js/app.e76ab352.js?v=d1664791' "$HTML"
+
+          CSS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 20 -o "$CSS" -w '%{http_code}' "$BASE/css/vamcity-modern-theme.css?v=5")"
+          echo "THEME_CSS_HTTP=$CSS_STATUS"
+          test "$CSS_STATUS" = 200
+          grep -Fq 'tokens-base.css?v=5' "$CSS"
+
+          JS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 30 -o /dev/null -w '%{http_code}' "$BASE/js/app.e76ab352.js?v=d1664791")"
+          echo "LEGACY_APP_BUNDLE_HTTP=$JS_STATUS"
+          test "$JS_STATUS" = 200
+
+          API_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 25 -o "$API" -w '%{http_code}' "$BASE/Loan/List/100")"
+          echo "PUBLIC_PLANS_API_HTTP=$API_STATUS"
+          test "$API_STATUS" = 200
+          python3 - "$API" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as f:
+              payload = json.load(f)
+          success = payload.get("success", payload.get("Success"))
+          data = payload.get("data", payload.get("Data"))
+          if success is not True or not isinstance(data, list) or len(data) == 0:
+              raise SystemExit("Plans API did not return a successful non-empty list")
+          print(f"PUBLIC_PLANS_API_OK count={len(data)}")
+          PY
+
+      - name: Install Playwright browser
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Render plans page on desktop and mobile
+        run: |
+          mkdir -p artifacts
+          cat > verify-ui.cjs <<'NODE'
+          const { chromium } = require('playwright');
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            let failed = false;
+            for (const viewport of [
+              { name: 'desktop', width: 1440, height: 1000 },
+              { name: 'mobile', width: 390, height: 844 }
+            ]) {
+              const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
+              const errors = [];
+              page.on('pageerror', e => errors.push('PAGEERROR ' + e.message));
+              page.on('requestfailed', r => errors.push('REQUEST_FAILED ' + r.url() + ' ' + (r.failure()?.errorText || 'unknown')));
+              page.on('response', r => {
+                if (r.status() >= 400 && new URL(r.url()).hostname === 'roofixo.ir') {
+                  errors.push('HTTP_' + r.status() + ' ' + r.url());
+                }
+              });
+              try {
+                const response = await page.goto('https://roofixo.ir/cl/plans/', { waitUntil: 'domcontentloaded', timeout: 45000 });
+                await page.waitForTimeout(6000);
+                const body = (await page.locator('body').innerText().catch(() => '')).replace(/\\s+/g, ' ').trim();
+                const appLength = await page.locator('#app').innerText().then(t => t.length).catch(() => 0);
+                const cards = await page.locator('.v-card, [class*="plan"], [class*="Plan"]').count().catch(() => 0);
+                const title = await page.title();
+                console.log('VIEWPORT=' + viewport.name + ' HTTP=' + (response?.status() ?? 'none'));
+                console.log('TITLE=' + title);
+                console.log('BODY_TEXT_LENGTH=' + body.length + ' APP_TEXT_LENGTH=' + appLength + ' PLAN_CARD_COUNT=' + cards);
+                console.log('BODY_SAMPLE=' + body.slice(0, 700));
+                console.log('BROWSER_ERRORS=' + JSON.stringify(errors.slice(0, 15)));
+                await page.screenshot({ path: 'artifacts/' + viewport.name + '.png', fullPage: true }).catch(() => {});
+                if (!response || response.status() !== 200 || body.length < 100 || !body.includes('وام سیتی')) failed = true;
+                if (errors.length) failed = true;
+              } catch (e) {
+                console.log('VIEWPORT_ERROR=' + viewport.name + ' ' + e.message);
+                failed = true;
+              } finally {
+                await page.close();
+              }
+            }
+            await browser.close();
+            if (failed) process.exit(1);
+          })();
+          NODE
+          node verify-ui.cjs
+
+      - name: Upload live UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vamcity-live-ui-desktop-mobile
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 7
