@@ -55,7 +55,7 @@ jobs:
           test -n "$DEPLOY_USER"
           test -n "$DEPLOY_SSH_KEY"
           install -m 700 -d ~/.ssh
-          printf '%s\\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_deploy_key
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_deploy_key
           chmod 600 ~/.ssh/vamcity_deploy_key
           PORT="${DEPLOY_PORT:-22}"
           ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
