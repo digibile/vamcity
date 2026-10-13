@@ -38,12 +38,12 @@ jobs:
           grep -q 'href="/plans.html"' vamcity-public-home.html
           grep -q 'id="plans"' vamcity-public-home.html
           grep -q "fetch('/Loan/List/100'" vamcity-public-home.html
-          grep -q "const href='/plan/0/'" vamcity-public-home.html
+          grep -q "const href='/cl/plan/0/'" vamcity-public-home.html
           test -s public-site/plans/index.html
           grep -q "fetch('/Loan/List/100'" public-site/plans/index.html
-          grep -q "const href='/plan/0/'" public-site/plans/index.html
+          grep -q "const href='/cl/plan/0/'" public-site/plans/index.html
           grep -q 'طرح‌های تسهیلات | وام‌سیتی' public-site/plans/index.html
-          ! grep -q '/cl/plan/' vamcity-public-home.html
+          grep -q "const href='/cl/plan/0/'" vamcity-public-home.html
           echo "PUBLIC_HOME_SOURCE_VALID"
 
       - name: Configure SSH
