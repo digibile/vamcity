@@ -191,13 +191,18 @@ img,svg,video,canvas{max-width:100%;height:auto}
   <div class="banner"><div><h2>مرکز مدیریت <span class="gold">وام‌سیتی</span></h2><p>رابط جدید مدیریتی در کنار امکانات عملیاتی قبلی؛ آمار ساختگی نمایش داده نمی‌شود و مسیرهای موجود حفظ شده‌اند.</p></div><a class="btn primary" href="/admin/userLoanRequests/">درخواست‌های تسهیلات ←</a></div>
   <div class="notice" role="note"><strong>وضعیت اتصال:</strong> این پنل جدید در حال جایگزینی رابط قدیمی است. آمار و فعالیت‌های ماژول‌های جدید تا زمان اتصال API عمداً نمایش داده نمی‌شوند. عملیات واقعی سامانه از پیوندهای «امکانات موجود سامانه» در همین سایدبار باز می‌شود؛ تنظیمات اپلیکیشن و پشتیبان‌گیری نیز حفظ شده‌اند.</div>
   <div class="metrics">
-    <div class="metric"><div class="metric-top">طرح‌های تسهیلات <span class="metric-icon">◈</span></div><strong>—</strong><small>داده زنده از مدیریت وام‌ها</small><a class="btn small" href="/admin/loans/">ورود به بخش واقعی</a></div>
-    <div class="metric"><div class="metric-top">اعضا و مشتریان <span class="metric-icon">♙</span></div><strong>—</strong><small>آمار فقط پس از دریافت API</small><a class="btn small" href="/admin/members/">مدیریت اعضا</a></div>
-    <div class="metric"><div class="metric-top">درخواست‌های تسهیلات <span class="metric-icon">▣</span></div><strong>—</strong><small>بدون داده ساختگی</small><a class="btn small" href="/admin/userLoanRequests/">مشاهده درخواست‌ها</a></div>
-    <div class="metric"><div class="metric-top">پشتیبان‌گیری و تنظیمات <span class="metric-icon">⚙</span></div><strong>فعال</strong><small>اتصال به ابزارهای فعلی</small><a class="btn small" href="/admin/appSettings">تنظیمات اپلیکیشن</a></div>
+    <div class="metric"><div class="metric-top">طرح‌های تسهیلات <span class="metric-icon">◈</span></div><strong id="metric-loans-value" aria-live="polite">در حال دریافت…</strong><small id="metric-loans-status">از سامانه اصلی</small><a class="btn small" href="/admin/loans/">مدیریت طرح‌ها</a></div>
+    <div class="metric"><div class="metric-top">اعضا و مشتریان <span class="metric-icon">♙</span></div><strong id="metric-members-value" aria-live="polite">در حال دریافت…</strong><small id="metric-members-status">از سامانه اصلی</small><a class="btn small" href="/admin/members/">مدیریت اعضا</a></div>
+    <div class="metric"><div class="metric-top">درخواست‌های ماه اخیر <span class="metric-icon">▣</span></div><strong id="metric-requests-value" aria-live="polite">در حال دریافت…</strong><small id="metric-requests-status">از سامانه اصلی</small><a class="btn small" href="/admin/userLoanRequests/">مشاهده درخواست‌ها</a></div>
+    <div class="metric"><div class="metric-top">ابزارهای مدیریتی <span class="metric-icon">⚙</span></div><strong>متصل</strong><small>تنظیمات و پشتیبان‌گیری موجود</small><a class="btn small" href="/admin/appBackup">تنظیمات و بازیابی</a></div>
   </div>
   <div class="grid2">
-    <div class="card"><div class="cardhead"><h3>نمای کلی فعالیت ماهانه</h3><span class="tag gold">نمونه نمایشی</span></div><div class="bars"><div class="barwrap"><div class="bar" style="height:42%"></div><small>فروردین</small></div><div class="barwrap"><div class="bar" style="height:56%"></div><small>اردیبهشت</small></div><div class="barwrap"><div class="bar" style="height:48%"></div><small>خرداد</small></div><div class="barwrap"><div class="bar" style="height:72%"></div><small>تیر</small></div><div class="barwrap"><div class="bar" style="height:63%"></div><small>مرداد</small></div><div class="barwrap"><div class="bar" style="height:86%"></div><small>شهریور</small></div><div class="barwrap"><div class="bar" style="height:77%"></div><small>مهر</small></div><div class="barwrap"><div class="bar" style="height:95%"></div><small>آبان</small></div></div><div class="legend"><span>حجم فعالیت نمایشی</span><span style="color:var(--muted)">بدون اتصال به داده زنده</span></div></div>
+    <div class="card"><div class="cardhead"><h3>وضعیت اتصال به اطلاعات سامانه</h3><span class="tag blue" id="live-data-status">در حال بررسی</span></div><div class="activity" id="live-data-checks">
+      <div class="activity-item"><div class="activity-icon">◈</div><div><b>طرح‌های تسهیلات</b><small id="live-loans-check">در حال بررسی اتصال به API واقعی</small></div></div>
+      <div class="activity-item"><div class="activity-icon">♙</div><div><b>اعضا و مشتریان</b><small id="live-members-check">در حال بررسی اتصال به API واقعی</small></div></div>
+      <div class="activity-item"><div class="activity-icon">▤</div><div><b>درخواست‌های تسهیلات</b><small id="live-requests-check">در حال بررسی اتصال به API واقعی</small></div></div>
+      <div class="activity-item"><div class="activity-icon">⚙</div><div><b>ابزارهای قدیمی سامانه</b><small>از همین سایدبار و بدون حذف قابلیت‌های قبلی در دسترس هستند.</small><a class="btn small" href="/admin/appSettings">تنظیمات اپلیکیشن</a> <a class="btn small" href="/admin/appBackup">پشتیبان‌گیری و بازیابی</a></div></div>
+    </div></div>
     <div class="card"><div class="cardhead"><h3>اقدامات و بررسی‌های اخیر</h3><button class="btn small" onclick="go('applications')">مشاهده همه</button></div><div class="activity">
       <div class="activity-item"><div class="activity-icon">◈</div><div><b>مدیریت وام‌ها</b><small>نمایش اطلاعات زنده از سامانه فعلی</small></div><a class="btn small" href="/admin/loans/">بازکردن</a></div>
       <div class="activity-item"><div class="activity-icon">♙</div><div><b>اعضا و مشتریان</b><small>مدیریت از مسیر اصلی سامانه</small></div><a class="btn small" href="/admin/members/">بازکردن</a></div>
@@ -422,6 +427,63 @@ calc();
     var link=document.getElementById('account-link');
     if(link){link.href=roles.indexOf('SuperAdmin')>=0?'/superadmin/dashboard':isAdmin?'/admin/dashboard':roles.indexOf('Agent')>=0?'/agent/dashboard':roles.indexOf('Sponsor')>=0?'/sponsor/dashboard':roles.indexOf('Member')>=0?'/member/dashboard':'/login/';link.setAttribute('aria-label','ورود به حساب کاربری '+name);}
   } catch(e) { /* Keep the admin interface usable if an older profile shape is present. */ }
+})();
+
+// Load authenticated, real counts from the existing VamCity API. No placeholder numbers.
+(async function loadLiveAdminMetrics(){
+  const faNumber = value => Number(value).toLocaleString('fa-IR');
+  const setText = (id, value) => { const el=document.getElementById(id); if(el) el.textContent=value; };
+  const setResult = (key, value, ok, note) => {
+    setText('metric-'+key+'-value', ok ? faNumber(value) : '—');
+    setText('metric-'+key+'-status', note);
+    setText('live-'+key+'-check', ok ? 'اتصال برقرار؛ '+faNumber(value)+' مورد دریافت شد.' : note);
+  };
+  let auth;
+  try {
+    const stored=localStorage.getItem('user');
+    if(!stored) throw new Error('ورود مدیر لازم است');
+    const user=JSON.parse(stored);
+    if(!user.accessToken) throw new Error('نشست ورود معتبر نیست');
+    auth={Authorization:'Bearer '+user.accessToken};
+  } catch(e) {
+    ['loans','members','requests'].forEach(k=>setResult(k,0,false,'برای نمایش آمار زنده، با حساب مدیر وارد شوید.'));
+    setText('live-data-status','نیازمند ورود');
+    return;
+  }
+  const parseList = payload => {
+    if(Array.isArray(payload)) return payload;
+    for(const key of ['data','Data','items','Items','result','Result','results','Results','value','Value']) {
+      if(payload && payload[key]!==undefined) {
+        if(Array.isArray(payload[key])) return payload[key];
+        if(payload[key] && typeof payload[key]==='object') {
+          const nested=parseList(payload[key]);
+          if(nested) return nested;
+        }
+      }
+    }
+    return null;
+  };
+  const load = async (url) => {
+    const response=await fetch(url,{headers:auth,credentials:'same-origin',cache:'no-store'});
+    if(!response.ok) throw new Error(response.status===401||response.status===403?'نشست مدیر منقضی شده یا دسترسی کافی نیست.':'پاسخ API '+response.status);
+    const body=await response.json();
+    const list=parseList(body);
+    if(!list) throw new Error('ساختار پاسخ API قابل شمارش نیست');
+    return list.length;
+  };
+  const start=new Date(); start.setMonth(start.getMonth()-1);
+  const requestUrl='/admin/userLoanRequest/list?start='+encodeURIComponent(start.toISOString())+'&end='+encodeURIComponent(new Date().toISOString());
+  const tasks=[
+    ['loans','/admin/loan/list/true','طرح‌های فعال'],
+    ['members','/admin/member/list/true','اعضای سامانه'],
+    ['requests',requestUrl,'درخواست‌های یک ماه اخیر']
+  ];
+  const results=await Promise.all(tasks.map(async ([key,url,label])=>{
+    try { const count=await load(url); setResult(key,count,true,label); return true; }
+    catch(error) { setResult(key,0,false,error.message||'دریافت آمار انجام نشد.'); return false; }
+  }));
+  const ok=results.filter(Boolean).length;
+  setText('live-data-status',ok===3?'اتصال کامل':ok+' از ۳ منبع متصل');
 })();
 </script>
 </body>
