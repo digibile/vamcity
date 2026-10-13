@@ -1,6 +1,7 @@
 name: Deploy integrated VamCity public homepage
 run-name: Publish VamCity homepage with live plans and working account links
 # Release refresh 2026-10-13: republish the canonical homepage, plans page, and shared entry links with a fresh live smoke test.
+# Trigger the production publish after the management-template refresh.
 
 on:
   push:
