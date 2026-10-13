@@ -107,7 +107,19 @@ jobs:
               a = text.index(begin)
               b = text.index(end, a) + len(end)
               text = text[:a] + text[b:]
-          text = re.sub(r"(?ms)^[ \\t]*location = / \\{\\s*.*?^[ \\t]*\\}\\s*", "", text)
+          lines = text.splitlines()
+          out = []
+          inside_root = False
+          for line in lines:
+              if line.strip() == "location = / {":
+                  inside_root = True
+                  continue
+              if inside_root:
+                  if line.strip() == "}":
+                      inside_root = False
+                  continue
+              out.append(line)
+          text = chr(10).join(out)
           block = f'''# VAMCITY_PUBLIC_HOME_BEGIN
           location = / {{
               root {public};
