@@ -33,7 +33,7 @@ jobs:
           grep -Fq '/css/vamcity-modern-theme.css?v=6' wwwroot/ui/index.html
           for file in tokens-base shell-navigation surfaces-actions forms-tables feedback-overlays responsive public-landing accessibility login-authentication workspaces; do
             test -s "wwwroot/ui/css/vamcity/$file.css"
-            grep -Fq "$file.css?v=5" wwwroot/ui/css/vamcity-modern-theme.css
+            grep -Fq "$file.css?v=6" wwwroot/ui/css/vamcity-modern-theme.css
           done
           grep -Fq '/js/chunk-vendors.0d0536ea.js' wwwroot/ui/index.html
           grep -Fq '/js/app.e76ab352.js?v=d1664791' wwwroot/ui/index.html
