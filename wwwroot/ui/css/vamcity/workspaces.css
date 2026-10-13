@@ -86,3 +86,86 @@
   .v-application .v-main .v-data-table__wrapper { overflow-x: auto; }
   .v-application .v-main .v-data-table td { white-space: nowrap; }
 }
+
+
+/* VamCity unified 2026 experience: consistent page chrome, forms and mobile layouts. */
+.v-application {
+  font-family: Tahoma, "Segoe UI", Arial, sans-serif !important;
+  color: #17283a;
+  background: #f5f7fa;
+}
+.v-application .v-main {
+  background:
+    radial-gradient(ellipse at 96% 0%, rgba(215,173,101,.08), transparent 28%),
+    linear-gradient(180deg, #f8fafc 0%, #f3f6f9 100%);
+}
+.v-application .v-app-bar,
+.v-application .v-toolbar {
+  min-height: 64px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.v-application .v-app-bar .v-btn,
+.v-application .v-toolbar .v-btn {
+  font-family: inherit;
+  letter-spacing: 0;
+  font-weight: 700;
+  border-radius: 10px;
+}
+.v-application .v-main .v-card:not(.v-card--flat) {
+  border: 1px solid #e2e9f0;
+  box-shadow: 0 10px 28px rgba(16,35,55,.055);
+}
+.v-application .v-main .v-card__title {
+  padding: 20px 22px;
+}
+.v-application .v-main .v-card__text {
+  color: #34485a;
+}
+.v-application .v-main .v-form .v-input__slot,
+.v-application .v-main .v-form fieldset {
+  border-radius: 12px;
+}
+.v-application .v-main .v-form .v-label {
+  font-family: inherit;
+  color: #53677a;
+}
+.v-application .v-main .v-form input,
+.v-application .v-main .v-form textarea,
+.v-application .v-main .v-form .v-select__selection {
+  font-family: inherit;
+}
+.v-application .v-main .v-form .v-btn:not(.v-btn--text):not(.v-btn--icon) {
+  min-height: 44px;
+  padding-inline: 18px;
+  border-radius: 12px;
+  font-weight: 800;
+}
+.v-application .v-main .v-data-table-header th {
+  font-weight: 800;
+}
+.v-application .v-footer {
+  padding-top: 18px;
+  padding-bottom: 18px;
+  color: #d5dfe7;
+  background: #102337 !important;
+}
+.v-application .v-footer a {
+  color: inherit;
+  text-decoration: none;
+}
+.v-application .v-footer a:hover {
+  color: #f0d5a5;
+}
+@media (max-width: 600px) {
+  .v-application .v-app-bar,
+  .v-application .v-toolbar {
+    min-height: 58px;
+  }
+  .v-application .v-main .v-card__title {
+    padding: 16px;
+  }
+  .v-application .v-main .v-form .v-btn:not(.v-btn--text):not(.v-btn--icon) {
+    width: 100%;
+    margin-inline: 0;
+  }
+}
