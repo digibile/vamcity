@@ -33,13 +33,13 @@ jobs:
           STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS -L --max-time 30 -o "$HTML" -w '%{http_code}' "$BASE/cl/plans/")"
           echo "PLANS_PAGE_HTTP=$STATUS"
           test "$STATUS" = 200
-          grep -Fq '/css/vamcity-modern-theme.css?v=5' "$HTML"
+          grep -Fq '/css/vamcity-modern-theme.css?v=6' "$HTML"
           grep -Fq '/js/app.e76ab352.js?v=d1664791' "$HTML"
 
-          CSS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 20 -o "$CSS" -w '%{http_code}' "$BASE/css/vamcity-modern-theme.css?v=5")"
+          CSS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 20 -o "$CSS" -w '%{http_code}' "$BASE/css/vamcity-modern-theme.css?v=6")"
           echo "THEME_CSS_HTTP=$CSS_STATUS"
           test "$CSS_STATUS" = 200
-          grep -Fq 'tokens-base.css?v=5' "$CSS"
+          grep -Fq 'tokens-base.css?v=6' "$CSS"
 
           JS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 30 -o /dev/null -w '%{http_code}' "$BASE/js/app.e76ab352.js?v=d1664791")"
           echo "LEGACY_APP_BUNDLE_HTTP=$JS_STATUS"
