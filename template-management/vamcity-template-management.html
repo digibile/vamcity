@@ -4,6 +4,9 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#102337">
 <meta name="vamcity-admin-ui-release" content="2026-10-13-integrated-admin-v3">
@@ -97,6 +100,86 @@ img,svg,video,canvas{max-width:100%;height:auto}
 .legacy-frame{display:block;width:100%;height:calc(100vh - 270px);min-height:620px;border:0;background:#f4f6f9}
 .legacy-loading{padding:20px;color:var(--muted);font-size:12px}
 @media(max-width:760px){.legacy-workspace{min-height:70vh}.legacy-frame{height:calc(100vh - 260px);min-height:560px}.legacy-toolbar{align-items:flex-start;flex-direction:column}}
+
+
+/* VamCity admin experience refresh: structural polish, not a color-only skin. */
+:root{
+  --navy:#102337;--navy2:#193d54;--gold:#c69a50;--gold2:#f4dfb4;
+  --ink:#192b3d;--muted:#6f7f91;--line:#e4eaf0;--bg:#f3f6fa;
+  --white:#fff;--green:#16836a;--red:#b94750;--blue:#3d78b5;
+  --shadow:0 8px 24px rgba(21,43,64,.055);
+}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{background:radial-gradient(ellipse at 88% 0%,rgba(214,184,126,.09),transparent 28rem),var(--bg);font-size:13px;line-height:1.85}
+.topbar{position:sticky;top:0;z-index:30;height:70px;padding:0 clamp(14px,2.4vw,36px);background:rgba(13,31,47,.97);backdrop-filter:blur(16px);box-shadow:0 5px 24px rgba(12,29,44,.12)}
+.brand-mark{border-radius:12px;box-shadow:inset 0 0 0 4px rgba(215,173,101,.06);font-size:25px}
+.brand strong{font-size:16px;letter-spacing:0}
+.top-actions{flex-wrap:wrap;justify-content:flex-end}
+.top-pill{transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.top-link{text-decoration:none!important}
+.top-link:hover{background:rgba(255,255,255,.14);border-color:rgba(215,173,101,.65);transform:translateY(-1px)}
+.layout{grid-template-columns:clamp(225px,19vw,280px) minmax(0,1fr);max-width:1920px;min-height:calc(100vh - 70px);margin:0 auto}
+.sidebar{top:70px;height:calc(100vh - 70px);min-height:calc(100vh - 70px);padding:20px 13px;background:linear-gradient(180deg,#102337 0%,#132d42 100%);border-left:1px solid rgba(255,255,255,.07)}
+.side-label{margin:21px 12px 8px;color:#a7b8c7;font-size:10px;font-weight:700;letter-spacing:.25px}
+.navbtn{position:relative;min-height:42px;padding:8px 10px;border:1px solid transparent;border-radius:10px;gap:10px;font-size:12px;line-height:1.6}
+.navbtn .ico{flex:0 0 28px;width:28px;height:28px;border:1px solid rgba(255,255,255,.045);border-radius:9px;background:rgba(255,255,255,.07)}
+.navbtn:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.07)}
+.navbtn.active{background:linear-gradient(90deg,rgba(198,154,80,.16),rgba(255,255,255,.07));border-color:rgba(198,154,80,.2);box-shadow:inset -3px 0 #d7ad65}
+.main{padding:clamp(18px,2.5vw,38px);min-width:0}
+.crumb{font-size:11px;margin-bottom:8px}
+.pagehead{align-items:center;margin-bottom:25px}
+.pagehead h1{font-size:clamp(21px,2vw,28px);font-weight:800;letter-spacing:-.6px}
+.pagehead p{font-size:12px;line-height:1.9}
+.btn{min-height:38px;border-radius:10px;padding:8px 14px;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 5px 15px rgba(21,43,64,.08)}
+.btn.primary{background:linear-gradient(135deg,#e5c17d,#c69a50);border-color:#c69a50;color:#182b3d}
+.btn.dark{background:linear-gradient(135deg,#193d54,#102337)}
+.banner{border:1px solid rgba(215,173,101,.24);border-radius:20px;padding:clamp(20px,2.4vw,34px);box-shadow:0 12px 32px rgba(16,35,55,.08);background:radial-gradient(circle at 8% 0%,rgba(215,173,101,.18),transparent 16rem),linear-gradient(112deg,#102337,#1b4058)}
+.banner h2{font-size:clamp(20px,2vw,27px);font-weight:800}
+.metrics{gap:16px;margin-bottom:22px}
+.metric,.card{border-radius:16px;border-color:#e5ebf1;box-shadow:var(--shadow);transition:box-shadow .18s ease,transform .18s ease}
+.metric:hover{box-shadow:0 12px 28px rgba(21,43,64,.08);transform:translateY(-2px)}
+.metric{padding:19px}
+.metric strong{font-size:clamp(21px,2vw,28px);font-weight:800}
+.metric-icon{border-radius:12px}
+.card{padding:clamp(15px,1.6vw,24px)}
+.cardhead{padding-bottom:12px;border-bottom:1px solid #eef1f5}
+.cardhead h3{font-size:14px;font-weight:800}
+.grid2,.grid3{gap:16px}
+table{border-collapse:separate;border-spacing:0}
+th{padding:13px 14px;background:#f5f8fb;font-size:10px}
+td{padding:13px 14px}
+tbody tr:hover{background:#f7fafc}
+.field input,.field select,.field textarea,.search{border-radius:10px;min-height:42px;transition:border-color .18s ease,box-shadow .18s ease}
+.field input:focus,.field select:focus,.field textarea:focus,.search:focus{border-color:#c69a50;box-shadow:0 0 0 3px rgba(198,154,80,.13)}
+.loan-card{border-radius:15px;box-shadow:0 5px 18px rgba(21,43,64,.035);transition:transform .18s ease,box-shadow .18s ease}
+.loan-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(21,43,64,.08)}
+.footer{margin:30px -4px 0;padding:22px 24px;border:1px solid rgba(255,255,255,.07);border-radius:16px;background:linear-gradient(110deg,#102337,#19394e);box-shadow:0 8px 24px rgba(16,35,55,.08)}
+.footer-links a{padding:4px 0;text-underline-offset:4px}
+.footer-links a:hover{color:#f4dfb4}
+.toast{z-index:100;max-width:min(440px,calc(100vw - 32px));border:1px solid rgba(215,173,101,.4);box-shadow:0 12px 34px rgba(16,35,55,.2)}
+:focus-visible{outline:3px solid rgba(198,154,80,.8);outline-offset:3px}
+@media(max-width:1100px){.layout{grid-template-columns:230px minmax(0,1fr)}.main{padding:20px}.metrics{gap:10px}}
+@media(max-width:760px){
+  .topbar{height:auto;min-height:62px;position:sticky;padding:10px 12px;align-items:flex-start}
+  .top-actions{max-width:66%;gap:5px}
+  .top-link{font-size:10px;padding:5px 8px}
+  .layout{display:flex;flex-direction:column;min-height:calc(100vh - 62px)}
+  .sidebar{position:sticky;top:62px;z-index:20;height:auto;min-height:0;padding:8px;display:flex;gap:5px;overflow-x:auto;overscroll-behavior-x:contain;border-left:0;border-bottom:1px solid rgba(255,255,255,.1)}
+  .sidebar .side-label,.sidebar .side-foot{display:none}
+  .navbtn{flex:0 0 auto;width:auto;min-height:38px;margin:0;padding:5px 9px;font-size:10px;white-space:nowrap}
+  .navbtn .ico{flex-basis:22px;width:22px;height:22px}
+  .main{padding:15px 12px}
+  .pagehead{display:block}
+  .pagehead .actions{margin-top:12px}
+  .banner{padding:19px;border-radius:15px}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .metric{padding:12px}
+  .metric strong{font-size:20px}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .footer{margin:22px 0 0;padding:16px;border-radius:13px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 </style>
 <script>
