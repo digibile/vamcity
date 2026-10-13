@@ -1,0 +1,217 @@
+name: Repair VamCity blank legacy pages by syncing the runtime bundle
+
+run-name: Sync matching VamCity SPA chunks to roofixo.ir
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/deploy-vamcity-runtime-chunks.yml"
+      - "wwwroot/ui/js/app.e76ab352.js"
+      - "wwwroot/ui/js/*.js"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vamcity-runtime-chunk-sync
+  cancel-in-progress: false
+
+jobs:
+  deploy-runtime-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build exact runtime asset set from webpack manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s wwwroot/ui/js/app.e76ab352.js
+          test -s wwwroot/ui/js/chunk-vendors.0d0536ea.js
+          python3 <<'PY'
+          import pathlib, re, tarfile
+          root = pathlib.Path("wwwroot/ui/js")
+          app = (root / "app.e76ab352.js").read_text(encoding="utf-8", errors="replace")
+          chunks = {}
+          for name, digest in re.findall(r'"((?:views|layout|default|chunk)-[^"]+)":"([a-f0-9]{8})"', app):
+              chunks.setdefault(name, digest)
+          if len(chunks) < 100:
+              raise SystemExit(f"Unexpectedly small webpack manifest: {len(chunks)}")
+          files = ["app.e76ab352.js", "chunk-vendors.0d0536ea.js"]
+          files.extend(f"{name}.{digest}.js" for name, digest in chunks.items())
+          missing = [name for name in files if not (root / name).is_file() or (root / name).stat().st_size == 0]
+          if missing:
+              raise SystemExit("Missing or empty source assets: " + ", ".join(missing[:30]))
+          pathlib.Path("/tmp/vamcity-runtime-assets.list").write_text("\n".join(files) + "\n")
+          with tarfile.open("/tmp/vamcity-runtime-assets.tar.gz", "w:gz") as tar:
+              for name in files:
+                  tar.add(root / name, arcname=f"wwwroot/ui/js/{name}")
+          print(f"WEBPACK_CHUNKS_IN_MANIFEST={len(chunks)}")
+          print(f"RUNTIME_ASSETS_PACKAGED={len(files)}")
+          print("SOURCE_ASSET_SET_VALID=1")
+          PY
+          tar -tzf /tmp/vamcity-runtime-assets.tar.gz | tail -5
+
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_runtime_key
+          chmod 600 ~/.ssh/vamcity_runtime_key
+          ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          chmod 600 ~/.ssh/known_hosts
+          echo "DEPLOY_PORT_EFFECTIVE=$PORT" >> "$GITHUB_ENV"
+          echo "DEPLOY_HOST_EFFECTIVE=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "DEPLOY_USER_EFFECTIVE=$DEPLOY_USER" >> "$GITHUB_ENV"
+
+      - name: Upload runtime asset archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          scp -i ~/.ssh/vamcity_runtime_key -P "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            /tmp/vamcity-runtime-assets.tar.gz \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE:/tmp/vamcity-runtime-assets-$GITHUB_SHA.tar.gz"
+
+      - name: Backup, sync bundle and matching chunks, then verify live routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/vamcity_runtime_key -p "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE" \
+            "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
+          set -euo pipefail
+          SHA="$1"
+          BASE=/home/roofixo/domains/roofixo.ir/vamcity-app
+          ARCHIVE="/tmp/vamcity-runtime-assets-$SHA.tar.gz"
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
+          test -n "$APP_ROOT"
+          test -s "$ARCHIVE"
+          test -s "$APP_ROOT/wwwroot/index.html"
+          JS_ROOT="$APP_ROOT/wwwroot/js"
+          BACKUP="$BASE/private/ui-backups/runtime-assets-$SHA"
+          TMP="$(mktemp -d)"
+          STAGE="$JS_ROOT/.runtime-stage-$SHA"
+          install -d -m 700 "$BACKUP/files" "$TMP" "$STAGE"
+          tar -xzf "$ARCHIVE" -C "$TMP"
+          SRC="$TMP/wwwroot/ui/js"
+          test -s "$SRC/app.e76ab352.js"
+          test -s "$SRC/chunk-vendors.0d0536ea.js"
+          python3 - "$SRC/app.e76ab352.js" "$SRC" "$TMP/runtime-assets.list" <<'PY'
+          import pathlib, re, sys
+          app_path, root, out = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), pathlib.Path(sys.argv[3])
+          app = app_path.read_text(encoding="utf-8", errors="replace")
+          chunks = {}
+          for name, digest in re.findall(r'"((?:views|layout|default|chunk)-[^"]+)":"([a-f0-9]{8})"', app):
+              chunks.setdefault(name, digest)
+          files = ["app.e76ab352.js", "chunk-vendors.0d0536ea.js"]
+          files.extend(f"{name}.{digest}.js" for name, digest in chunks.items())
+          missing = [name for name in files if not (root / name).is_file() or (root / name).stat().st_size == 0]
+          if missing:
+              raise SystemExit("Incomplete uploaded runtime set: " + ", ".join(missing[:20]))
+          out.write_text("\n".join(files) + "\n")
+          print(f"LIVE_MANIFEST_CHUNKS={len(chunks)}")
+          print(f"LIVE_ASSETS_TO_SYNC={len(files)}")
+          PY
+          mapfile -t FILES < "$TMP/runtime-assets.list"
+          : > "$BACKUP/absent.list"
+          for f in "${FILES[@]}"; do
+            if [ -s "$JS_ROOT/$f" ]; then
+              cp -p "$JS_ROOT/$f" "$BACKUP/files/$f"
+            else
+              printf '%s\n' "$f" >> "$BACKUP/absent.list"
+            fi
+            install -m 644 "$SRC/$f" "$STAGE/$f"
+          done
+          DEPLOY_STARTED=0
+          rollback() {
+            for f in "${FILES[@]}"; do
+              if [ -s "$BACKUP/files/$f" ]; then
+                cp -p "$BACKUP/files/$f" "$JS_ROOT/$f"
+              elif grep -Fxq "$f" "$BACKUP/absent.list"; then
+                rm -f "$JS_ROOT/$f"
+              fi
+            done
+          }
+          on_exit() {
+            RC=$?
+            if [ "$RC" -ne 0 ] && [ "$DEPLOY_STARTED" = 1 ]; then
+              echo "RUNTIME_SYNC_FAILED; RESTORING_PREVIOUS_JS_ASSETS=1"
+              rollback || true
+            fi
+            rm -rf "$TMP" "$STAGE"
+            rm -f "$ARCHIVE"
+            exit "$RC"
+          }
+          trap on_exit EXIT
+          DEPLOY_STARTED=1
+          for f in "${FILES[@]}"; do
+            mv -f "$STAGE/$f" "$JS_ROOT/$f"
+          done
+          for f in "${FILES[@]}"; do
+            test -s "$JS_ROOT/$f"
+          done
+          grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' "$JS_ROOT/app.e76ab352.js"
+          curl --retry 3 --retry-delay 1 --fail --silent --show-error --max-time 10 \
+            "http://127.0.0.1:5187/js/app.e76ab352.js?runtime-sync=$SHA" -o /tmp/vamcity-live-app.js
+          grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' /tmp/vamcity-live-app.js
+          rm -f /tmp/vamcity-live-app.js
+          for f in "${FILES[@]}"; do
+            case "$f" in
+              app.e76ab352.js|chunk-vendors.0d0536ea.js|views-admin-Dashboard.*.js|views-admin-Loans.*.js|views-admin-ManageLoan.*.js|views-admin-UserLoanRequests.*.js|views-admin-AppSettings.*.js|views-admin-AppBackup.*.js|views-admin-Users.*.js)
+                CODE="$(curl -sS --max-time 8 -o /dev/null -w '%{http_code}' "http://127.0.0.1:5187/js/$f")"
+                echo "LIVE_RUNTIME_ASSET_HTTP=$CODE FILE=$f"
+                test "$CODE" = 200
+                ;;
+            esac
+          done
+          for path in /login/ /register/0/ /cl/plans/ /admin/loans/ /admin/userLoanRequests/; do
+            CODE="$(curl -sS -L --max-time 10 -o /dev/null -w '%{http_code}' "http://127.0.0.1:5187$path")"
+            echo "LIVE_SPA_ROUTE_HTTP=$CODE PATH=$path"
+            test "$CODE" = 200
+          done
+          echo "RUNTIME_BUNDLE_AND_CHUNKS_SYNCED=1"
+          echo "DATABASE_TOUCHED=0"
+          echo "APP_CONTAINER_RESTARTED=0"
+          echo "ROLLBACK_BACKUP=$BACKUP"
+          REMOTE
+          rm -f /tmp/vamcity-runtime-assets.tar.gz
+
+      - name: Verify public runtime assets and blank-page routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in \
+            "/js/app.e76ab352.js?runtime-sync=$GITHUB_SHA" \
+            "/js/chunk-vendors.0d0536ea.js" \
+            "/login/" \
+            "/register/0/" \
+            "/cl/plans/" \
+            "/admin/loans/" \
+            "/admin/userLoanRequests/"; do
+            CODE="$(curl -k -sS -L --max-time 15 -o /tmp/vamcity-public-check -w '%{http_code}' "https://roofixo.ir$path")"
+            echo "PUBLIC_HTTP=$CODE PATH=$path"
+            test "$CODE" = 200
+            if [[ "$path" == /js/* ]]; then
+              test -s /tmp/vamcity-public-check
+            else
+              grep -qi '<html' /tmp/vamcity-public-check
+            fi
+          done
+          rm -f /tmp/vamcity-public-check
+          echo "PUBLIC_ROUTE_AND_RUNTIME_ASSET_CHECKS_OK=1"
