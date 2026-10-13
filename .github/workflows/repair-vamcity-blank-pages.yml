@@ -2,14 +2,6 @@ name: Repair missing VamCity legacy page assets
 run-name: Recover missing hashed JS chunks used by the live VamCity app
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/repair-vamcity-blank-pages.yml"
-  workflow_run:
-    workflows: ["Deploy VamCity UI only (preserve app and database)"]
-    types: [completed]
-    branches: [main]
   workflow_dispatch:
 
 permissions:
