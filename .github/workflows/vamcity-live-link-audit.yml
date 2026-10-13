@@ -1,5 +1,5 @@
 name: VamCity live link audit
-# Refresh live route diagnostics after Linux staging was verified.
+# Full production audit 2026-10-13: crawl all public entry points and admin sidebar routes after missing-chunk recovery; validate rendered pages, browser errors, 404s and 5xx responses.
 on:
   push:
     branches: [main]
