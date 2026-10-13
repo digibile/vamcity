@@ -164,6 +164,24 @@ jobs:
               add_header Pragma "no-cache" always;
               expires -1;
           }
+          # Replace only the authenticated admin dashboard landing route with the new UI.
+          # Other /admin/* routes remain on the existing Vue application so current features stay reachable.
+          location = /admin/dashboard {
+              root /home/roofixo/domains/roofixo.ir/public_html;
+              try_files /vamcity-admin/index.html =404;
+              default_type text/html;
+              add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+              add_header Pragma "no-cache" always;
+              expires -1;
+          }
+          location = /admin/dashboard/ {
+              root /home/roofixo/domains/roofixo.ir/public_html;
+              try_files /vamcity-admin/index.html =404;
+              default_type text/html;
+              add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+              add_header Pragma "no-cache" always;
+              expires -1;
+          }
           # Serve the dedicated public VamCity landing page at the domain root.
           # Do not send public visitors into the legacy Vue application.
           location = / {
@@ -219,6 +237,29 @@ jobs:
             exit 1
           fi
           if ! systemctl reload nginx; then rollback_config; exit 1; fi
+
+          echo "=== VERIFY NEW ADMIN DASHBOARD ROUTE AND PRESERVED LEGACY MODULES ==="
+          ADMIN_BODY="$(mktemp)"
+          ADMIN_STATUS="$(curl -k -sS -o "$ADMIN_BODY" --max-time 15 -w '%{http_code}' "https://roofixo.ir/admin/dashboard?route-check=$TS")"
+          echo "NEW_ADMIN_DASHBOARD_HTTP=$ADMIN_STATUS"
+          echo "NEW_ADMIN_DASHBOARD_BYTES=$(wc -c < "$ADMIN_BODY")"
+          grep -q "localStorage.getItem" "$ADMIN_BODY"
+          grep -q "مرکز مدیریت وام‌سیتی" "$ADMIN_BODY"
+          test "$ADMIN_STATUS" = "200"
+          rm -f "$ADMIN_BODY"
+          for ROUTE in /admin/appSettings /admin/appBackup; do
+            LEGACY_BODY="$(mktemp)"
+            LEGACY_STATUS="$(curl -k -sS -o "$LEGACY_BODY" --max-time 15 -w '%{http_code}' "https://roofixo.ir$ROUTE?route-check=$TS" || true)"
+            LEGACY_BUNDLE="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$LEGACY_BODY" | head -1 || true)"
+            echo "PRESERVED_LEGACY_ROUTE=$ROUTE HTTP=$LEGACY_STATUS APP_BUNDLE=$LEGACY_BUNDLE"
+            if [ "$LEGACY_STATUS" != "200" ] || [ -z "$LEGACY_BUNDLE" ]; then
+              rm -f "$LEGACY_BODY"
+              echo "LEGACY_ADMIN_MODULE_ROUTE_FAILED=$ROUTE"
+              exit 1
+            fi
+            rm -f "$LEGACY_BODY"
+          done
+          echo "NEW_ADMIN_UI_ROUTE_AND_LEGACY_MODULES_VERIFIED=true"
 
           echo "=== VERIFY LOGIN AND REGISTRATION ROUTES REACH THE APP ==="
           AUTH_FAILED=0
