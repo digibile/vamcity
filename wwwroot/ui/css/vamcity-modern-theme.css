@@ -1,0 +1,144 @@
+/* VamCity UI-only theme layer.
+   Keeps the existing Vue/Vuetify components, routes, API calls and business logic intact. */
+:root {
+  --vc-navy: #102337;
+  --vc-navy-2: #18384e;
+  --vc-gold: #d7ad65;
+  --vc-gold-soft: #f8f0e1;
+  --vc-ink: #17283a;
+  --vc-muted: #718096;
+  --vc-line: #e4eaf0;
+  --vc-page: #f4f6f9;
+  --vc-white: #fff;
+  --vc-green: #16836a;
+  --vc-shadow: 0 10px 28px rgba(16,35,55,.07);
+}
+html { background: var(--vc-page); }
+body, .v-application {
+  font-family: Tahoma, "Vazirmatn", Arial, sans-serif !important;
+  color: var(--vc-ink);
+  background: var(--vc-page) !important;
+}
+.v-application { line-height: 1.8; }
+.v-application .primary { background-color: var(--vc-navy) !important; border-color: var(--vc-navy) !important; }
+.v-application .accent { background-color: var(--vc-gold) !important; border-color: var(--vc-gold) !important; }
+.v-application .primary--text { color: var(--vc-navy) !important; caret-color: var(--vc-navy) !important; }
+.v-application .accent--text { color: #9b7337 !important; caret-color: #9b7337 !important; }
+.v-application .v-main { background: var(--vc-page); }
+.v-application .v-card,
+.v-application .v-sheet:not(.v-toolbar):not(.v-navigation-drawer):not(.v-list),
+.v-application .v-data-table,
+.v-application .v-dialog > .v-card {
+  border-color: var(--vc-line);
+}
+.v-application .v-card {
+  border-radius: 16px !important;
+  box-shadow: var(--vc-shadow) !important;
+  overflow: hidden;
+}
+.v-application .v-card__title {
+  color: var(--vc-ink);
+  font-weight: 700;
+  line-height: 1.8;
+}
+.v-application .v-toolbar {
+  box-shadow: 0 3px 16px rgba(16,35,55,.06) !important;
+}
+.v-application .v-app-bar,
+.v-application .v-toolbar.primary {
+  background: linear-gradient(110deg, var(--vc-navy), var(--vc-navy-2)) !important;
+  color: white !important;
+}
+.v-application .v-navigation-drawer {
+  background: #fff !important;
+  border-color: var(--vc-line) !important;
+}
+.v-application .v-navigation-drawer .v-list-item {
+  margin: 3px 8px;
+  min-height: 44px;
+  border-radius: 10px;
+}
+.v-application .v-navigation-drawer .v-list-item--active {
+  color: var(--vc-navy) !important;
+  background: var(--vc-gold-soft) !important;
+}
+.v-application .v-navigation-drawer .v-list-item--active:before { opacity: 0 !important; }
+.v-application .v-list-item__title,
+.v-application .v-list-item__subtitle { line-height: 1.8; }
+.v-application .v-btn {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-weight: 700;
+  border-radius: 10px !important;
+  box-shadow: none;
+}
+.v-application .v-btn.v-btn--contained.primary,
+.v-application .v-btn.primary {
+  background: var(--vc-navy) !important;
+  color: #fff !important;
+}
+.v-application .v-btn.accent {
+  background: var(--vc-gold) !important;
+  color: var(--vc-navy) !important;
+}
+.v-application .v-btn:not(.v-btn--icon):not(.v-btn--fab) { min-height: 38px; }
+.v-application .v-text-field,
+.v-application .v-select,
+.v-application .v-textarea {
+  border-radius: 10px;
+}
+.v-application .v-input__slot {
+  border-radius: 10px !important;
+}
+.v-application .v-input--is-focused .v-input__slot:before,
+.v-application .v-input--is-focused .v-input__slot:after {
+  border-color: var(--vc-gold) !important;
+}
+.v-application .v-label,
+.v-application .v-messages,
+.v-application .caption { line-height: 1.8; }
+.v-application .v-data-table {
+  border: 1px solid var(--vc-line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.v-application .v-data-table thead th {
+  background: #f7f9fb;
+  color: #536477 !important;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.v-application .v-data-table tbody tr:hover { background: #fbf7ef !important; }
+.v-application .v-divider { border-color: var(--vc-line) !important; }
+.v-application .v-chip {
+  border-radius: 999px;
+  font-weight: 600;
+}
+.v-application .v-alert { border-radius: 12px; }
+.v-application .v-dialog { box-shadow: none; }
+.v-application .v-pagination__item,
+.v-application .v-pagination__navigation { box-shadow: none; border: 1px solid var(--vc-line); }
+.v-application .v-pagination__item--active { background: var(--vc-navy) !important; }
+.v-application .v-tabs > .v-tabs-bar { background: transparent !important; }
+.v-application .v-tab { letter-spacing: 0; font-weight: 700; }
+.v-application .v-tab--active { color: var(--vc-navy) !important; }
+.v-application .v-tabs-slider { background: var(--vc-gold) !important; }
+.v-application .v-progress-linear__determinate { background: var(--vc-gold) !important; }
+.v-application .v-progress-circular { color: var(--vc-gold) !important; }
+.v-application .v-footer { background: transparent; }
+.v-application a { color: var(--vc-navy); }
+.v-application .error--text { color: #b94750 !important; }
+.v-application .success--text { color: var(--vc-green) !important; }
+.v-application .v-card__text,
+.v-application .v-card__subtitle { color: #536477; }
+.v-application .v-expansion-panels { border-radius: 14px; overflow: hidden; }
+.v-application .v-expansion-panel { border-bottom: 1px solid var(--vc-line); }
+.v-application .v-expansion-panel-header { font-weight: 700; }
+.v-application .v-table { border-radius: 12px; }
+.v-application .v-snack__content { line-height: 1.8; }
+@media (max-width: 600px) {
+  .v-application .v-card { border-radius: 13px !important; }
+  .v-application .v-card__title { font-size: 1rem; }
+  .v-application .v-data-table { overflow-x: auto; }
+  .v-application .v-btn:not(.v-btn--icon):not(.v-btn--fab) { padding-inline: 12px; }
+}
