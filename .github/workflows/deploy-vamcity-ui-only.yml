@@ -95,19 +95,19 @@ jobs:
           docker inspect "$APP_CONTAINER" >/dev/null
           APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' "$APP_CONTAINER")"
           test -n "$APP_ROOT"
-          test -s "$APP_ROOT/index.html"
-          test -d "$APP_ROOT/css"
+          test -s "$APP_ROOT/wwwroot/index.html"
+          test -d "$APP_ROOT/wwwroot/css"
           mkdir -p "$BACKUP/css" "$TMP"
           chmod 700 "$BASE/private" "$BASE/private/ui-backups" "$BACKUP"
-          cp -p "$APP_ROOT/index.html" "$BACKUP/index.html"
-          if [ -s "$APP_ROOT/css/vamcity-modern-theme.css" ]; then
-            cp -p "$APP_ROOT/css/vamcity-modern-theme.css" "$BACKUP/css/vamcity-modern-theme.css"
+          cp -p "$APP_ROOT/wwwroot/index.html" "$BACKUP/index.html"
+          if [ -s "$APP_ROOT/wwwroot/css/vamcity-modern-theme.css" ]; then
+            cp -p "$APP_ROOT/wwwroot/css/vamcity-modern-theme.css" "$BACKUP/css/vamcity-modern-theme.css"
             echo present > "$BACKUP/manifest.state"
           else
             echo absent > "$BACKUP/manifest.state"
           fi
-          if [ -d "$APP_ROOT/css/vamcity" ]; then
-            cp -a "$APP_ROOT/css/vamcity" "$BACKUP/css/vamcity"
+          if [ -d "$APP_ROOT/wwwroot/css/vamcity" ]; then
+            cp -a "$APP_ROOT/wwwroot/css/vamcity" "$BACKUP/css/vamcity"
             echo present > "$BACKUP/modules.state"
           else
             echo absent > "$BACKUP/modules.state"
@@ -119,15 +119,15 @@ jobs:
           grep -Fq '/css/vamcity-modern-theme.css?v=5' "$TMP/wwwroot/ui/index.html"
 
           rollback() {
-            cp -p "$BACKUP/index.html" "$APP_ROOT/index.html"
+            cp -p "$BACKUP/index.html" "$APP_ROOT/wwwroot/index.html"
             if [ "$(cat "$BACKUP/manifest.state")" = present ]; then
-              cp -p "$BACKUP/css/vamcity-modern-theme.css" "$APP_ROOT/css/vamcity-modern-theme.css"
+              cp -p "$BACKUP/css/vamcity-modern-theme.css" "$APP_ROOT/wwwroot/css/vamcity-modern-theme.css"
             else
-              rm -f "$APP_ROOT/css/vamcity-modern-theme.css"
+              rm -f "$APP_ROOT/wwwroot/css/vamcity-modern-theme.css"
             fi
-            rm -rf "$APP_ROOT/css/vamcity"
+            rm -rf "$APP_ROOT/wwwroot/css/vamcity"
             if [ "$(cat "$BACKUP/modules.state")" = present ]; then
-              cp -a "$BACKUP/css/vamcity" "$APP_ROOT/css/vamcity"
+              cp -a "$BACKUP/css/vamcity" "$APP_ROOT/wwwroot/css/vamcity"
             fi
           }
           DEPLOY_STARTED=0
@@ -145,17 +145,17 @@ jobs:
 
           DEPLOY_STARTED=1
           install -m 644 "$TMP/wwwroot/ui/index.html" "$APP_ROOT/.index.html-$SHA.tmp"
-          mv "$APP_ROOT/.index.html-$SHA.tmp" "$APP_ROOT/index.html"
-          install -m 644 "$TMP/wwwroot/ui/css/vamcity-modern-theme.css" "$APP_ROOT/css/.vamcity-modern-theme-$SHA.tmp"
-          mv "$APP_ROOT/css/.vamcity-modern-theme-$SHA.tmp" "$APP_ROOT/css/vamcity-modern-theme.css"
-          mkdir -p "$APP_ROOT/css/vamcity"
+          mv "$APP_ROOT/.index.html-$SHA.tmp" "$APP_ROOT/wwwroot/index.html"
+          install -m 644 "$TMP/wwwroot/ui/css/vamcity-modern-theme.css" "$APP_ROOT/wwwroot/css/.vamcity-modern-theme-$SHA.tmp"
+          mv "$APP_ROOT/wwwroot/css/.vamcity-modern-theme-$SHA.tmp" "$APP_ROOT/wwwroot/css/vamcity-modern-theme.css"
+          mkdir -p "$APP_ROOT/wwwroot/css/vamcity"
           for file in "$TMP"/wwwroot/ui/css/vamcity/*.css; do
             name="$(basename "$file")"
-            install -m 644 "$file" "$APP_ROOT/css/vamcity/.$name-$SHA.tmp"
-            mv "$APP_ROOT/css/vamcity/.$name-$SHA.tmp" "$APP_ROOT/css/vamcity/$name"
+            install -m 644 "$file" "$APP_ROOT/wwwroot/css/vamcity/.$name-$SHA.tmp"
+            mv "$APP_ROOT/wwwroot/css/vamcity/.$name-$SHA.tmp" "$APP_ROOT/wwwroot/css/vamcity/$name"
           done
 
-          grep -Fq '/css/vamcity-modern-theme.css?v=5' "$APP_ROOT/index.html"
+          grep -Fq '/css/vamcity-modern-theme.css?v=5' "$APP_ROOT/wwwroot/index.html"
           curl --retry 4 --retry-delay 2 --fail --silent --show-error --max-time 10 \
             "http://127.0.0.1:5187/css/vamcity-modern-theme.css?v=5" -o /dev/null
           curl --retry 4 --retry-delay 2 --fail --silent --show-error --max-time 10 \
