@@ -84,6 +84,15 @@ jobs:
           fi
           nginx -t
 
+          echo "=== DIAGNOSE BACKEND AUTH ROUTES BEFORE VHOST CHANGES ==="
+          for ROUTE in /login/ /cl/login /cl/register; do
+            DIAG_HEADERS="$(mktemp)"
+            DIAG_BODY="$(mktemp)"
+            DIAG_STATUS="$(curl -sS -D "$DIAG_HEADERS" -H 'Host: roofixo.ir' -o "$DIAG_BODY" --max-time 12 -w '%{http_code}' "http://127.0.0.1:5187$ROUTE" || true)"
+            echo "BACKEND_AUTH_ROUTE=$ROUTE HTTP=$DIAG_STATUS LOCATION=$(grep -i '^location:' "$DIAG_HEADERS" | tail -1 | tr -d '\\r' || true) TITLE=$(grep -oE '<title>[^<]*</title>' "$DIAG_BODY" | head -1 || true) BYTES=$(wc -c < "$DIAG_BODY") APP_BUNDLE=$(grep -Eo '/js/app\\.[a-f0-9]+\\.js' "$DIAG_BODY" | head -1 || true)"
+            rm -f "$DIAG_HEADERS" "$DIAG_BODY"
+          done
+
           echo "=== BACKUP CURRENT DOMAIN AND TEMPLATE STATE ==="
           cp -a "$DOMAIN_CONF" "$BACKUP/domain.conf.before"
           cp -a "$GENERATED" "$BACKUP/nginx.conf.before"
@@ -202,16 +211,13 @@ jobs:
           echo "=== VERIFY LOGIN AND REGISTRATION ROUTES REACH THE APP ==="
           AUTH_FAILED=0
           for ROUTE in /login/ /cl/login /cl/register; do
+            AUTH_HEADERS="$(mktemp)"
             AUTH_BODY="$(mktemp)"
-            AUTH_FIRST_STATUS="$(curl -k --resolve "roofixo.ir:443:$DOMAIN_IP" -sS -o /dev/null --max-time 20 -w '%{http_code}' "https://roofixo.ir$ROUTE?route-check=$TS" || true)"
-            echo "AUTH_FIRST_RESPONSE=$ROUTE HTTP=$AUTH_FIRST_STATUS"
-            AUTH_STATUS="$(curl -k --resolve "roofixo.ir:443:$DOMAIN_IP" -sS -L -o "$AUTH_BODY" --max-time 20 -w '%{http_code}' "https://roofixo.ir$ROUTE?route-check=$TS" || true)"
-            AUTH_HAS_APP="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$AUTH_BODY" | head -1 || true)"
-            echo "AUTH_ROUTE=$ROUTE HTTP=$AUTH_STATUS APP_BUNDLE=$AUTH_HAS_APP"
-            echo "AUTH_BODY_TITLE=$(grep -oE '<title>[^<]*</title>' "$AUTH_BODY" | head -1 || true)"
-            echo "AUTH_BODY_BYTES=$(wc -c < "$AUTH_BODY")"
+            AUTH_STATUS="$(curl -k --resolve "roofixo.ir:443:$DOMAIN_IP" -sS -D "$AUTH_HEADERS" -o "$AUTH_BODY" --max-time 20 -w '%{http_code}' "https://roofixo.ir$ROUTE?route-check=$TS" || true)"
+            AUTH_HAS_APP="$(grep -Eo '/js/app\\.[a-f0-9]+\\.js' "$AUTH_BODY" | head -1 || true)"
+            echo "AUTH_ROUTE=$ROUTE HTTP=$AUTH_STATUS LOCATION=$(grep -i '^location:' "$AUTH_HEADERS" | tail -1 | tr -d '\\r' || true) TITLE=$(grep -oE '<title>[^<]*</title>' "$AUTH_BODY" | head -1 || true) BYTES=$(wc -c < "$AUTH_BODY") APP_BUNDLE=$AUTH_HAS_APP"
             if [ "$AUTH_STATUS" != "200" ] || [ -z "$AUTH_HAS_APP" ]; then AUTH_FAILED=1; fi
-            rm -f "$AUTH_BODY"
+            rm -f "$AUTH_HEADERS" "$AUTH_BODY"
           done
           if [ "$AUTH_FAILED" = "1" ]; then
             echo "AUTH_ROUTE_CHECK_FAILED; restoring previous Nginx configuration"
