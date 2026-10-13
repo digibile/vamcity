@@ -35,13 +35,13 @@ jobs:
           STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS -L --max-time 30 -o "$HTML" -w '%{http_code}' "$BASE/cl/plans/")"
           echo "PLANS_PAGE_HTTP=$STATUS"
           test "$STATUS" = 200
-          grep -Fq '/css/vamcity-modern-theme.css?v=6' "$HTML"
+          grep -Fq '/css/vamcity-modern-theme.css?v=7' "$HTML"
           grep -Fq '/js/app.e76ab352.js?v=otp-ui1' "$HTML"
 
-          CSS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 20 -o "$CSS" -w '%{http_code}' "$BASE/css/vamcity-modern-theme.css?v=6")"
+          CSS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 20 -o "$CSS" -w '%{http_code}' "$BASE/css/vamcity-modern-theme.css?v=7")"
           echo "THEME_CSS_HTTP=$CSS_STATUS"
           test "$CSS_STATUS" = 200
-          grep -Fq 'tokens-base.css?v=6' "$CSS"
+          grep -Fq 'tokens-base.css?v=7' "$CSS"
 
           JS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 30 -o /dev/null -w '%{http_code}' "$BASE/js/app.e76ab352.js?v=otp-ui1")"
           echo "LEGACY_APP_BUNDLE_HTTP=$JS_STATUS"
@@ -176,6 +176,18 @@ jobs:
             if (!otpText.includes('رمز پیامکی را اینجا وارد کنید') || errors.length) {
               throw new Error('OTP sign-in UI did not open cleanly: ' + JSON.stringify(errors));
             }
+            const otpInputs = page.locator('#login-view .otp-container input');
+            const otpCount = await otpInputs.count();
+            if (otpCount < 4) throw new Error('Expected at least four OTP digit boxes; got ' + otpCount);
+            await otpInputs.nth(0).click();
+            await otpInputs.nth(0).fill('7');
+            const autoAdvanced = await otpInputs.nth(1).evaluate(el => document.activeElement === el);
+            console.log('OTP_AUTO_ADVANCE=' + autoAdvanced + ' OTP_BOXES=' + otpCount);
+            if (!autoAdvanced) throw new Error('OTP did not auto-advance to the next digit box');
+            await otpInputs.nth(1).press('Backspace');
+            const backspaceReturned = await otpInputs.nth(0).evaluate(el => document.activeElement === el);
+            console.log('OTP_BACKSPACE_RETURN=' + backspaceReturned);
+            if (!backspaceReturned) throw new Error('OTP Backspace navigation did not return to previous digit box');
             await page.screenshot({ path: 'artifacts/login-otp-desktop.png', fullPage: true });
 
             await page.goto('https://roofixo.ir/login/', { waitUntil: 'commit', timeout: 20000 });
