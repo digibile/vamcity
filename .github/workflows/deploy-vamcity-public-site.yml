@@ -133,7 +133,7 @@ jobs:
           # Remove legacy exact-match plan routes from earlier deployments before adding
           # the single canonical managed block below. This avoids duplicate nginx locations.
           text = re.sub(
-              r'(?ms)^[ \\t]*location\\s*=\\s*(?:/plans\\.html|/plans/|/plans|/cl/plans/|/cl/plans)\\s*\\{\\n.*?^[ \\t]*\\}[ \\t]*\\n?',
+              r'(?ms)^[ \t]*location\s*=\s*(?:/plans\.html|/plans/|/plans|/cl/plans/|/cl/plans)\s*\{\n.*?^[ \t]*\}[ \t]*\n?',
               '',
               text,
           )
