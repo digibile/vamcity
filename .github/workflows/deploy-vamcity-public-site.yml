@@ -140,7 +140,7 @@ jobs:
           nginx -t
           grep -Fq 'location = / {' "$GENERATED"
           systemctl reload nginx
-          STATUS="$(curl -k -sS --resolve roofixo.ir:443:127.0.0.1 -o "/tmp/vamcity-home-check-$SHA.html" -w '%{http_code}' https://roofixo.ir/)"
+          STATUS="$(curl -k -sS --resolve roofixo.ir:443:185.8.174.167 -o "/tmp/vamcity-home-check-$SHA.html" -w '%{http_code}' https://roofixo.ir/)"
           echo "LOCAL_HOME_HTTP=$STATUS"
           echo "HOME_BYTES=$(wc -c < "/tmp/vamcity-home-check-$SHA.html")"
           echo "HOME_TITLE=$(grep -oE '<title>[^<]*</title>' "/tmp/vamcity-home-check-$SHA.html" | head -1 || true)"
