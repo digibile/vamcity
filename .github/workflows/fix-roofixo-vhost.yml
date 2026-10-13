@@ -204,6 +204,27 @@ jobs:
               add_header Pragma "no-cache" always;
               expires -1;
           }
+          # Keep the standalone public plans page alive even when this vhost workflow runs.
+          # The homepage deploy workflow also manages these routes; both workflows must agree.
+          location = /plans.html {
+              alias /home/roofixo/domains/roofixo.ir/public_html/plans.html;
+              default_type text/html;
+              add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+              add_header Pragma "no-cache" always;
+              expires -1;
+          }
+          location = /plans {
+              return 302 /plans.html;
+          }
+          location = /plans/ {
+              return 302 /plans.html;
+          }
+          location = /cl/plans {
+              return 302 /plans.html;
+          }
+          location = /cl/plans/ {
+              return 302 /plans.html;
+          }
           # Legacy bookmarks are mapped to the real Vue SPA route names.
           location = /cl/login {
               return 302 /login/;
