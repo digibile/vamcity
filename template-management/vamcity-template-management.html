@@ -118,7 +118,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
 <div class="shell">
 <header class="topbar">
   <div class="brand"><div class="brand-mark">◈</div><div><strong>وام‌سیتی</strong><small>مرکز مدیریت وام و عملیات سامانه</small></div></div>
-  <div class="top-actions"><a class="top-pill top-link" href="/" target="_blank" rel="noopener" title="سایت عمومی در زبانه جدید باز می‌شود تا نشست مدیریت حفظ شود">مشاهده سایت ↗</a><a class="top-pill top-link" href="/plans.html">طرح‌های تسهیلات</a><a class="top-pill top-link" href="/login/">ورود کاربران</a><a class="top-pill top-link" href="/register/0/">عضویت</a><a class="top-pill top-link" href="/cl/agentregister/0/">درخواست همکاری و نمایندگی</a><a class="top-pill top-link" href="/admin/dashboard" aria-current="page">پنل مدیریت</a><a class="top-pill top-link" href="#settings" onclick="go(\'settings\');return false;">تنظیمات اپلیکیشن</a><a class="top-pill top-link" href="#backup" onclick="go(\'backup\');return false;">پشتیبان‌گیری</a><a class="top-pill top-link" id="account-link" href="/admin/dashboard" title="حساب کاربری"><span id="account-name">حساب کاربری</span></a><div class="avatar" id="account-avatar" title="کاربر واردشده">م</div></div>
+  <div class="top-actions"><a class="top-pill top-link" href="/" target="_blank" rel="noopener" title="سایت عمومی در زبانه جدید باز می‌شود تا نشست مدیریت حفظ شود">مشاهده سایت ↗</a><a class="top-pill top-link" href="/plans.html">طرح‌های تسهیلات</a><a class="top-pill top-link" href="/login/">ورود کاربران</a><a class="top-pill top-link" href="/register/0/">عضویت</a><a class="top-pill top-link" href="/cl/agentregister/0/">درخواست همکاری و نمایندگی</a><a class="top-pill top-link" href="/admin/dashboard" aria-current="page">پنل مدیریت</a><a class="top-pill top-link" href="#settings" onclick="go('settings');return false;">تنظیمات اپلیکیشن</a><a class="top-pill top-link" href="#backup" onclick="go('backup');return false;">پشتیبان‌گیری</a><a class="top-pill top-link" id="account-link" href="/admin/dashboard" title="حساب کاربری"><span id="account-name">حساب کاربری</span></a><div class="avatar" id="account-avatar" title="کاربر واردشده">م</div></div>
 </header>
 <div class="layout">
 <aside class="sidebar">
@@ -140,8 +140,8 @@ img,svg,video,canvas{max-width:100%;height:auto}
   <a class="navbtn" href="#settings" onclick="go('settings');return false;" style="text-decoration:none"><span class="ico">▧</span>تنظیمات قالب و صفحات</a>
   <a class="navbtn" href="#settings" onclick="go('settings');return false;" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات و دسترسی‌ها</a>
   <div class="side-label">امکانات موجود سامانه</div>
-  <a class="navbtn" href="#settings" onclick="go('settings');return false;" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات اپلیکیشن</a>
-  <a class="navbtn" href="#backup" onclick="go('backup');return false;" style="text-decoration:none"><span class="ico">▣</span>پشتیبان‌گیری و بازیابی</a>
+  <a class="navbtn" href="/admin/appsettings/" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات اپلیکیشن</a>
+  <a class="navbtn" href="/admin/appbackup/" style="text-decoration:none"><span class="ico">▣</span>پشتیبان‌گیری و بازیابی</a>
   <a class="navbtn" href="/admin/loans/" style="text-decoration:none"><span class="ico">◈</span>مدیریت وام‌ها</a>
   <a class="navbtn" href="/admin/userLoanRequests/" style="text-decoration:none"><span class="ico">▤</span>درخواست‌های تسهیلات</a>
   <a class="navbtn" href="/admin/loanPaymentRequests" style="text-decoration:none"><span class="ico">⇄</span>درخواست‌های پرداخت</a>
@@ -364,7 +364,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
 <div class="toast" id="toast"></div>
 <script>
 const pages={overview:"داشبورد مدیریت",calculator:"محاسبه‌گر و مقایسه"};
-const operationalPages={loans:["/loans","مدیریت طرح‌های تسهیلات"],applications:["/userLoanRequests/","درخواست‌های وام"],stores:["/contacts","مخاطبان و پذیرندگان"],"store-register":["/cl/agentregister/0/","درخواست همکاری و نمایندگی"],products:["/customerOrders/","سفارش‌های مشتریان"],"pay-merchants":["/contacts","پرونده پذیرندگان"],"pay-register":["/cl/agentregister/0/","درخواست همکاری پذیرندگان"],transactions:["/loanPaymentRequests","پرداخت‌ها و درخواست‌های تسویه"]};
+const operationalPages={loans:["/loans","مدیریت طرح‌های تسهیلات"],applications:["/userLoanRequests/","درخواست‌های وام"],stores:["/contacts","مخاطبان و پذیرندگان"],"store-register":["/cl/agentregister/0/","درخواست همکاری و نمایندگی"],products:["/customerOrders/","سفارش‌های مشتریان"],"pay-merchants":["/contacts","پرونده پذیرندگان"],"pay-register":["/cl/agentregister/0/","درخواست همکاری پذیرندگان"],transactions:["/loanPaymentRequests","پرداخت‌ها و درخواست‌های تسویه"],settings:["/admin/appsettings/","تنظیمات اپلیکیشن"],backup:["/admin/appbackup/","پشتیبان‌گیری و بازیابی"]};
 function go(id){if(operationalPages[id]){openLegacy(operationalPages[id][0],operationalPages[id][1]);return;}if(typeof legacyWorkspace!=="undefined"&&legacyWorkspace){legacyWorkspace.hidden=true;if(legacyFrame)legacyFrame.src="about:blank";if(typeof mainSections!=="undefined")mainSections.forEach(section=>section.style.display="");}document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active",b.dataset.page===id));if(!pages[id])return;window.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll(".navbtn[data-page]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
 let toastTimer;function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),3200)}
