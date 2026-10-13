@@ -179,6 +179,10 @@ jobs:
           PLANS_STATUS="$(curl -k -sS --resolve roofixo.ir:443:185.8.174.167 -o "/tmp/vamcity-plans-check-$SHA.html" -w '%{http_code}' https://roofixo.ir/plans.html)"
           echo "LOCAL_HOME_HTTP=$STATUS"
           echo "LOCAL_PLANS_HTTP=$PLANS_STATUS"
+          echo "PLANS_BYTES=$(wc -c < "/tmp/vamcity-plans-check-$SHA.html")"
+          echo "PLANS_TITLE=$(grep -oE '<title>[^<]*</title>' "/tmp/vamcity-plans-check-$SHA.html" | head -1 || true)"
+          echo "PLANS_PREFIX=$(head -c 400 "/tmp/vamcity-plans-check-$SHA.html" | tr '\\n' ' ' || true)"
+          echo "PLANS_ROUTE_BLOCK=$(grep -n -A10 -B1 'VAMCITY_PUBLIC_PLANS_BEGIN' "$GENERATED" | head -15 || true)"
           test "$PLANS_STATUS" = 200
           grep -q 'طرح‌های تسهیلات | وام‌سیتی' "/tmp/vamcity-plans-check-$SHA.html"
           echo "HOME_BYTES=$(wc -c < "/tmp/vamcity-home-check-$SHA.html")"
