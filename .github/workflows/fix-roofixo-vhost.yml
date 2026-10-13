@@ -228,4 +228,32 @@ jobs:
           fi
           if [ "$LE_RESULT" != success ]; then echo "WARNING=Certificate renewal did not report success; HTTPS route itself returned 200 with certificate verification disabled."; fi
           echo "VAMCITY_ROOFIXO_HTTPS_LIVE=true"
+
+          echo "=== VERIFY MAIN DOMAIN ROOT AND PUBLIC DATA API ==="
+          ROOT_BODY="$(mktemp)"
+          ROOT_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS -L --max-time 25 -o "$ROOT_BODY" -w '%{http_code}' https://roofixo.ir/)"
+          echo "ROOFIXO_ROOT_STATUS=$ROOT_STATUS"
+          echo "ROOFIXO_ROOT_BYTES=$(wc -c < "$ROOT_BODY")"
+          echo "ROOFIXO_ROOT_TITLE=$(grep -oE '<title>[^<]*</title>' "$ROOT_BODY" | head -1 || true)"
+          test "$ROOT_STATUS" = "200"
+          grep -Eqi '<html' "$ROOT_BODY"
+          grep -Eqi 'وام سیتی|VamCity' "$ROOT_BODY"
+          rm -f "$ROOT_BODY"
+
+          API_BODY="$(mktemp)"
+          API_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 25 -o "$API_BODY" -w '%{http_code}' https://roofixo.ir/Loan/List/100)"
+          echo "ROOFIXO_PUBLIC_LOAN_DATA_API_STATUS=$API_STATUS"
+          test "$API_STATUS" = "200"
+          python3 - "$API_BODY" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as f:
+              payload = json.load(f)
+          success = payload.get("success", payload.get("Success"))
+          data = payload.get("data", payload.get("Data"))
+          if success is not True or not isinstance(data, list) or not data:
+              raise SystemExit("Public loan data API returned no valid loan records")
+          print(f"ROOFIXO_PUBLIC_LOAN_DATA_OK count={len(data)}")
+          PY
+          rm -f "$API_BODY"
+          echo "ROOFIXO_ROOT_AND_PUBLIC_DATA_VERIFIED=true"
           REMOTE
