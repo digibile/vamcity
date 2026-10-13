@@ -40,7 +40,8 @@ jobs:
                 console.log('FINAL_URL='+page.url());
                 console.log('TITLE='+await page.title());
                 console.log('BODY_TEXT='+(await page.locator('body').innerText().catch(()=>'' )).replace(/\s+/g,' ').slice(0,4500));
-                console.log('LINKS='+JSON.stringify(await page.locator('a').evaluateAll(as=>as.slice(0,100).map(a=>({text:(a.innerText||a.getAttribute('aria-label')||'').trim().slice(0,90),href:a.getAttribute('href')}))));
+                const links = await page.locator('a').evaluateAll(as => as.slice(0,100).map(a => ({text:(a.innerText||a.getAttribute('aria-label')||'').trim().slice(0,90),href:a.getAttribute('href')})));
+                console.log('LINKS='+JSON.stringify(links));
                 if(path==='/vamcity-template-preview/') await page.screenshot({path:'/tmp/vamcity-template-preview.png',fullPage:true});
               } catch(e) { console.log('PATH_ERROR='+path+' '+e.message); }
             }
