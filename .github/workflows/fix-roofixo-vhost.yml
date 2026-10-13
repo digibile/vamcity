@@ -276,5 +276,15 @@ jobs:
           PY
           rm -f "$API_BODY"
           echo "ROOFIXO_ROOT_AND_PUBLIC_DATA_VERIFIED=true"
+
+          LOGIN_HEADERS="$(mktemp)"
+          LOGIN_STATUS="$(curl --retry 2 --retry-all-errors --retry-delay 1 -sS --max-time 20 -D "$LOGIN_HEADERS" -o /dev/null -w '%{http_code}' https://roofixo.ir/login/)"
+          echo "ROOFIXO_LEGACY_LOGIN_STATUS=$LOGIN_STATUS"
+          echo "ROOFIXO_LEGACY_LOGIN_LOCATION=$(grep -i '^location:' "$LOGIN_HEADERS" | tail -1 | tr -d '\r' || true)"
+          test "$LOGIN_STATUS" = "302"
+          grep -Eiq '^location:[[:space:]]*/[[:space:]]*          REMOTE
+ "$LOGIN_HEADERS"
+          rm -f "$LOGIN_HEADERS"
+          echo "ROOFIXO_LEGACY_LOGIN_REDIRECT_VERIFIED=true"
           echo "ROOFIXO_PUBLIC_LANDING_AT_ROOT=true"
           REMOTE
