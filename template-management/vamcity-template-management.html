@@ -118,7 +118,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
 <div class="shell">
 <header class="topbar">
   <div class="brand"><div class="brand-mark">◈</div><div><strong>وام‌سیتی</strong><small>مرکز مدیریت وام و عملیات سامانه</small></div></div>
-  <div class="top-actions"><a class="top-pill top-link" href="/" target="_blank" rel="noopener" title="سایت عمومی در زبانه جدید باز می‌شود تا نشست مدیریت حفظ شود">مشاهده سایت ↗</a><a class="top-pill top-link" href="/plans/0/">طرح‌های تسهیلات</a><a class="top-pill top-link" href="/login/">ورود کاربران</a><a class="top-pill top-link" href="/register/0/">عضویت</a><a class="top-pill top-link" href="/cl/agentregister/0/">درخواست همکاری و نمایندگی</a><a class="top-pill top-link" href="/admin/dashboard" aria-current="page">پنل مدیریت</a><a class="top-pill top-link" href="#settings" onclick="go(\'settings\');return false;">تنظیمات اپلیکیشن</a><a class="top-pill top-link" href="#backup" onclick="go(\'backup\');return false;">پشتیبان‌گیری</a><a class="top-pill top-link" id="account-link" href="/admin/dashboard" title="حساب کاربری"><span id="account-name">حساب کاربری</span></a><div class="avatar" id="account-avatar" title="کاربر واردشده">م</div></div>
+  <div class="top-actions"><a class="top-pill top-link" href="/" target="_blank" rel="noopener" title="سایت عمومی در زبانه جدید باز می‌شود تا نشست مدیریت حفظ شود">مشاهده سایت ↗</a><a class="top-pill top-link" href="/plans.html">طرح‌های تسهیلات</a><a class="top-pill top-link" href="/login/">ورود کاربران</a><a class="top-pill top-link" href="/register/0/">عضویت</a><a class="top-pill top-link" href="/cl/agentregister/0/">درخواست همکاری و نمایندگی</a><a class="top-pill top-link" href="/admin/dashboard" aria-current="page">پنل مدیریت</a><a class="top-pill top-link" href="#settings" onclick="go(\'settings\');return false;">تنظیمات اپلیکیشن</a><a class="top-pill top-link" href="#backup" onclick="go(\'backup\');return false;">پشتیبان‌گیری</a><a class="top-pill top-link" id="account-link" href="/admin/dashboard" title="حساب کاربری"><span id="account-name">حساب کاربری</span></a><div class="avatar" id="account-avatar" title="کاربر واردشده">م</div></div>
 </header>
 <div class="layout">
 <aside class="sidebar">
@@ -153,7 +153,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
   <a class="navbtn" href="/admin/customerOrders/" style="text-decoration:none"><span class="ico">▤</span>سفارش‌های مشتریان</a>
   <a class="navbtn" href="/admin/inquirymanagement" style="text-decoration:none"><span class="ico">⌕</span>مدیریت استعلام‌ها</a>
   <a class="navbtn" href="/admin/smslist" style="text-decoration:none"><span class="ico">◉</span>پیامک‌ها و گزارش ارسال</a>
-  <a class="navbtn" href="/admin/emailList" style="text-decoration:none"><span class="ico">✉</span>ایمیل‌ها</a>
+  <a class="navbtn" href="#email" onclick="go('email');return false;" style="text-decoration:none"><span class="ico">✉</span>ایمیل‌ها</a>
   <a class="navbtn" href="/admin/expense" style="text-decoration:none"><span class="ico">▥</span>هزینه‌ها</a>
   <div class="side-label">گزارش‌ها</div>
   <a class="navbtn" href="/admin/reports/" style="text-decoration:none"><span class="ico">▤</span>مرکز گزارش‌ها</a>
@@ -334,6 +334,13 @@ img,svg,video,canvas{max-width:100%;height:auto}
   <div class="crumb">مدیریت / تنظیمات و دسترسی‌ها</div><div class="pagehead"><div><h1>تنظیمات و دسترسی‌ها</h1><p>نمونه ساختار نقش‌ها؛ کنترل دسترسی واقعی باید در بک‌اند enforce شود.</p></div></div>
   <div class="notice">این صفحه مجوز واقعی ایجاد یا تغییر نمی‌دهد. در نسخه عملیاتی، دسترسی باید در API و سمت سرور کنترل شود، نه صرفاً با مخفی کردن اجزای UI.</div>
   <div class="card tablewrap"><table><thead><tr><th>نقش نمونه</th><th>تسهیلات</th><th>فروشگاه‌ها</th><th>پرداخت‌یاری</th><th>تنظیمات</th></tr></thead><tbody><tr><td><b>مدیر سامانه</b></td><td><span class="tag">مدیریت</span></td><td><span class="tag">مدیریت</span></td><td><span class="tag">مدیریت</span></td><td><span class="tag">مدیریت</span></td></tr><tr><td><b>کارشناس تسهیلات</b></td><td><span class="tag">بررسی پرونده</span></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag gray">بدون دسترسی</span></td></tr><tr><td><b>مدیر فروشگاه</b></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag">فروشگاه خود</span></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag gray">بدون دسترسی</span></td></tr><tr><td><b>کارشناس پذیرندگان</b></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag">پرونده پذیرنده</span></td><td><span class="tag gray">بدون دسترسی</span></td></tr></tbody></table></div>
+</section>
+
+<section class="section" id="email">
+  <div class="crumb">عملیات و پشتیبانی / ایمیل‌ها</div>
+  <div class="pagehead"><div><h1>ایمیل‌ها و گزارش ارسال</h1><p>وضعیت ماژول ایمیل در رابط فعلی سامانه</p></div></div>
+  <div class="notice">مسیر «emailList» در نقشهٔ مسیرهای نسخهٔ فعلی برنامه ثبت نشده بود و به همین دلیل می‌توانست صفحهٔ خالی نشان دهد. این بخش جایگزین نمای سفید شده است؛ تا زمان اتصال مسیر و API واقعی ارسال ایمیل، فهرست و وضعیت ارسال ساختگی نمایش داده نمی‌شود.</div>
+  <div class="card"><div class="cardhead"><h3>وضعیت سرویس ایمیل</h3><span class="tag gold">نیازمند اتصال بک‌اند</span></div><p class="muted">هیچ پیام یا گزارش واقعی در این بخش خوانده یا ارسال نمی‌شود.</p><button class="btn dark" type="button" onclick="go('overview')">بازگشت به مرکز مدیریت</button></div>
 </section>
 
 <section class="section" id="backup">
