@@ -89,7 +89,7 @@ jobs:
             DIAG_HEADERS="$(mktemp)"
             DIAG_BODY="$(mktemp)"
             DIAG_STATUS="$(curl -sS -D "$DIAG_HEADERS" -H 'Host: roofixo.ir' -o "$DIAG_BODY" --max-time 12 -w '%{http_code}' "http://127.0.0.1:5187$ROUTE" || true)"
-            echo "BACKEND_AUTH_ROUTE=$ROUTE HTTP=$DIAG_STATUS LOCATION=$(grep -i '^location:' "$DIAG_HEADERS" | tail -1 | tr -d '\\r' || true) TITLE=$(grep -oE '<title>[^<]*</title>' "$DIAG_BODY" | head -1 || true) BYTES=$(wc -c < "$DIAG_BODY") APP_BUNDLE=$(grep -Eo '/js/app\\.[a-f0-9]+\\.js' "$DIAG_BODY" | head -1 || true)"
+            echo "BACKEND_AUTH_ROUTE=$ROUTE HTTP=$DIAG_STATUS LOCATION=$(grep -i '^location:' "$DIAG_HEADERS" | tail -1 | tr -d '\r' || true) TITLE=$(grep -oE '<title>[^<]*</title>' "$DIAG_BODY" | head -1 || true) BYTES=$(wc -c < "$DIAG_BODY") APP_BUNDLE=$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$DIAG_BODY" | head -1 || true)"
             rm -f "$DIAG_HEADERS" "$DIAG_BODY"
           done
 
@@ -214,8 +214,8 @@ jobs:
             AUTH_HEADERS="$(mktemp)"
             AUTH_BODY="$(mktemp)"
             AUTH_STATUS="$(curl -k --resolve "roofixo.ir:443:$DOMAIN_IP" -sS -D "$AUTH_HEADERS" -o "$AUTH_BODY" --max-time 20 -w '%{http_code}' "https://roofixo.ir$ROUTE?route-check=$TS" || true)"
-            AUTH_HAS_APP="$(grep -Eo '/js/app\\.[a-f0-9]+\\.js' "$AUTH_BODY" | head -1 || true)"
-            echo "AUTH_ROUTE=$ROUTE HTTP=$AUTH_STATUS LOCATION=$(grep -i '^location:' "$AUTH_HEADERS" | tail -1 | tr -d '\\r' || true) TITLE=$(grep -oE '<title>[^<]*</title>' "$AUTH_BODY" | head -1 || true) BYTES=$(wc -c < "$AUTH_BODY") APP_BUNDLE=$AUTH_HAS_APP"
+            AUTH_HAS_APP="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$AUTH_BODY" | head -1 || true)"
+            echo "AUTH_ROUTE=$ROUTE HTTP=$AUTH_STATUS LOCATION=$(grep -i '^location:' "$AUTH_HEADERS" | tail -1 | tr -d '\r' || true) TITLE=$(grep -oE '<title>[^<]*</title>' "$AUTH_BODY" | head -1 || true) BYTES=$(wc -c < "$AUTH_BODY") APP_BUNDLE=$AUTH_HAS_APP"
             if [ "$AUTH_STATUS" != "200" ] || [ -z "$AUTH_HAS_APP" ]; then AUTH_FAILED=1; fi
             rm -f "$AUTH_HEADERS" "$AUTH_BODY"
           done
@@ -239,14 +239,25 @@ jobs:
           echo "NOTE=Keep the recovered route in place while diagnostics run; do not roll back to the known broken default vhost."
           rm -f "$HTTP_BODY" "$HTTPS_PRECHECK_BODY"
 
-          echo "=== REQUEST LET'S ENCRYPT CERTIFICATE ==="
+          echo "=== CHECK EXISTING HTTPS CERTIFICATE BEFORE REQUESTING ANOTHER ==="
           LE_RESULT=failed
-          if [ -x /usr/local/directadmin/scripts/letsencrypt.sh ]; then
-            if timeout 180 /usr/local/directadmin/scripts/letsencrypt.sh request roofixo.ir 4096; then LE_RESULT=success; fi
+          LE_ACTION=not-run
+          CERT_SUMMARY="$(echo | openssl s_client -connect "$DOMAIN_IP:443" -servername roofixo.ir 2>/dev/null | openssl x509 -noout -subject -issuer -dates -ext subjectAltName 2>&1 || true)"
+          if echo "$CERT_SUMMARY" | grep -q 'DNS:roofixo.ir' &&
+             echo "$CERT_SUMMARY" | grep -q 'DNS:www.roofixo.ir' &&
+             echo | openssl s_client -connect "$DOMAIN_IP:443" -servername roofixo.ir 2>/dev/null | openssl x509 -noout -checkend 1209600 >/dev/null 2>&1; then
+            LE_RESULT=success
+            LE_ACTION=skipped-valid-existing-certificate
+            echo "EXISTING_CERTIFICATE_VALID_FOR_AT_LEAST_14_DAYS=true"
+          else
+            LE_ACTION=requested
+            if [ -x /usr/local/directadmin/scripts/letsencrypt.sh ]; then
+              if timeout 180 /usr/local/directadmin/scripts/letsencrypt.sh request roofixo.ir 4096; then LE_RESULT=success; fi
+            fi
           fi
-          echo "LETSENCRYPT_REQUEST_RESULT=$LE_RESULT"
+          echo "LETSENCRYPT_REQUEST_RESULT=$LE_ACTION"
           if [ "$LE_RESULT" != success ]; then
-            find /usr/local/directadmin/data/users/roofixo/domains/acme_provider_cert_logs -maxdepth 1 -type f -name 'roofixo.ir.log' -exec tail -n 50 {} \; 2>/dev/null || true
+            find /usr/local/directadmin/data/users/roofixo/domains/acme_provider_cert_logs -maxdepth 1 -type f -name 'roofixo.ir.log' -exec tail -n 50 {} \\; 2>/dev/null || true
           fi
 
           /usr/local/directadmin/custombuild/build rewrite_confs >/dev/null
