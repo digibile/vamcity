@@ -38,6 +38,12 @@ jobs:
           echo "=== PREVIEW HTTP ==="
           curl -k -sS -L --max-time 15 -o /tmp/vamcity-preview-inspect.html -w 'PREVIEW_HTTP=%{http_code}\nCONTENT_TYPE=%{content_type}\nSIZE=%{size_download}\nFINAL_URL=%{url_effective}\n' https://roofixo.ir/vamcity-template-preview/
           grep -Eoi '<title[^>]*>[^<]*|<script[^>]+src=[^ >]+|<link[^>]+href=[^ >]+' /tmp/vamcity-preview-inspect.html | head -80 || true
+          echo "=== PUBLIC ROOT TOP LEVEL ==="
+          find "$ROOT/public_html" -maxdepth 2 -type f -printf '%p %s bytes\n' 2>/dev/null | sort | head -120 || true
+          echo "=== PREVIEW DIRECTORY EXACT ==="
+          for p in "$ROOT/public_html/vamcity-template-preview" "$ROOT/public_html/vamcity-template-preview.html" "$ROOT/public_html/vamcity-template-preview/index.html" "$ROOT/public_html/plans.html"; do
+            if [ -e "$p" ]; then ls -ld "$p"; find "$p" -maxdepth 3 -type f -printf '%p %s bytes\n' 2>/dev/null | head -80 || true; fi
+          done
           echo "=== MATCHING FILES ==="
           find "$ROOT/public_html" "$ROOT/vamcity-app" -maxdepth 5 -type f \( -iname '*preview*' -o -iname '*admin*' -o -iname '*dashboard*' -o -iname '*template*' \) -printf '%p %s bytes\n' 2>/dev/null | head -160 || true
           echo "=== APP MOUNT AND ENTRY ==="
