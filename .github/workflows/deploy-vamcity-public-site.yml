@@ -55,7 +55,7 @@ jobs:
           test -n "$DEPLOY_SSH_KEY"
           PORT="${DEPLOY_PORT:-22}"
           install -m 700 -d ~/.ssh
-          printf '%s\\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_public_site_key
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_public_site_key
           chmod 600 ~/.ssh/vamcity_public_site_key
           ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           echo "PORT=$PORT" >> "$GITHUB_ENV"
@@ -109,7 +109,7 @@ jobs:
             cp -p "$BACKUP/roofixo.ir.cust_nginx.before" "$CUSTOM"
             if [ "$(cat "$BACKUP/home.state")" = existing ]; then cp -p "$BACKUP/vamcity-public-home.html.before" "$PUBLIC/vamcity-public-home.html"; else rm -f "$PUBLIC/vamcity-public-home.html"; fi
             if [ "$(cat "$BACKUP/plans.state")" = existing ]; then install -d "$PUBLIC/plans"; cp -p "$BACKUP/plans-index.html.before" "$PUBLIC/plans/index.html"; else rm -f "$PUBLIC/plans/index.html"; fi
-            printf 'action=rewrite&value=nginx&user=roofixo\\n' >> /usr/local/directadmin/data/task.queue
+            printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
             /usr/local/directadmin/dataskq d >/dev/null 2>&1 || true
             nginx -t && systemctl reload nginx || true
           }
@@ -170,7 +170,7 @@ jobs:
           STARTED=1
           mv -f "$PUBLIC/.vamcity-public-home-$SHA.tmp" "$PUBLIC/vamcity-public-home.html"
           mv -f "$PUBLIC/plans/.index-$SHA.tmp" "$PUBLIC/plans/index.html"
-          printf 'action=rewrite&value=nginx&user=roofixo\\n' >> /usr/local/directadmin/data/task.queue
+          printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
           /usr/local/directadmin/dataskq d
           nginx -t
           systemctl reload nginx
