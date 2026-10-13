@@ -340,3 +340,33 @@
   .register-card .otp-container { gap: 5px; }
   .register-card .otp-container .code-inputs { flex-basis: 40px; width: 40px; max-width: 40px; }
 }
+
+
+/* Single six-digit OTP field for both login and registration. */
+.otp-single-input {
+  width: min(100%, 440px);
+  margin: 12px auto 18px !important;
+  direction: ltr;
+}
+.otp-single-input .v-input__slot {
+  min-height: 62px !important;
+  border: 1px solid #dce4ec;
+  border-radius: 16px !important;
+  background: #f8fafc;
+}
+.otp-single-input input {
+  color: #102337 !important;
+  text-align: center !important;
+  letter-spacing: .42em;
+  font-size: 1.55rem !important;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.otp-single-input.v-input--is-focused .v-input__slot {
+  border-color: #b68a4a !important;
+  box-shadow: 0 0 0 3px rgba(193,151,84,.12);
+}
+@media (max-width: 600px) {
+  .otp-single-input .v-input__slot { min-height: 56px !important; }
+  .otp-single-input input { letter-spacing: .28em; font-size: 1.35rem !important; }
+}
