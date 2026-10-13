@@ -381,9 +381,17 @@ function openLegacy(url,label){
           ".v-app-bar, .v-navigation-drawer, .v-navigation-drawer__scrim, .v-footer, .v-system-bar{display:none!important}",
           ".v-main{padding:0!important;margin:0!important}",
           ".v-main__wrap{padding:16px!important}",
+          "html,body,#app,.v-application{min-height:0!important;background:#f4f6f9!important;color:#17283a!important;font-family:Tahoma,Vazirmatn,Arial,sans-serif!important}",
+          ".v-card,.v-sheet.v-card{border:1px solid #e5eaf0!important;border-radius:14px!important;box-shadow:0 12px 32px #17324b0b!important}",
+          ".v-btn{border-radius:9px!important;text-transform:none!important;letter-spacing:0!important;font-weight:600!important}",
+          ".v-data-table,.v-data-table>.v-data-table__wrapper{border-radius:12px!important;overflow:auto!important}",
+          ".v-data-table-header th,.v-data-table thead th{background:#f8fafc!important;color:#748295!important;font-weight:600!important}",
+          ".v-text-field .v-input__control>.v-input__slot,.v-select .v-input__control>.v-input__slot,.v-textarea .v-input__control>.v-input__slot{border-radius:9px!important}",
+          ".v-alert,.v-chip,.v-dialog>.v-card{border-radius:10px!important}",
+          ".v-toolbar__content,.v-card__title{font-weight:600!important;color:#17283a!important}",
+          ".v-main__wrap .container{max-width:none!important}",
           "#app{min-height:0!important}",
-          "html,body{min-height:0!important;background:#f4f6f9!important}",
-          "@media(max-width:760px){.v-main__wrap{padding:8px!important}}"
+          "@media(max-width:760px){.v-main__wrap{padding:8px!important}.v-card__text{padding:12px!important}.v-data-table{font-size:12px!important}}"
         ].join("\\n");
         doc.head.appendChild(style);
       }
