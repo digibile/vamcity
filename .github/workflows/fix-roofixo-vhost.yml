@@ -153,16 +153,22 @@ jobs:
           location = /c/lplans/0/ {
               return 302 /cl/plans/;
           }
-          # Public home must render the real VamCity landing page, not the template-management dashboard.
+          # Serve the dedicated public VamCity landing page at the domain root.
+          # Do not send public visitors into the legacy Vue application.
           location = / {
-              proxy_pass http://127.0.0.1:5187/plans/0/;
-              proxy_http_version 1.1;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
-              proxy_set_header X-Forwarded-Host $host;
-              proxy_redirect off;
+              root /home/roofixo/domains/roofixo.ir/public_html;
+              try_files /vamcity-public-home.html =404;
+              default_type text/html;
+              add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+              add_header Pragma "no-cache" always;
+              expires -1;
+          }
+          # Old bookmarks/deep links must not replace the public homepage with the legacy login screen.
+          location = /login {
+              return 302 /;
+          }
+          location = /login/ {
+              return 302 /;
           }
           location / {
               proxy_pass http://127.0.0.1:5187;
@@ -250,8 +256,8 @@ jobs:
           echo "ROOFIXO_ROOT_TITLE=$(grep -oE '<title>[^<]*</title>' "$ROOT_BODY" | head -1 || true)"
           test "$ROOT_STATUS" = "200"
           grep -Eqi '<html' "$ROOT_BODY"
-          grep -Eqi 'وام سیتی|VamCity' "$ROOT_BODY"
-          grep -Eqi 'app\.[a-f0-9]+\.js|/js/app\.' "$ROOT_BODY"
+          grep -Eqi '<title>وام‌سیتی | راهکارهای تأمین مالی و خرید اقساطی</title>' "$ROOT_BODY"
+          grep -q 'id="principal"' "$ROOT_BODY"
           rm -f "$ROOT_BODY"
 
           API_BODY="$(mktemp)"
