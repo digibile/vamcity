@@ -70,25 +70,30 @@ jobs:
           SRC="/tmp/vamcity-template-management-$SHA.html"
           ROOT="/home/roofixo/domains/roofixo.ir/public_html"
           DEST="$ROOT/vamcity-template-management"
+          PREVIEW="$ROOT/vamcity-template-preview"
           test -s "$SRC"
           grep -qi '<html' "$SRC"
           grep -q 'id="overview"' "$SRC"
-          install -d -m 755 "$DEST"
+          install -d -m 755 "$DEST" "$PREVIEW"
           install -m 644 "$SRC" "$DEST/index.html.new"
           install -m 644 "$SRC" "$ROOT/vamcity-template-management.html.new"
+          install -m 644 "$SRC" "$PREVIEW/index.html.new"
           mv -f "$DEST/index.html.new" "$DEST/index.html"
           mv -f "$ROOT/vamcity-template-management.html.new" "$ROOT/vamcity-template-management.html"
+          mv -f "$PREVIEW/index.html.new" "$PREVIEW/index.html"
           rm -f "$SRC"
           test -s "$DEST/index.html"
           test -s "$ROOT/vamcity-template-management.html"
+          test -s "$PREVIEW/index.html"
           echo "PUBLISHED=$DEST/index.html"
           echo "PUBLISHED=$ROOT/vamcity-template-management.html"
+          echo "PUBLISHED=$PREVIEW/index.html"
           REMOTE
 
       - name: Verify live URLs and expected content
         run: |
           set -euo pipefail
-          for URL in "https://roofixo.ir/vamcity-template-management/?build=$GITHUB_SHA" "https://roofixo.ir/vamcity-template-management.html?build=$GITHUB_SHA"; do
+          for URL in "https://roofixo.ir/vamcity-template-management/?build=$GITHUB_SHA" "https://roofixo.ir/vamcity-template-management.html?build=$GITHUB_SHA" "https://roofixo.ir/vamcity-template-preview/?build=$GITHUB_SHA"; do
             CODE="$(curl -k -sS -L --max-time 25 -o /tmp/vamcity-template-check.html -w '%{http_code}' "$URL" || true)"
             SIZE="$(wc -c < /tmp/vamcity-template-check.html 2>/dev/null || echo 0)"
             echo "$URL HTTP $CODE bytes=$SIZE"
