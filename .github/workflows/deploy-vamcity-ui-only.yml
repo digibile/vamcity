@@ -1,5 +1,6 @@
 name: Deploy VamCity UI only (preserve app and database)
 # This release copies presentation assets only; it never rebuilds the app or restores a database.
+# The paired live regression workflow checks plans, login modes, registration, and mobile rendering.
 
 on:
   push:
