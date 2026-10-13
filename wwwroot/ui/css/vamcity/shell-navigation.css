@@ -22,3 +22,60 @@
 .v-application .v-list-item__title,
 .v-application .v-list-item__subtitle { line-height: 1.8; }
 .v-application .v-footer { background: transparent; }
+
+
+/* VamCity new admin shell: retain Vue routes and permission-driven navigation, replace legacy chrome. */
+.v-application .v-app-bar,
+.v-application .v-toolbar.primary {
+  min-height: 72px;
+  background: linear-gradient(112deg,#0b1b2a 0%,#102337 58%,#1b4259 100%) !important;
+  border-bottom: 1px solid rgba(215,173,101,.45);
+  box-shadow: 0 8px 26px rgba(11,27,42,.13) !important;
+}
+.v-application .v-app-bar .v-toolbar__content { min-height: 72px; padding-inline: clamp(14px,2.5vw,32px); }
+.v-application .v-app-bar .v-btn,
+.v-application .v-toolbar.primary .v-btn { color:#f4f7fa; }
+.v-application .v-navigation-drawer {
+  color:#d6e0e8 !important;
+  background:linear-gradient(180deg,#102337 0%,#0b1b2a 100%) !important;
+  border:0 !important;
+  box-shadow: inset -1px 0 rgba(255,255,255,.06), 8px 0 28px rgba(11,27,42,.07);
+}
+.v-application .v-navigation-drawer .v-list,
+.v-application .v-navigation-drawer .v-sheet,
+.v-application .v-navigation-drawer .v-navigation-drawer__content { background:transparent !important; }
+.v-application .v-navigation-drawer .v-list-item {
+  min-height:46px;
+  margin:3px 10px;
+  padding-inline:12px;
+  border:1px solid transparent;
+  border-radius:11px;
+  color:#d2dce5 !important;
+  transition:background .18s ease,border-color .18s ease,transform .18s ease;
+}
+.v-application .v-navigation-drawer .v-list-item .v-icon { color:#d7ad65 !important; }
+.v-application .v-navigation-drawer .v-list-item:hover {
+  background:rgba(255,255,255,.075) !important;
+  border-color:rgba(255,255,255,.06);
+}
+.v-application .v-navigation-drawer .v-list-item--active {
+  color:#fff !important;
+  background:linear-gradient(90deg,rgba(215,173,101,.16),rgba(215,173,101,.06)) !important;
+  border-color:rgba(215,173,101,.25);
+  box-shadow:inset -3px 0 #d7ad65;
+}
+.v-application .v-navigation-drawer .v-list-item--active .v-icon { color:#f0d7a4 !important; }
+.v-application .v-navigation-drawer .v-list-item__title,
+.v-application .v-navigation-drawer .v-list-item__subtitle { color:inherit !important; font-weight:600; line-height:1.8; }
+.v-application .v-navigation-drawer .v-subheader,
+.v-application .v-navigation-drawer .text--secondary { color:#8fa5b7 !important; }
+.v-application .v-navigation-drawer .v-divider { border-color:rgba(255,255,255,.12) !important; }
+.v-application .v-footer { color:#718096; }
+.v-application .v-main { min-height:calc(100vh - 72px); }
+.v-application .v-main > .v-container,
+.v-application .v-main .container[id$="-view"] { max-width:1600px; }
+@media(max-width:600px) {
+  .v-application .v-app-bar,
+  .v-application .v-app-bar .v-toolbar__content { min-height:60px; }
+  .v-application .v-navigation-drawer .v-list-item { min-height:44px; margin-inline:8px; }
+}
