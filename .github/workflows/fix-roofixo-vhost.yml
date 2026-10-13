@@ -151,6 +151,19 @@ jobs:
           location = /c/lplans/0/ {
               return 302 /cl/plans/;
           }
+          # Serve the new standalone VamCity admin template at its preview URL.
+          # Keep this isolated path static; all authentication and legacy application routes remain proxied below.
+          location = /vamcity-template-preview {
+              return 301 /vamcity-template-preview/;
+          }
+          location = /vamcity-template-preview/ {
+              root /home/roofixo/domains/roofixo.ir/public_html;
+              try_files /vamcity-template-preview/index.html =404;
+              default_type text/html;
+              add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+              add_header Pragma "no-cache" always;
+              expires -1;
+          }
           # Serve the dedicated public VamCity landing page at the domain root.
           # Do not send public visitors into the legacy Vue application.
           location = / {
