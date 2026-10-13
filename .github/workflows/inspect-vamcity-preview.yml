@@ -46,6 +46,32 @@ jobs:
           done
           echo "=== MATCHING FILES ==="
           find "$ROOT/public_html" "$ROOT/vamcity-app" -maxdepth 5 -type f \( -iname '*preview*' -o -iname '*admin*' -o -iname '*dashboard*' -o -iname '*template*' \) -printf '%p %s bytes\n' 2>/dev/null | head -160 || true
+          echo "=== PREVIEW HTML STRUCTURE ==="
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          p=Path("/home/roofixo/domains/roofixo.ir/public_html/vamcity-template-preview/index.html")
+          s=p.read_text(errors="replace")
+          print("PREVIEW_BYTES=",len(s))
+          for needle in ["<title","<style","<script","localStorage","sessionStorage","fetch(","axios","/api/","sidebar","dashboard","admin"]:
+            print("COUNT",repr(needle),s.lower().count(needle.lower()))
+          import re
+          for pattern in [r"<title[^>]*>(.*?)</title>",r"<script[^>]*src=[\"']([^\"']+)",r"<link[^>]*href=[\"']([^\"']+)",r"(?:href|action)=[\"']([^\"']+)",r"fetch\([\\\"']([^\\\"']+)",r"axios\.(?:get|post)\([\\\"']([^\\\"']+)"]:
+            vals=re.findall(pattern,s,re.I|re.S)
+            print("PATTERN",pattern,"=>",repr(vals[:100]))
+          class P(HTMLParser):
+            def __init__(self): super().__init__(); self.tags=[]; self.text=[]
+            def handle_starttag(self,t,a):
+              d=dict(a)
+              if t in ("a","button","input","form","nav","aside","main","section") and (t not in ("input",) or d.get("placeholder") or d.get("aria-label")):
+                self.tags.append((t,{k:d.get(k) for k in ("id","class","href","type","placeholder","aria-label","action","onclick","data-page") if d.get(k)}))
+            def handle_data(self,d):
+              d=" ".join(d.split())
+              if d and len(d)>1:self.text.append(d)
+          q=P();q.feed(s)
+          print("STRUCTURAL_TAGS=",repr(q.tags[:180]))
+          print("TEXT_LABELS=",repr(q.text[:240]))
+          PY
           echo "=== APP MOUNT AND ENTRY ==="
           docker inspect -f 'APP_RUNNING={{.State.Running}}' vamcity-stage-app
           APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
