@@ -81,17 +81,22 @@ jobs:
           DOMAIN_ROOT=/home/roofixo/domains/roofixo.ir
           PUBLIC="$DOMAIN_ROOT/public_html"
           PRIVATE="$DOMAIN_ROOT/vamcity-app/private"
+          APP_CONTAINER=vamcity-stage-app
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' "$APP_CONTAINER")"
           CUSTOM=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx
           GENERATED=/usr/local/directadmin/data/users/roofixo/nginx.conf
           HOME_SRC="/tmp/vamcity-public-home-$SHA.html"
           PLANS_SRC="/tmp/vamcity-public-plans-$SHA.html"
-          PLANS_DEST="$PUBLIC/plans.html"
+          PUBLIC_PLANS_DEST="$PUBLIC/plans.html"
+          APP_PLANS_DEST="$APP_ROOT/wwwroot/plans.html"
           BACKUP="$PRIVATE/rollback/public-site-$SHA"
           mkdir -p "$BACKUP"
           chmod 700 "$PRIVATE" "$PRIVATE/rollback" "$BACKUP"
           test -s "$HOME_SRC"
           test -s "$PLANS_SRC"
           test -s "$PUBLIC/vamcity-public-home.html"
+          test -n "$APP_ROOT"
+          test -s "$APP_ROOT/wwwroot/index.html"
           grep -q 'href="/login/"' "$HOME_SRC"
           grep -q 'href="/register/0/"' "$HOME_SRC"
           grep -q 'href="/plans.html"' "$HOME_SRC"
@@ -99,7 +104,8 @@ jobs:
           grep -q "const href='/plan/0/'" "$PLANS_SRC"
 
           if [ -e "$PUBLIC/vamcity-public-home.html" ]; then cp -p "$PUBLIC/vamcity-public-home.html" "$BACKUP/vamcity-public-home.html.before"; echo existing > "$BACKUP/home.state"; else echo absent > "$BACKUP/home.state"; fi
-          if [ -e "$PLANS_DEST" ]; then cp -p "$PLANS_DEST" "$BACKUP/plans.html.before"; echo existing > "$BACKUP/plans.state"; else echo absent > "$BACKUP/plans.state"; fi
+          if [ -e "$PUBLIC_PLANS_DEST" ]; then cp -p "$PUBLIC_PLANS_DEST" "$BACKUP/public-plans.html.before"; echo existing > "$BACKUP/public-plans.state"; else echo absent > "$BACKUP/public-plans.state"; fi
+          if [ -e "$APP_PLANS_DEST" ]; then cp -p "$APP_PLANS_DEST" "$BACKUP/app-plans.html.before"; echo existing > "$BACKUP/app-plans.state"; else echo absent > "$BACKUP/app-plans.state"; fi
           cp -p "$CUSTOM" "$BACKUP/roofixo.ir.cust_nginx.before"
           chmod 600 "$BACKUP"/*.before "$BACKUP"/*.state
 
@@ -107,7 +113,8 @@ jobs:
             echo "ROLLING_BACK_VAMCITY_PUBLIC_SITE"
             cp -p "$BACKUP/roofixo.ir.cust_nginx.before" "$CUSTOM"
             if [ "$(cat "$BACKUP/home.state")" = existing ]; then cp -p "$BACKUP/vamcity-public-home.html.before" "$PUBLIC/vamcity-public-home.html"; else rm -f "$PUBLIC/vamcity-public-home.html"; fi
-            if [ "$(cat "$BACKUP/plans.state")" = existing ]; then cp -p "$BACKUP/plans.html.before" "$PLANS_DEST"; else rm -f "$PLANS_DEST"; fi
+            if [ "$(cat "$BACKUP/public-plans.state")" = existing ]; then cp -p "$BACKUP/public-plans.html.before" "$PUBLIC_PLANS_DEST"; else rm -f "$PUBLIC_PLANS_DEST"; fi
+            if [ "$(cat "$BACKUP/app-plans.state")" = existing ]; then cp -p "$BACKUP/app-plans.html.before" "$APP_PLANS_DEST"; else rm -f "$APP_PLANS_DEST"; fi
             printf 'action=rewrite&value=nginx&user=roofixo\\n' >> /usr/local/directadmin/data/task.queue
             /usr/local/directadmin/dataskq d >/dev/null 2>&1 || true
             nginx -t && systemctl reload nginx || true
@@ -123,9 +130,11 @@ jobs:
 
           install -m 644 "$HOME_SRC" "$PUBLIC/.vamcity-public-home-$SHA.tmp"
           install -m 644 "$PLANS_SRC" "$PUBLIC/.plans-$SHA.tmp"
+          install -m 644 "$PLANS_SRC" "$APP_ROOT/wwwroot/.plans-$SHA.tmp"
           STARTED=1
           mv -f "$PUBLIC/.vamcity-public-home-$SHA.tmp" "$PUBLIC/vamcity-public-home.html"
-          mv -f "$PUBLIC/.plans-$SHA.tmp" "$PLANS_DEST"
+          mv -f "$PUBLIC/.plans-$SHA.tmp" "$PUBLIC_PLANS_DEST"
+          mv -f "$APP_ROOT/wwwroot/.plans-$SHA.tmp" "$APP_PLANS_DEST"
 
           python3 - "$CUSTOM" "$PUBLIC" <<'PY'
           import pathlib, re, sys
@@ -175,7 +184,8 @@ jobs:
           rm -f /tmp/vamcity-home-check-$SHA.html /tmp/vamcity-plans-check-$SHA.html
           echo "PUBLIC_SITE_DEPLOY_OK"
           echo "HOME_FILE=$PUBLIC/vamcity-public-home.html"
-          echo "PLANS_FILE=$PLANS_DEST"
+          echo "PUBLIC_PLANS_FILE=$PUBLIC_PLANS_DEST"
+          echo "APP_PLANS_FILE=$APP_PLANS_DEST"
           echo "BACKUP=$BACKUP"
           echo "DATABASE_UNTOUCHED=1"
           echo "APP_CONTAINER_RESTARTED=0"
