@@ -94,7 +94,7 @@ jobs:
       - name: Verify requested preview URL and expected navigation
         run: |
           set -euo pipefail
-          URL="https://roofixo.ir/vamcity-template-preview/index.html?build=$GITHUB_SHA"
+          URL="https://roofixo.ir/vamcity-template-preview/?build=$GITHUB_SHA"
           CODE="$(curl -k -sS -L --max-time 25 -o /tmp/vamcity-template-check.html -w '%{http_code}' "$URL" || true)"
           SIZE="$(wc -c < /tmp/vamcity-template-check.html 2>/dev/null || echo 0)"
           echo "$URL HTTP $CODE bytes=$SIZE"
