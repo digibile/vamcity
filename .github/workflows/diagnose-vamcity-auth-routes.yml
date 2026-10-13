@@ -35,6 +35,10 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           ssh -i "$RUNNER_TEMP/deploy_key" -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
+          echo "=== ACTIVE AUTH LOCATION RULES ==="
+          grep -n -E -A3 -B2 'location = /(login|cl/login|cl/register)' /usr/local/directadmin/data/users/roofixo/nginx.conf /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx 2>/dev/null || true
+          echo "=== CUSTOM NGINX AUTH RULES ==="
+          grep -n -E -A3 -B2 'location = /(login|cl/login|cl/register)' /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx 2>/dev/null || true
           for ROUTE in / /login/ /cl/login /cl/register /cl/plans/; do
             BODY="$(mktemp)"
             HEADERS="$(mktemp)"
