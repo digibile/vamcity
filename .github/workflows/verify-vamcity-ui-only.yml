@@ -3,13 +3,11 @@ run-name: Check live VamCity plans page, theme assets, and existing data
 
 on:
   workflow_run:
-    workflows: ["Deploy VamCity UI only (preserve app and database)"]
+    workflows:
+      - "Deploy VamCity UI only (preserve app and database)"
+      - "Repair Roofixo VamCity vhost and SSL"
     types: [completed]
     branches: [main]
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/verify-vamcity-ui-only.yml"
 
 permissions:
   contents: read
@@ -113,6 +111,49 @@ jobs:
           })();
           NODE
           node verify-ui.cjs
+
+      - name: Verify login page and both existing sign-in modes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+            const errors = [];
+            page.on('pageerror', e => errors.push(e.message));
+            const response = await page.goto('https://roofixo.ir/login/', { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await page.waitForTimeout(3500);
+            const initialText = (await page.locator('body').innerText()).replace(/\\s+/g, ' ');
+            console.log('LOGIN_PAGE_HTTP=' + (response?.status() ?? 'none'));
+            console.log('LOGIN_STATIC_MODE_VISIBLE=' + initialText.includes('ورود با رمز ثابت'));
+            console.log('LOGIN_OTP_MODE_VISIBLE=' + initialText.includes('ورود با رمز پیامکی'));
+            console.log('LOGIN_BODY_SAMPLE=' + initialText.slice(0, 500));
+            if (!response || response.status() !== 200 ||
+                !initialText.includes('ورود با رمز ثابت') ||
+                !initialText.includes('ورود با رمز پیامکی')) {
+              throw new Error('The public login page or one of its existing sign-in modes is missing');
+            }
+            await page.screenshot({ path: 'artifacts/login-desktop.png', fullPage: true });
+            await page.getByText('ورود با رمز پیامکی', { exact: false }).first().click();
+            await page.waitForTimeout(400);
+            const otpText = (await page.locator('body').innerText()).replace(/\\s+/g, ' ');
+            const mobileVisible = await page.getByLabel('شماره موبایل', { exact: false }).count().catch(() => 0);
+            console.log('LOGIN_OTP_MOBILE_FIELD_COUNT=' + mobileVisible);
+            console.log('LOGIN_OTP_INPUT_VISIBLE=' + otpText.includes('رمز پیامکی را اینجا وارد کنید'));
+            if (!otpText.includes('رمز پیامکی را اینجا وارد کنید') || errors.length) {
+              throw new Error('OTP UI did not open cleanly: ' + JSON.stringify(errors));
+            }
+            await page.screenshot({ path: 'artifacts/login-otp-desktop.png', fullPage: true });
+            await page.setViewportSize({ width: 390, height: 844 });
+            await page.reload({ waitUntil: 'domcontentloaded' });
+            await page.waitForTimeout(2500);
+            await page.screenshot({ path: 'artifacts/login-mobile.png', fullPage: true });
+            console.log('LOGIN_BROWSER_ERRORS=' + JSON.stringify(errors));
+            await browser.close();
+          })().catch(e => { console.error(e); process.exit(1); });
+          NODE
 
       - name: Upload live UI screenshots
         if: always()
