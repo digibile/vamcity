@@ -211,16 +211,25 @@ jobs:
             }
             const otpInputs = page.locator('#login-view .otp-container input');
             const otpCount = await otpInputs.count();
-            if (otpCount < 4) throw new Error('Expected at least four OTP digit boxes; got ' + otpCount);
-            await otpInputs.nth(0).click();
-            await otpInputs.nth(0).fill('7');
-            const autoAdvanced = await otpInputs.nth(1).evaluate(el => document.activeElement === el);
-            console.log('OTP_AUTO_ADVANCE=' + autoAdvanced + ' OTP_BOXES=' + otpCount);
-            if (!autoAdvanced) throw new Error('OTP did not auto-advance to the next digit box');
-            await otpInputs.nth(1).press('Backspace');
-            const backspaceReturned = await otpInputs.nth(0).evaluate(el => document.activeElement === el);
-            console.log('OTP_BACKSPACE_RETURN=' + backspaceReturned);
-            if (!backspaceReturned) throw new Error('OTP Backspace navigation did not return to previous digit box');
+            const otpSingle = page.locator('#login-view .otp-single-input input').first();
+            const otpSingleCount = await page.locator('#login-view .otp-single-input input').count();
+            if (otpSingleCount > 0) {
+              await otpSingle.fill('123456');
+              const otpValue = (await otpSingle.inputValue()).replace(/\\D/g, '');
+              console.log('OTP_SINGLE_FIELD=' + otpSingleCount + ' OTP_VALUE_LENGTH=' + otpValue.length);
+              if (otpValue !== '123456') throw new Error('Six-digit OTP field did not retain numeric input');
+            } else {
+              if (otpCount < 4) throw new Error('No supported OTP input found; digit boxes=' + otpCount);
+              await otpInputs.nth(0).click();
+              await otpInputs.nth(0).fill('7');
+              const autoAdvanced = await otpInputs.nth(1).evaluate(el => document.activeElement === el);
+              console.log('OTP_AUTO_ADVANCE=' + autoAdvanced + ' OTP_BOXES=' + otpCount);
+              if (!autoAdvanced) throw new Error('OTP did not auto-advance to the next digit box');
+              await otpInputs.nth(1).press('Backspace');
+              const backspaceReturned = await otpInputs.nth(0).evaluate(el => document.activeElement === el);
+              console.log('OTP_BACKSPACE_RETURN=' + backspaceReturned);
+              if (!backspaceReturned) throw new Error('OTP Backspace navigation did not return to previous digit box');
+            }
             await page.screenshot({ path: 'artifacts/login-otp-desktop.png', fullPage: true });
 
             await page.goto('https://roofixo.ir/login/', { waitUntil: 'commit', timeout: 20000 });
