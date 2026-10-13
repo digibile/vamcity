@@ -1,5 +1,5 @@
 name: VamCity roofixo.ir live smoke test
-# Diagnostic refresh: trigger a fresh live check after the SSH-key fix.
+# Diagnostic refresh: compare public DNS routing with the local DirectAdmin vhost after homepage rollout.
 run-name: Verify VamCity HTML and assets on roofixo.ir
 
 on:
