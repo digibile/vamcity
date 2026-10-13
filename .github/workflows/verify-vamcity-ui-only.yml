@@ -46,10 +46,10 @@ jobs:
           test "$LEGACY_URL" = "$BASE/plans.html"
           rm -f "$HOME"
 
-          CSS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 20 -o "$CSS" -w '%{http_code}' "$BASE/css/vamcity-modern-theme.css?v=7")"
+          CSS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 20 -o "$CSS" -w '%{http_code}' "$BASE/css/vamcity-modern-theme.css?v=8")"
           echo "THEME_CSS_HTTP=$CSS_STATUS"
           test "$CSS_STATUS" = 200
-          grep -Fq 'tokens-base.css?v=7' "$CSS"
+          grep -Fq 'tokens-base.css?v=8' "$CSS"
 
           JS_STATUS="$(curl --retry 3 --retry-all-errors --retry-delay 2 -sS --max-time 30 -o /dev/null -w '%{http_code}' "$BASE/js/app.e76ab352.js?v=otp-ui1")"
           echo "LEGACY_APP_BUNDLE_HTTP=$JS_STATUS"
