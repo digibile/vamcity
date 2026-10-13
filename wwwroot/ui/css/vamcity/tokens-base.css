@@ -14,17 +14,17 @@
 }
 html { background: var(--vc-page); }
 body, .v-application {
-  font-family: Tahoma, "Vazirmatn", Arial, sans-serif !important;
+  font-family: 'Yekan', Tahoma, 'Vazirmatn', Arial, sans-serif;
   color: var(--vc-ink);
-  background: var(--vc-page) !important;
+  background: var(--vc-page);
 }
 .v-application { line-height: 1.8; }
 .v-application .v-main { background: var(--vc-page); }
-.v-application .primary { background-color: var(--vc-navy) !important; border-color: var(--vc-navy) !important; }
-.v-application .accent { background-color: var(--vc-gold) !important; border-color: var(--vc-gold) !important; }
-.v-application .primary--text { color: var(--vc-navy) !important; caret-color: var(--vc-navy) !important; }
-.v-application .accent--text { color: #9b7337 !important; caret-color: #9b7337 !important; }
+.v-application .primary { background-color: var(--vc-navy); border-color: var(--vc-navy); }
+.v-application .accent { background-color: var(--vc-gold); border-color: var(--vc-gold); }
+.v-application .primary--text { color: var(--vc-navy); caret-color: var(--vc-navy); }
+.v-application .accent--text { color: #9b7337; caret-color: #9b7337; }
 .v-application a { color: var(--vc-navy); }
-.v-application .error--text { color: #b94750 !important; }
-.v-application .success--text { color: var(--vc-green) !important; }
-.v-application .v-divider { border-color: var(--vc-line) !important; }
+.v-application .error--text { color: #b94750; }
+.v-application .success--text { color: var(--vc-green); }
+.v-application .v-divider { border-color: var(--vc-line); }
