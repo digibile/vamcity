@@ -7,14 +7,14 @@
     try {
       var target = new URL(value == null ? window.location.href : value, window.location.href);
       return target.origin === window.location.origin &&
-        target.pathname.replace(/\\/+$/, '').toLowerCase() === '/admin/dashboard';
+        target.pathname.replace(/\/+$/, '').toLowerCase() === '/admin/dashboard';
     } catch (_) { return false; }
   }
   function bridge(method) {
     var original = window.history[method];
     window.history[method] = function (state, title, url) {
       if (url != null && targetIsAdminDashboard(url) &&
-          window.location.pathname.replace(/\\/+$/, '').toLowerCase() !== '/admin/dashboard') {
+          window.location.pathname.replace(/\/+$/, '').toLowerCase() !== '/admin/dashboard') {
         window.location.assign(new URL(url, window.location.href).href);
         return;
       }
