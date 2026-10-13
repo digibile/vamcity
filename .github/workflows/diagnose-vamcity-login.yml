@@ -1,5 +1,5 @@
 name: Diagnose VamCity login, HTTP 400 and admin routes
-run-name: Trace live login 400 responses and admin routes
+run-name: Verify post-fix login token routes and HTTP 400 status
 on:
   push:
     branches: [main]
