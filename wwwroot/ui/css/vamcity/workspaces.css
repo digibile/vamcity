@@ -169,3 +169,148 @@
     margin-inline: 0;
   }
 }
+
+
+/* VamCity management shell refresh: carry the standalone template's navy/gold visual system
+   into the authenticated Vue app without replacing its routes, role checks, data or controls. */
+.v-application {
+  --vc-navy: #102337;
+  --vc-navy-2: #1b4057;
+  --vc-gold: #d7ad65;
+  --vc-gold-soft: #fbf3e4;
+  --vc-ink: #17283a;
+  --vc-line: #e3e9ef;
+}
+.v-application .v-app-bar,
+.v-application .v-toolbar,
+.v-application .v-toolbar.primary,
+.v-application .v-app-bar.primary {
+  background: linear-gradient(110deg,#0b1b2a,#18374d) !important;
+  color: #fff !important;
+  border-bottom: 1px solid rgba(215,173,101,.34) !important;
+  box-shadow: 0 8px 24px rgba(11,27,42,.13) !important;
+}
+.v-application .v-app-bar .v-btn,
+.v-application .v-toolbar .v-btn,
+.v-application .v-app-bar .v-icon,
+.v-application .v-toolbar .v-icon {
+  color: inherit;
+}
+.v-application .v-navigation-drawer {
+  color: #d6e0e8 !important;
+  background: #102337 !important;
+  border-color: rgba(255,255,255,.10) !important;
+  box-shadow: 4px 0 24px rgba(16,35,55,.06);
+}
+.v-application .v-navigation-drawer .v-list {
+  padding: 12px 9px 18px;
+}
+.v-application .v-navigation-drawer .v-list-item {
+  min-height: 46px;
+  margin: 4px 3px;
+  padding-inline: 12px;
+  color: #d6e0e8 !important;
+  border-radius: 11px;
+  transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+.v-application .v-navigation-drawer .v-list-item .v-icon,
+.v-application .v-navigation-drawer .v-list-item .v-list-item__title,
+.v-application .v-navigation-drawer .v-list-item .v-list-item__subtitle {
+  color: inherit !important;
+}
+.v-application .v-navigation-drawer .v-list-item:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,.075) !important;
+}
+.v-application .v-navigation-drawer .v-list-item--active,
+.v-application .v-navigation-drawer .v-list-item.v-list-item--active {
+  color: #fff !important;
+  background: rgba(255,255,255,.10) !important;
+  box-shadow: inset -3px 0 #d7ad65;
+}
+.v-application .v-navigation-drawer .v-list-item--active .v-icon {
+  color: #f0d7a4 !important;
+}
+.v-application .v-navigation-drawer .v-list-item--active:before {
+  opacity: 0 !important;
+}
+.v-application .v-main {
+  background:
+    radial-gradient(ellipse at 96% 0%,rgba(215,173,101,.075),transparent 28%),
+    linear-gradient(180deg,#f8fafc 0%,#f2f5f8 100%) !important;
+}
+.v-application .v-main .v-card:not(.v-card--flat) {
+  border: 1px solid #e2e9f0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 28px rgba(16,35,55,.055) !important;
+  transition: box-shadow .18s ease,border-color .18s ease;
+}
+.v-application .v-main .v-card:not(.v-card--flat):hover {
+  border-color: #d5dfe8 !important;
+  box-shadow: 0 14px 34px rgba(16,35,55,.075) !important;
+}
+.v-application .v-main .v-card__title {
+  color: #17283a;
+  font-weight: 800;
+}
+.v-application .v-main .v-card__title .v-icon {
+  color: #b68a4a !important;
+}
+.v-application .v-main .v-data-table {
+  border-radius: 14px;
+  border: 1px solid #e3e9ef;
+  box-shadow: none;
+}
+.v-application .v-main .v-data-table thead th,
+.v-application .v-main .v-data-table-header th {
+  background: #f6f8fb !important;
+  color: #526579 !important;
+  font-weight: 800 !important;
+}
+.v-application .v-main .v-data-table tbody tr:hover {
+  background: #fcf9f2 !important;
+}
+.v-application .v-main .v-btn:not(.v-btn--icon):not(.v-btn--text) {
+  border-radius: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  transition: transform .16s ease,box-shadow .16s ease,filter .16s ease;
+}
+.v-application .v-main .v-btn:not(.v-btn--icon):not(.v-btn--text):hover {
+  filter: brightness(1.025);
+}
+.v-application .v-main .v-input__slot,
+.v-application .v-main .v-select__selections {
+  border-radius: 11px;
+}
+.v-application .v-main .v-input--is-focused .v-input__slot,
+.v-application .v-main .v-input--is-focused fieldset {
+  border-color: #bd9658 !important;
+}
+.v-application .v-footer {
+  color: #d6e0e8 !important;
+  background: #102337 !important;
+  border-top: 1px solid rgba(215,173,101,.25);
+}
+.v-application .v-footer a {
+  color: inherit;
+  text-decoration: none;
+}
+.v-application .v-footer a:hover {
+  color: #f0d7a4;
+}
+#login-view .v-footer,
+.register-card .v-footer {
+  background: #102337 !important;
+}
+@media (max-width: 600px) {
+  .v-application .v-navigation-drawer .v-list { padding: 8px 6px 14px; }
+  .v-application .v-navigation-drawer .v-list-item { min-height: 43px; margin: 3px 2px; }
+  .v-application .v-main .v-card:not(.v-card--flat) { border-radius: 14px !important; }
+  .v-application .v-main .v-card__title { padding: 15px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .v-application .v-navigation-drawer *,
+  .v-application .v-main .v-card,
+  .v-application .v-main .v-btn { transition: none !important; }
+}
