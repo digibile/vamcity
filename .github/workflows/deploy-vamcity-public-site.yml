@@ -158,10 +158,7 @@ jobs:
           }}
           # VAMCITY_PUBLIC_PLANS_END
           '''
-          match = re.search(r"(?m)^[ \\t]*location / \\{", text)
-          if not match:
-              raise SystemExit("Could not find actual generic location / block; refusing to modify Nginx")
-          text = text[:match.start()] + block + "\n" + text[match.start():]
+          text = text.rstrip() + "\\n" + block + "\\n"
           config.write_text(text)
           PY
           chown roofixo:roofixo "$CUSTOM"
