@@ -167,16 +167,14 @@ jobs:
           # Replace only the authenticated admin dashboard landing route with the new UI.
           # Other /admin/* routes remain on the existing Vue application so current features stay reachable.
           location = /admin/dashboard {
-              root /home/roofixo/domains/roofixo.ir/public_html;
-              try_files /vamcity-admin/index.html =404;
+              alias /home/roofixo/domains/roofixo.ir/public_html/vamcity-admin/index.html;
               default_type text/html;
               add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
               add_header Pragma "no-cache" always;
               expires -1;
           }
           location = /admin/dashboard/ {
-              root /home/roofixo/domains/roofixo.ir/public_html;
-              try_files /vamcity-admin/index.html =404;
+              alias /home/roofixo/domains/roofixo.ir/public_html/vamcity-admin/index.html;
               default_type text/html;
               add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
               add_header Pragma "no-cache" always;
