@@ -116,5 +116,22 @@ jobs:
           grep -q 'پشتیبان‌گیری و بازیابی' /tmp/vamcity-template-check.html
           echo "REQUESTED_PREVIEW_VERIFIED=$URL"
           grep -q "مرکز مدیریت وام‌سیتی" /tmp/vamcity-template-check.html
-          grep -q "localStorage.getItem" /tmp/vamcity-template-check.html
+          grep -Fq "localStorage.getItem('user')" /tmp/vamcity-template-check.html
           echo "AUTH_GUARDED_ADMIN_TEMPLATE_VERIFIED=true"
+
+          echo "=== VERIFY REPLACED ADMIN DASHBOARD ROUTE ==="
+          ADMIN_URL="https://roofixo.ir/admin/dashboard?build=$GITHUB_SHA"
+          ADMIN_CODE="$(curl -k -sS -L --max-time 25 -o /tmp/vamcity-admin-check.html -w '%{http_code}' "$ADMIN_URL")"
+          ADMIN_SIZE="$(wc -c < /tmp/vamcity-admin-check.html)"
+          echo "$ADMIN_URL HTTP $ADMIN_CODE bytes=$ADMIN_SIZE"
+          test "$ADMIN_CODE" = "200"
+          test "$ADMIN_SIZE" -gt 30000
+          grep -q 'id="overview"' /tmp/vamcity-admin-check.html
+          grep -q "تنظیمات اپلیکیشن" /tmp/vamcity-admin-check.html
+          grep -q "پشتیبان‌گیری و بازیابی" /tmp/vamcity-admin-check.html
+          grep -q "مرکز مدیریت وام‌سیتی" /tmp/vamcity-admin-check.html
+          grep -Fq "localStorage.getItem('user')" /tmp/vamcity-admin-check.html
+          grep -q 'href="/admin/reports"' /tmp/vamcity-admin-check.html
+          grep -q 'href="/admin/tickets"' /tmp/vamcity-admin-check.html
+          grep -q 'href="/admin/appBackup"' /tmp/vamcity-admin-check.html
+          echo "ADMIN_DASHBOARD_NEW_UI_AND_LEGACY_LINKS_VERIFIED=true"
