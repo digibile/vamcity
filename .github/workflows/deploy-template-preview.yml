@@ -1,6 +1,6 @@
 name: Deploy independent VamCity template management
 run-name: Publish VamCity template management preview
-# Deployment refresh: republish the new admin template at /admin/dashboard and verify preserved legacy feature links.
+# Deployment refresh 2026-10-13: republish the new admin template at /admin/dashboard and verify preserved legacy feature links, login redirect compatibility, and static route response.
 
 on:
   push:
