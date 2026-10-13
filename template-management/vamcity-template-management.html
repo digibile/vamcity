@@ -83,6 +83,17 @@ img,svg,video,canvas{max-width:100%;height:auto}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* Keep the new management shell visible while legacy business modules run inside it. */
+.legacy-workspace{min-height:calc(100vh - 220px);background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+.legacy-workspace[hidden]{display:none!important}
+.legacy-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#f8fafc;border-bottom:1px solid var(--line)}
+.legacy-toolbar strong{font-size:12px}
+.legacy-toolbar button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:7px 12px}
+.legacy-frame{display:block;width:100%;height:calc(100vh - 270px);min-height:620px;border:0;background:#f4f6f9}
+.legacy-loading{padding:20px;color:var(--muted);font-size:12px}
+@media(max-width:760px){.legacy-workspace{min-height:70vh}.legacy-frame{height:calc(100vh - 260px);min-height:560px}.legacy-toolbar{align-items:flex-start;flex-direction:column}}
+
 </style>
 <script>
 (function(){
@@ -315,6 +326,16 @@ img,svg,video,canvas{max-width:100%;height:auto}
   <div class="notice">این صفحه مجوز واقعی ایجاد یا تغییر نمی‌دهد. در نسخه عملیاتی، دسترسی باید در API و سمت سرور کنترل شود، نه صرفاً با مخفی کردن اجزای UI.</div>
   <div class="card tablewrap"><table><thead><tr><th>نقش نمونه</th><th>تسهیلات</th><th>فروشگاه‌ها</th><th>پرداخت‌یاری</th><th>تنظیمات</th></tr></thead><tbody><tr><td><b>مدیر سامانه</b></td><td><span class="tag">مدیریت</span></td><td><span class="tag">مدیریت</span></td><td><span class="tag">مدیریت</span></td><td><span class="tag">مدیریت</span></td></tr><tr><td><b>کارشناس تسهیلات</b></td><td><span class="tag">بررسی پرونده</span></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag gray">بدون دسترسی</span></td></tr><tr><td><b>مدیر فروشگاه</b></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag">فروشگاه خود</span></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag gray">بدون دسترسی</span></td></tr><tr><td><b>کارشناس پذیرندگان</b></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag gray">بدون دسترسی</span></td><td><span class="tag">پرونده پذیرنده</span></td><td><span class="tag gray">بدون دسترسی</span></td></tr></tbody></table></div>
 </section>
+
+<section class="legacy-workspace" id="legacy-workspace" hidden aria-label="امکانات عملیاتی سامانه">
+  <div class="legacy-toolbar">
+    <strong id="legacy-title">بخش عملیاتی سامانه</strong>
+    <button type="button" onclick="returnToOverview()">بازگشت به مرکز مدیریت</button>
+  </div>
+  <div class="legacy-loading" id="legacy-loading">در حال بارگذاری بخش انتخاب‌شده…</div>
+  <iframe class="legacy-frame" id="legacy-frame" title="امکانات عملیاتی وام‌سیتی" loading="eager"></iframe>
+</section>
+
 <footer class="footer"><div class="footer-brand"><strong>وام‌سیتی</strong><span>مرکز مدیریت یکپارچه</span></div><nav class="footer-links" aria-label="پیوندهای کاربردی"><a href="/">سایت اصلی</a><a href="/login/">ورود کاربران</a><a href="/register/0/">عضویت</a><a href="/plans.html">طرح‌های تسهیلات</a><a href="/cl/agentregister/0/">درخواست همکاری و نمایندگی</a><a href="/admin/appSettings">تنظیمات اپلیکیشن</a><a href="/admin/appBackup">پشتیبان‌گیری و بازیابی</a></nav><small>دسترسی به امکانات موجود از مسیرهای اصلی سامانه حفظ شده است.</small></footer>
 </main></div></div>
 <div class="toast" id="toast"></div>
@@ -329,6 +350,59 @@ function calc(){const amount=+document.getElementById("amount").value,months=+do
 function filterRows(input,tableId){const q=input.value.trim().toLowerCase();document.querySelectorAll("#"+tableId+" tbody tr").forEach(tr=>tr.style.display=tr.innerText.toLowerCase().includes(q)?"":"none")}
 function filterTag(select,tableId){const q=select.value;document.querySelectorAll("#"+tableId+" tbody tr").forEach(tr=>tr.style.display=!q||tr.innerText.includes(q)?"":"none")}
 function switchTable(btn,id){document.querySelectorAll(".switcher button").forEach(b=>b.classList.toggle("active",b===btn));["productTable","ordersTable"].forEach(x=>document.getElementById(x).style.display=x===id?"":"none")}
+
+// Route existing operational features through the new management shell.
+// The legacy app remains the source of truth for data and actions; only its
+// outer navigation is hidden inside the same-origin workspace.
+const legacyWorkspace=document.getElementById("legacy-workspace");
+const legacyFrame=document.getElementById("legacy-frame");
+const legacyLoading=document.getElementById("legacy-loading");
+const mainSections=Array.from(document.querySelectorAll("main.main > .section"));
+function openLegacy(url,label){
+  if(!legacyWorkspace||!legacyFrame)return;
+  mainSections.forEach(section=>section.style.display="none");
+  legacyWorkspace.hidden=false;
+  document.getElementById("legacy-title").textContent=(label||"امکانات سامانه").replace(/\\s+/g," ").trim();
+  legacyLoading.style.display="block";
+  legacyFrame.onload=function(){
+    legacyLoading.style.display="none";
+    try{
+      const doc=legacyFrame.contentDocument;
+      if(doc&&doc.head&&!doc.getElementById("vamcity-shell-integration")){
+        const style=doc.createElement("style");
+        style.id="vamcity-shell-integration";
+        style.textContent=[
+          ".v-app-bar, .v-navigation-drawer, .v-navigation-drawer__scrim, .v-footer, .v-system-bar{display:none!important}",
+          ".v-main{padding:0!important;margin:0!important}",
+          ".v-main__wrap{padding:16px!important}",
+          "#app{min-height:0!important}",
+          "html,body{min-height:0!important;background:#f4f6f9!important}",
+          "@media(max-width:760px){.v-main__wrap{padding:8px!important}}"
+        ].join("\\n");
+        doc.head.appendChild(style);
+      }
+    }catch(e){/* Cross-origin or browser policy: keep the original page functional. */}
+  };
+  legacyFrame.src=url;
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function returnToOverview(){
+  legacyFrame.src="about:blank";
+  legacyWorkspace.hidden=true;
+  legacyFrame.onload=null;
+  mainSections.forEach(section=>section.style.display="");
+  go("overview");
+}
+document.querySelectorAll('a[href^="/admin/"]').forEach(link=>{
+  const href=link.getAttribute("href")||"";
+  if(href==="/admin/dashboard"||href==="/admin/dashboard/")return;
+  link.addEventListener("click",event=>{
+    if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+    event.preventDefault();
+    openLegacy(href,link.innerText||link.textContent||"امکانات سامانه");
+  });
+});
+
 calc();
 /* Read the signed-in profile from the same legacy auth store; public browsing opens in a new tab and does not clear this session. */
 (function(){
