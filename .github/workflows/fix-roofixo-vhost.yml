@@ -282,12 +282,7 @@ jobs:
           echo "ROOFIXO_LEGACY_LOGIN_STATUS=$LOGIN_STATUS"
           echo "ROOFIXO_LEGACY_LOGIN_LOCATION=$(grep -i '^location:' "$LOGIN_HEADERS" | tail -1 || true)"
           test "$LOGIN_STATUS" = "302"
-          grep -Eiq '^location:[[:space:]]*(https://roofixo\.ir)?/[[:space:]]*
-          rm -f "$LOGIN_HEADERS"
-          echo "ROOFIXO_LEGACY_LOGIN_REDIRECT_VERIFIED=true"
-          echo "ROOFIXO_PUBLIC_LANDING_AT_ROOT=true"
-          REMOTE
- "$LOGIN_HEADERS"
+          grep -Eiq '^location:[[:space:]]*(https://roofixo[.]ir/|/)$' "$LOGIN_HEADERS"
           rm -f "$LOGIN_HEADERS"
           echo "ROOFIXO_LEGACY_LOGIN_REDIRECT_VERIFIED=true"
           echo "ROOFIXO_PUBLIC_LANDING_AT_ROOT=true"
