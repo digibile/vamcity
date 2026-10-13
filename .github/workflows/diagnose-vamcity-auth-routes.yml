@@ -35,6 +35,17 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           ssh -i "$RUNNER_TEMP/deploy_key" -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
+          echo "=== APP ROUTES WITH FORWARDED HOST HEADERS ==="
+          for ROUTE in /login/ /cl/login /cl/register; do
+            BODY="$(mktemp)"
+            HEADERS="$(mktemp)"
+            STATUS="$(curl -sS -D "$HEADERS" -H 'Host: roofixo.ir' -H 'X-Forwarded-Proto: https' -H 'X-Forwarded-Host: roofixo.ir' -o "$BODY" --max-time 15 -w '%{http_code}' "http://127.0.0.1:5187$ROUTE" || true)"
+            LOCATION="$(grep -i '^location:' "$HEADERS" | tail -1 | tr -d '\r' || true)"
+            TITLE="$(grep -oE '<title>[^<]*</title>' "$BODY" | head -1 || true)"
+            BUNDLE="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$BODY" | head -1 || true)"
+            echo "APP_FORWARDED_ROUTE=$ROUTE HTTP=$STATUS LOCATION=${LOCATION:-none} TITLE=${TITLE:-none} BUNDLE=${BUNDLE:-missing} BYTES=$(wc -c < "$BODY")"
+            rm -f "$BODY" "$HEADERS"
+          done
           echo "=== ACTIVE AUTH LOCATION RULES ==="
           grep -n -E -A3 -B2 'location = /(login|cl/login|cl/register)' /usr/local/directadmin/data/users/roofixo/nginx.conf /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx 2>/dev/null || true
           echo "=== NGINX LOADED AUTH RULES ==="
