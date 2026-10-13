@@ -1,0 +1,142 @@
+name: Repair missing VamCity legacy page assets
+run-name: Recover missing hashed JS chunks used by the live VamCity app
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/repair-vamcity-blank-pages.yml"
+  workflow_run:
+    workflows: ["Deploy VamCity UI only (preserve app and database)"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vamcity-legacy-chunk-recovery
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Recover only missing hashed chunks from the original application archive
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/vamcity-recovery-key"
+          chmod 600 "$RUNNER_TEMP/vamcity-recovery-key"
+          ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          chmod 600 "$HOME/.ssh/known_hosts"
+          ssh -i "$RUNNER_TEMP/vamcity-recovery-key" -p "$PORT" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          BASE=/home/roofixo/domains/roofixo.ir/vamcity-app
+          ZIP=/home/roofixo/domains/roofixo.ir/public_html/vamcity.zip
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
+          test -n "$APP_ROOT"
+          test -s "$APP_ROOT/wwwroot/js/app.e76ab352.js"
+          test -s "$ZIP"
+          test -d "$APP_ROOT/wwwroot/js"
+          TMP="$(mktemp -d)"
+          trap 'rm -rf "$TMP"' EXIT
+          export APP_ROOT ZIP TMP
+          python3 <<'PY'
+          import os, re, sys, zipfile, pathlib, shutil
+          app_root = pathlib.Path(os.environ["APP_ROOT"])
+          zip_path = pathlib.Path(os.environ["ZIP"])
+          js_root = app_root / "wwwroot" / "js"
+          app = (js_root / "app.e76ab352.js").read_text(encoding="utf-8", errors="replace")
+          # The first 8-hex hash for each lazy chunk is the JS hash map used by webpack.
+          expected = {}
+          for name, digest in re.findall(r'"((?:views|layout|default|chunk)-[^"]+)":"([a-f0-9]{8})"', app):
+              if name not in expected:
+                  expected[name] = digest
+          if not expected:
+              raise SystemExit("NO_RUNTIME_CHUNK_MAP_FOUND")
+          missing = [(name, digest) for name, digest in expected.items()
+                     if not (js_root / f"{name}.{digest}.js").is_file()]
+          print(f"RUNTIME_JS_CHUNKS={len(expected)}")
+          print(f"MISSING_BEFORE_RECOVERY={len(missing)}")
+          if not missing:
+              print("ALL_RUNTIME_JS_CHUNKS_PRESENT=1")
+              raise SystemExit(0)
+          with zipfile.ZipFile(zip_path) as archive:
+              names = set(archive.namelist())
+              recovered, unrecovered = [], []
+              for name, digest in missing:
+                  filename = f"{name}.{digest}.js"
+                  candidates = (f"wwwroot/js/{filename}", f"wwwroot/ui/js/{filename}", f"js/{filename}")
+                  entry = next((p for p in candidates if p in names), None)
+                  if not entry:
+                      unrecovered.append(filename)
+                      continue
+                  tmp_path = pathlib.Path(os.environ["TMP"]) / filename
+                  with archive.open(entry) as src, open(tmp_path, "wb") as dst:
+                      shutil.copyfileobj(src, dst)
+                  if tmp_path.stat().st_size == 0:
+                      unrecovered.append(filename + " (empty archive entry)")
+                      tmp_path.unlink(missing_ok=True)
+                      continue
+                  target = js_root / filename
+                  staged = target.with_name("." + filename + ".recovery-tmp")
+                  shutil.copyfile(tmp_path, staged)
+                  os.chmod(staged, 0o644)
+                  os.replace(staged, target)
+                  recovered.append((filename, tmp_path.stat().st_size))
+          for filename, size in recovered:
+              print(f"RECOVERED_JS={filename} BYTES={size}")
+          for filename in unrecovered:
+              print(f"UNRECOVERED_JS={filename}")
+          print(f"RECOVERED_COUNT={len(recovered)}")
+          print(f"UNRECOVERED_COUNT={len(unrecovered)}")
+          if unrecovered:
+              raise SystemExit(2)
+          PY
+          echo "=== VERIFY ROUTE CHUNKS THROUGH LIVE APP ==="
+          python3 - <<'PY'
+          import os, re, subprocess, pathlib
+          app_root = pathlib.Path(os.environ["APP_ROOT"])
+          app = (app_root / "wwwroot/js/app.e76ab352.js").read_text(encoding="utf-8", errors="replace")
+          expected = {}
+          for name, digest in re.findall(r'"((?:views|layout|default|chunk)-[^"]+)":"([a-f0-9]{8})"', app):
+              if name not in expected:
+                  expected[name] = digest
+          sample = [("views-admin-Dashboard", expected.get("views-admin-Dashboard")),
+                    ("views-admin-Loans", expected.get("views-admin-Loans")),
+                    ("views-admin-ManageLoan", expected.get("views-admin-ManageLoan")),
+                    ("views-superAdmin-Customers", expected.get("views-superAdmin-Customers")),
+                    ("views-admin-Users", expected.get("views-admin-Users"))]
+          for name, digest in sample:
+              if not digest:
+                  print(f"CHUNK_MAP_MISSING={name}")
+                  continue
+              file = pathlib.Path(os.environ["APP_ROOT"]) / "wwwroot/js" / f"{name}.{digest}.js"
+              if not file.is_file() or file.stat().st_size == 0:
+                  raise SystemExit(f"CHUNK_STILL_MISSING={file.name}")
+              result = subprocess.run(["curl","-sS","--max-time","10","-o","/dev/null","-w","%{http_code}","http://127.0.0.1:5187/js/"+file.name], capture_output=True, text=True)
+              code = result.stdout.strip()
+              print(f"LIVE_CHUNK_HTTP={code} FILE={file.name}")
+              if code != "200":
+                  raise SystemExit(f"LIVE_CHUNK_NOT_SERVING={file.name} HTTP={code}")
+          print("LEGACY_CHUNK_RECOVERY_VERIFIED=1")
+          PY
+          echo "DATABASE_TOUCHED=0"
+          echo "APP_CONTAINER_RESTARTED=0"
+          REMOTE
