@@ -11,6 +11,7 @@ This folder contains presentation-only overrides for the existing Vue/Vuetify ap
 - `feedback-overlays.css`: alerts, dialogs, and transient feedback styling.
 - `responsive.css`: small-screen layout adjustments only.
 - `public-landing.css`: marketing/loan landing pages only, scoped beneath `.landing` so admin and member workspaces do not inherit landing-page styling.
+- `accessibility.css`: keyboard focus indicators, readable message wrapping, and reduced-motion preferences.
 - `../vamcity-modern-theme.css`: ordered import manifest; do not place component rules here.
 
 ## Change policy
