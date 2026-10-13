@@ -81,6 +81,8 @@ jobs:
           DOMAIN_ROOT=/home/roofixo/domains/roofixo.ir
           PUBLIC="$DOMAIN_ROOT/public_html"
           PRIVATE="$DOMAIN_ROOT/vamcity-app/private"
+          CUSTOM=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx
+          GENERATED=/usr/local/directadmin/data/users/roofixo/nginx.conf
           HOME_SRC="/tmp/vamcity-public-home-$SHA.html"
           PLANS_SRC="/tmp/vamcity-public-plans-$SHA.html"
           PLANS_DEST="$PUBLIC/plans.html"
@@ -98,12 +100,17 @@ jobs:
 
           if [ -e "$PUBLIC/vamcity-public-home.html" ]; then cp -p "$PUBLIC/vamcity-public-home.html" "$BACKUP/vamcity-public-home.html.before"; echo existing > "$BACKUP/home.state"; else echo absent > "$BACKUP/home.state"; fi
           if [ -e "$PLANS_DEST" ]; then cp -p "$PLANS_DEST" "$BACKUP/plans.html.before"; echo existing > "$BACKUP/plans.state"; else echo absent > "$BACKUP/plans.state"; fi
+          cp -p "$CUSTOM" "$BACKUP/roofixo.ir.cust_nginx.before"
           chmod 600 "$BACKUP"/*.before "$BACKUP"/*.state
 
           rollback() {
             echo "ROLLING_BACK_VAMCITY_PUBLIC_SITE"
+            cp -p "$BACKUP/roofixo.ir.cust_nginx.before" "$CUSTOM"
             if [ "$(cat "$BACKUP/home.state")" = existing ]; then cp -p "$BACKUP/vamcity-public-home.html.before" "$PUBLIC/vamcity-public-home.html"; else rm -f "$PUBLIC/vamcity-public-home.html"; fi
             if [ "$(cat "$BACKUP/plans.state")" = existing ]; then cp -p "$BACKUP/plans.html.before" "$PLANS_DEST"; else rm -f "$PLANS_DEST"; fi
+            printf 'action=rewrite&value=nginx&user=roofixo\\n' >> /usr/local/directadmin/data/task.queue
+            /usr/local/directadmin/dataskq d >/dev/null 2>&1 || true
+            nginx -t && systemctl reload nginx || true
           }
           STARTED=0
           on_exit() {
@@ -120,6 +127,41 @@ jobs:
           mv -f "$PUBLIC/.vamcity-public-home-$SHA.tmp" "$PUBLIC/vamcity-public-home.html"
           mv -f "$PUBLIC/.plans-$SHA.tmp" "$PLANS_DEST"
 
+          python3 - "$CUSTOM" "$PUBLIC" <<'PY'
+          import pathlib, re, sys
+          config = pathlib.Path(sys.argv[1])
+          public = sys.argv[2]
+          text = config.read_text()
+          begin = "# VAMCITY_PUBLIC_PLANS_BEGIN"
+          end = "# VAMCITY_PUBLIC_PLANS_END"
+          if begin in text and end in text:
+              a = text.index(begin)
+              b = text.index(end, a) + len(end)
+              text = text[:a] + text[b:]
+          block = f'''# VAMCITY_PUBLIC_PLANS_BEGIN
+          location = /plans.html {
+              root {public};
+              try_files /plans.html =404;
+              default_type text/html;
+              add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+              add_header Pragma "no-cache" always;
+              expires -1;
+          }
+          # VAMCITY_PUBLIC_PLANS_END
+          '''
+          match = re.search(r"(?m)^[ \\t]*location / \\{", text)
+          if not match:
+              raise SystemExit("Could not find actual generic location / block; refusing to modify Nginx")
+          text = text[:match.start()] + block + "\\n" + text[match.start():]
+          config.write_text(text)
+          PY
+          chown roofixo:roofixo "$CUSTOM"
+          chmod 644 "$CUSTOM"
+          printf 'action=rewrite&value=nginx&user=roofixo\\n' >> /usr/local/directadmin/data/task.queue
+          /usr/local/directadmin/dataskq d
+          nginx -t
+          systemctl reload nginx
+          grep -Fq 'location = /plans.html' "$GENERATED"
           HOME_STATUS="$(curl -k -sS --resolve roofixo.ir:443:127.0.0.1 -o /tmp/vamcity-home-check-$SHA.html -w '%{http_code}' https://roofixo.ir/)"
           PLANS_STATUS="$(curl -k -sS --resolve roofixo.ir:443:127.0.0.1 -o /tmp/vamcity-plans-check-$SHA.html -w '%{http_code}' https://roofixo.ir/plans.html)"
           echo "LOCAL_HOME_HTTP=$HOME_STATUS"
