@@ -37,6 +37,10 @@ jobs:
           set -euo pipefail
           echo "=== ACTIVE AUTH LOCATION RULES ==="
           grep -n -E -A3 -B2 'location = /(login|cl/login|cl/register)' /usr/local/directadmin/data/users/roofixo/nginx.conf /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx 2>/dev/null || true
+          echo "=== NGINX LOADED AUTH RULES ==="
+          nginx -T 2>/dev/null | grep -n -E -A3 -B2 'location = /(login|cl/login|cl/register)|return 302 /;' || true
+          echo "=== ALL DOMAIN CONFIGS WITH LOGIN REDIRECTS ==="
+          grep -R -n -E 'location = /(login|cl/login|cl/register)|return 302 /;' /usr/local/directadmin/data/users/roofixo /etc/nginx 2>/dev/null | head -100 || true
           echo "=== CUSTOM NGINX AUTH RULES ==="
           grep -n -E -A3 -B2 'location = /(login|cl/login|cl/register)' /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx 2>/dev/null || true
           for ROUTE in / /login/ /cl/login /cl/register /cl/plans/; do
