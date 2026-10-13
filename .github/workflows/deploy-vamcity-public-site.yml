@@ -161,12 +161,12 @@ jobs:
           match = re.search(r"(?m)^[ \\t]*location / \\{", text)
           if not match:
               raise SystemExit("Could not find actual generic location / block; refusing to modify Nginx")
-          text = text[:match.start()] + block + "\\n" + text[match.start():]
+          text = text[:match.start()] + block + "\n" + text[match.start():]
           config.write_text(text)
           PY
           chown roofixo:roofixo "$CUSTOM"
           chmod 644 "$CUSTOM"
-          printf 'action=rewrite&value=nginx&user=roofixo\\n' >> /usr/local/directadmin/data/task.queue
+          printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
           /usr/local/directadmin/dataskq d
           nginx -t
           systemctl reload nginx
