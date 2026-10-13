@@ -141,7 +141,7 @@ jobs:
           grep -Fq '/css/vamcity-modern-theme.css?v=10' "$TMP/wwwroot/ui/index.html"
           grep -Eq '/js/app.e76ab352.js\?v=otp-ui(1|2)' "$TMP/wwwroot/ui/index.html"
           grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' "$TMP/wwwroot/ui/js/app.e76ab352.js"
-          grep -Fq 'e=Array.isArray(e)?e:[]' "$TMP/wwwroot/ui/js/views-admin-UserLoanRequests.8e3264fe.js"
+          grep -Fq 'e=Array.isArray(e)?e.filter((function(t){return t&&"object"===typeof t})):[]' "$TMP/wwwroot/ui/js/views-admin-UserLoanRequests.8e3264fe.js"
 
           rollback() {
             cp -p "$BACKUP/index.html" "$APP_ROOT/wwwroot/index.html"
@@ -195,7 +195,7 @@ jobs:
           rm -f /tmp/vamcity-otp-bundle-check.js
           curl --retry 4 --retry-delay 2 --fail --silent --show-error --max-time 10 \
             "http://127.0.0.1:5187/js/views-admin-UserLoanRequests.8e3264fe.js" -o /tmp/vamcity-loan-requests-check.js
-          grep -Fq 'e=Array.isArray(e)?e:[]' /tmp/vamcity-loan-requests-check.js
+          grep -Fq 'e=Array.isArray(e)?e.filter((function(t){return t&&"object"===typeof t})):[]' /tmp/vamcity-loan-requests-check.js
           rm -f /tmp/vamcity-loan-requests-check.js
           echo "UI_ONLY_DEPLOY_OK"
           echo "APP_ROOT=$APP_ROOT"
@@ -216,6 +216,6 @@ jobs:
           rm -f /tmp/vamcity-public-otp-bundle.js
           curl --retry 3 --retry-delay 2 --fail --silent --show-error --max-time 15 \
             "https://roofixo.ir/js/views-admin-UserLoanRequests.8e3264fe.js" -o /tmp/vamcity-public-loan-requests.js
-          grep -Fq 'e=Array.isArray(e)?e:[]' /tmp/vamcity-public-loan-requests.js
+          grep -Fq 'e=Array.isArray(e)?e.filter((function(t){return t&&"object"===typeof t})):[]' /tmp/vamcity-public-loan-requests.js
           rm -f /tmp/vamcity-public-loan-requests.js
           echo "PUBLIC_UI_ASSETS_OK"
