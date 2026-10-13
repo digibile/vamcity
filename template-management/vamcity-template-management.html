@@ -100,7 +100,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
 <div class="shell">
 <header class="topbar">
   <div class="brand"><div class="brand-mark">◈</div><div><strong>وام‌سیتی</strong><small>مرکز مدیریت وام و عملیات سامانه</small></div></div>
-  <div class="top-actions"><a class="top-pill top-link" href="/" title="رفتن به سایت اصلی">سایت اصلی</a><a class="top-pill top-link" href="/plans.html">طرح‌های تسهیلات</a><a class="top-pill top-link" href="/cl/agentregister/0/">درخواست نمایندگی</a><span class="top-pill">پنل مدیریت</span><a class="top-pill top-link" href="/admin/appSettings">تنظیمات اپلیکیشن</a><div class="avatar" title="مدیریت">م</div></div>
+  <div class="top-actions"><a class="top-pill top-link" href="/" target="_blank" rel="noopener" title="سایت عمومی در زبانه جدید باز می‌شود تا نشست مدیریت حفظ شود">مشاهده سایت ↗</a><a class="top-pill top-link" href="/plans/0/">طرح‌های تسهیلات</a><a class="top-pill top-link" href="/login/">ورود کاربران</a><a class="top-pill top-link" href="/register/0/">عضویت</a><a class="top-pill top-link" href="/cl/agentregister/0/">درخواست نمایندگی</a><a class="top-pill top-link" href="/admin/dashboard" aria-current="page">پنل مدیریت</a><a class="top-pill top-link" href="/admin/appSettings">تنظیمات اپلیکیشن</a><a class="top-pill top-link" href="/admin/appBackup">پشتیبان‌گیری</a><a class="top-pill top-link" id="account-link" href="/admin/dashboard" title="حساب کاربری"><span id="account-name">حساب کاربری</span></a><div class="avatar" id="account-avatar" title="کاربر واردشده">م</div></div>
 </header>
 <div class="layout">
 <aside class="sidebar">
@@ -327,6 +327,24 @@ function filterRows(input,tableId){const q=input.value.trim().toLowerCase();docu
 function filterTag(select,tableId){const q=select.value;document.querySelectorAll("#"+tableId+" tbody tr").forEach(tr=>tr.style.display=!q||tr.innerText.includes(q)?"":"none")}
 function switchTable(btn,id){document.querySelectorAll(".switcher button").forEach(b=>b.classList.toggle("active",b===btn));["productTable","ordersTable"].forEach(x=>document.getElementById(x).style.display=x===id?"":"none")}
 calc();
+/* Read the signed-in profile from the same legacy auth store; public browsing opens in a new tab and does not clear this session. */
+(function(){
+  try {
+    var raw=localStorage.getItem('user');
+    if(!raw)return;
+    var user=JSON.parse(raw)||{};
+    var data=typeof user.userData==='string'?JSON.parse(user.userData||'{}'):(user.userData||{});
+    var roles=Array.isArray(data.userRoleNames)?data.userRoleNames:[];
+    var isAdmin=roles.indexOf('Admin')>=0||roles.indexOf('SuperAdmin')>=0;
+    var name=data.fullName||data.name||data.displayName||user.fullName||user.username||user.userName||user.mobile||'کاربر سامانه';
+    var nameNode=document.getElementById('account-name');
+    var avatar=document.getElementById('account-avatar');
+    if(nameNode)nameNode.textContent=name;
+    if(avatar){avatar.textContent=String(name).trim().charAt(0)||'ک';avatar.title='حساب کاربری: '+name;}
+    var link=document.getElementById('account-link');
+    if(link){link.href=roles.indexOf('SuperAdmin')>=0?'/superadmin/dashboard':isAdmin?'/admin/dashboard':roles.indexOf('Agent')>=0?'/agent/dashboard':roles.indexOf('Sponsor')>=0?'/sponsor/dashboard':roles.indexOf('Member')>=0?'/member/dashboard':'/login/';link.setAttribute('aria-label','ورود به حساب کاربری '+name);}
+  } catch(e) { /* Keep the admin interface usable if an older profile shape is present. */ }
+})();
 </script>
 </body>
 </html>
