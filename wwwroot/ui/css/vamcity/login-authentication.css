@@ -299,3 +299,44 @@
   #login-view .v-card .v-btn,
   #login-view .v-card .v-input__slot { transition: none !important; }
 }
+
+
+/* Registration shares the premium account visual system; all legacy fields and validation remain intact. */
+.register-card {
+  max-width: 760px !important;
+  margin: 0 auto !important;
+  overflow: hidden;
+  border: 1px solid #e0e7ee !important;
+  border-radius: 26px !important;
+  background: rgba(255,255,255,.97) !important;
+  box-shadow: 0 28px 80px rgba(16,35,55,.13) !important;
+}
+.register-card .v-card__title,
+.register-card .v-card__text { font-family: inherit; }
+.register-card .v-card__title {
+  padding: 22px 28px !important;
+  color: #fff;
+  background: linear-gradient(115deg,#102337,#244d65) !important;
+  font-weight: 800;
+  line-height: 1.8;
+}
+.register-card .v-card__text { padding: 24px 28px 12px !important; }
+.register-card .v-input { margin-top: 8px; }
+.register-card .v-input__slot { min-height: 52px; border-radius: 14px !important; }
+.register-card .v-btn:not(.v-btn--icon) {
+  min-height: 46px;
+  border-radius: 13px;
+  font-family: inherit;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.register-card .otp-container { gap: 8px; direction: ltr; }
+.register-card .otp-container .code-inputs { flex: 0 1 48px; width: 48px; max-width: 48px; }
+.register-card .otp-container .code-inputs input { text-align: center; font-size: 1.25rem; font-weight: 800; }
+@media (max-width: 600px) {
+  .register-card { border-radius: 20px !important; }
+  .register-card .v-card__title { padding: 18px !important; }
+  .register-card .v-card__text { padding: 18px 14px 10px !important; }
+  .register-card .otp-container { gap: 5px; }
+  .register-card .otp-container .code-inputs { flex-basis: 40px; width: 40px; max-width: 40px; }
+}
