@@ -77,14 +77,26 @@ jobs:
           for LOG in /var/log/nginx/domains/roofixo.ir.log /var/log/nginx/access.log /var/log/nginx/domains/roofixo.ir.ssl.log; do
             if [ -r "$LOG" ]; then
               echo "ACCESS_LOG=$LOG"
-              tail -n 4000 "$LOG" | awk '$9 == 400 { path=$7; sub(/\\?.*/, "", path); count[path]++ } END { for (p in count) printf "HTTP400_PATH=%s COUNT=%d\\n", p, count[p] }' | sort
+              python3 - "$LOG" <<'PY'
+          import collections, pathlib, re, sys
+          path = pathlib.Path(sys.argv[1])
+          lines = path.read_text(errors="replace").splitlines()[-4000:]
+          counts = collections.Counter()
+          pattern = re.compile(r'"(?:GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD) ([^ ?" ]+)(?:\\?[^ "]*?)? HTTP/[^"]+" (\\d{3})')
+          for line in lines:
+              match = pattern.search(line)
+              if match and match.group(2) == "400":
+                  counts[match.group(1)] += 1
+          for route, count in sorted(counts.items()):
+              print(f"HTTP400_PATH={route} COUNT={count}")
+          PY
             fi
           done
           echo "=== API TOKEN NORMALIZATION CHECK ==="
-          for PATH in /api/token /api/token/; do
+          for API_PATH in /api/token /api/token/; do
             BODY="$(mktemp)"
-            STATUS="$(curl -sS -o "$BODY" --max-time 12 -w '%{http_code}' -X POST -H 'Host: roofixo.ir' -H 'Content-Type: application/x-www-form-urlencoded;charset=utf-8' --data 'username=__diagnostic_invalid_user__&password=__diagnostic_invalid_password__' "http://127.0.0.1:5187$PATH" 2>/dev/null || echo CURL_ERROR)"
-            printf 'LOGIN_ENDPOINT=%s HTTP=%s BODY_BYTES=%s\\n' "$PATH" "$STATUS" "$(wc -c < "$BODY")"
+            STATUS="$(curl -sS -o "$BODY" --max-time 12 -w '%{http_code}' -X POST -H 'Host: roofixo.ir' -H 'Content-Type: application/x-www-form-urlencoded;charset=utf-8' --data 'username=__diagnostic_invalid_user__&password=__diagnostic_invalid_password__' "http://127.0.0.1:5187$API_PATH" 2>/dev/null || echo CURL_ERROR)"
+            printf 'LOGIN_ENDPOINT=%s HTTP=%s BODY_BYTES=%s\\n' "$API_PATH" "$STATUS" "$(wc -c < "$BODY")"
             rm -f "$BODY"
           done
           echo "=== RECENT APP HTTP400 SIGNAL COUNT (NO RAW LOGS) ==="
