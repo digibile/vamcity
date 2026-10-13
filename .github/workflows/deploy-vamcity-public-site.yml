@@ -163,6 +163,18 @@ jobs:
               add_header Pragma "no-cache" always;
               expires -1;
           }}
+          location = /plans {{
+              return 302 /plans.html;
+          }}
+          location = /plans/ {{
+              return 302 /plans.html;
+          }}
+          location = /cl/plans {{
+              return 302 /plans.html;
+          }}
+          location = /cl/plans/ {{
+              return 302 /plans.html;
+          }}
           # VAMCITY_PUBLIC_PLANS_END
           '''
           config.write_text(text.rstrip() + chr(10) + block + chr(10) + plans_block + chr(10))
@@ -174,6 +186,7 @@ jobs:
           nginx -t
           grep -Fq 'location = / {' "$GENERATED"
           grep -Fq 'location = /plans.html' "$GENERATED"
+          grep -Fq 'location = /cl/plans/' "$GENERATED"
           systemctl reload nginx
           STATUS="$(curl -k -sS --resolve roofixo.ir:443:185.8.174.167 -o "/tmp/vamcity-home-check-$SHA.html" -w '%{http_code}' https://roofixo.ir/)"
           PLANS_STATUS="$(curl -k -sS --resolve roofixo.ir:443:185.8.174.167 -o "/tmp/vamcity-plans-check-$SHA.html" -w '%{http_code}' https://roofixo.ir/plans.html)"
@@ -220,6 +233,12 @@ jobs:
           echo "PUBLIC_PLANS_HTTP=$PLANS_CODE"
           test "$PLANS_CODE" = 200
           grep -q 'طرح‌های تسهیلات | وام‌سیتی' /tmp/vamcity-plans.html
+          for LEGACY_ROUTE in /cl/plans/ /plans/; do
+            LEGACY_FINAL_URL="$(curl --retry 2 --retry-delay 1 -sS -L --max-time 20 -o /tmp/vamcity-legacy-plans.html -w '%{url_effective}' "$BASE$LEGACY_ROUTE")"
+            echo "LEGACY_PLANS_ROUTE=$LEGACY_ROUTE FINAL_URL=$LEGACY_FINAL_URL"
+            test "$LEGACY_FINAL_URL" = "$BASE/plans.html"
+            grep -q 'طرح‌های تسهیلات | وام‌سیتی' /tmp/vamcity-legacy-plans.html
+          done
           for ROUTE in /login/ /register/0/; do
             CODE="$(curl --retry 2 --retry-delay 1 -sS -L --max-time 20 -o /dev/null -w '%{http_code}' "$BASE$ROUTE")"
             echo "ACCOUNT_ROUTE=$ROUTE HTTP=$CODE"
@@ -267,6 +286,9 @@ jobs:
             const detailLinks = await page.locator('.card a[href^="/plan/0/"]').count();
             if (detailLinks < 1) throw new Error('Dedicated plan cards are missing real detail links');
             console.log('DESKTOP_DEDICATED_PLAN_CARDS='+cards+' DETAIL_LINKS='+detailLinks);
+            await page.goto('https://roofixo.ir/cl/plans/', {waitUntil:'networkidle',timeout:45000});
+            if (!page.url().endsWith('/plans.html')) throw new Error('Legacy plans URL did not redirect to the modern page');
+            if ((await page.locator('.card').count()) < 1) throw new Error('Legacy plans URL did not show modern plan cards');
             await page.setViewportSize({width:390,height:844});
             await page.reload({waitUntil:'networkidle',timeout:45000});
             const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
