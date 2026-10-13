@@ -5,6 +5,9 @@
 <!-- 2026-10-13 navigation refresh: expose every verified public entry point from the main header and footer. -->
 <!-- Release refresh 2026-10-13: full-width homepage layout; verify live homepage, modern plans page, login, registration, and cooperation links after routing repair. -->
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#102337">
 <title>وام‌سیتی | طرح‌های واقعی و خرید اقساطی</title>
@@ -111,6 +114,43 @@ html{scroll-padding-top:88px;scroll-behavior:smooth}
 .footrow{align-items:flex-start}.foot a{display:inline-block;padding:4px 0;transition:color .2s}.foot a:hover{color:#f0d7a4}
 @media(max-width:850px){.hero{min-height:0;grid-template-columns:1fr;background-position:58% center}.hero-art{max-width:620px;width:100%;margin-top:4px}.links{border-radius:16px}.features,.plans{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.hero{margin-top:14px;border-radius:19px;padding:22px 18px;gap:18px;background-position:62% center}.hero h1{font-size:27px;line-height:1.65}.hero p{font-size:13px}.hero .buttons{display:grid;grid-template-columns:1fr}.hero .buttons .btn{width:100%}.hero-art{padding:16px;border-radius:17px}.artline{font-size:11px;padding:10px 0}.features,.plans,.calcgrid{grid-template-columns:1fr}.heading{align-items:flex-start;flex-direction:column}.feature,.plan,.calc{padding:17px}.banner{padding:18px;align-items:stretch}.banner .btn{flex:1}.actions .btn{padding:8px 10px;font-size:11px}.nav{height:auto;min-height:66px}.brand{font-size:16px}.mark{width:36px;height:36px}}
+
+
+/* Public UI consistency pass: strengthen layout, navigation and component hierarchy beyond a palette swap. */
+:root{--navy:#102337;--navy2:#1a3c52;--gold:#c69a50;--ink:#192b3d;--muted:#6f7f91;--line:#e4eaf0;--bg:#f3f6fa}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{background:radial-gradient(ellipse at 90% 0%,rgba(214,184,126,.10),transparent 28rem),var(--bg);line-height:1.95}
+.top{background:rgba(255,255,255,.94);backdrop-filter:blur(16px);box-shadow:0 5px 24px rgba(16,35,55,.045)}
+.nav{min-height:76px}
+.brand{letter-spacing:-.2px}
+.mark{border-radius:12px;box-shadow:0 5px 14px rgba(16,35,55,.12)}
+.links{gap:clamp(10px,1.5vw,20px);font-size:12px}
+.links a{transition:color .18s ease}
+.links a:hover{color:var(--gold)}
+.btn{min-height:40px;border-radius:11px;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 7px 18px rgba(16,35,55,.09)}
+.btn.primary{background:linear-gradient(135deg,#e5c17d,#c69a50);border-color:#c69a50}
+.hero{border-radius:26px;box-shadow:0 16px 42px rgba(16,35,55,.11);background:radial-gradient(circle at 8% 0%,rgba(215,173,101,.16),transparent 18rem),linear-gradient(120deg,#0c1c2b,#1d465e)}
+.hero h1{font-weight:800;letter-spacing:-.6px}
+.hero-art{backdrop-filter:blur(12px);box-shadow:inset 0 1px rgba(255,255,255,.06)}
+.section{padding:clamp(24px,3vw,40px) 0}
+.heading{margin-bottom:20px}
+.heading h2{font-weight:800;letter-spacing:-.35px}
+.feature,.plan,.calc{border-radius:17px;box-shadow:0 8px 24px rgba(21,43,64,.045);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.feature:hover,.plan:hover{transform:translateY(-3px);border-color:rgba(198,154,80,.45);box-shadow:0 14px 32px rgba(21,43,64,.09)}
+.icon{border-radius:12px}
+.planstats{border:1px solid #edf1f5;background:#f7f9fc}
+.tag{font-weight:800}
+.calc input{accent-color:#c69a50}
+.result{background:radial-gradient(circle at 90% 0%,rgba(215,173,101,.16),transparent 13rem),linear-gradient(145deg,#102337,#1b4058);border:1px solid rgba(215,173,101,.2)}
+.banner{border-radius:17px;box-shadow:0 7px 22px rgba(21,43,64,.035)}
+.foot{background:linear-gradient(110deg,#0b1b2a,#18374d);border-top:1px solid rgba(215,173,101,.4)}
+.foot a{transition:color .18s ease}
+.foot a:hover{color:#f4dfb4!important;text-decoration:underline;text-underline-offset:4px}
+:focus-visible{outline:3px solid rgba(198,154,80,.75);outline-offset:3px}
+@media(max-width:850px){.links{box-shadow:0 16px 36px rgba(16,35,55,.12)}.feature:hover,.plan:hover{transform:none}}
+@media(max-width:640px){.nav{min-height:64px}.hero{border-radius:18px}.section{padding:20px 0}.feature,.plan,.calc{border-radius:14px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 </style>
 </head>
