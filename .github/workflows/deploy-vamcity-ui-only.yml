@@ -187,7 +187,7 @@ jobs:
           set -euo pipefail
           curl --retry 3 --retry-delay 2 --fail --silent --show-error --max-time 15 \
             "https://roofixo.ir/css/vamcity-modern-theme.css?v=9" -o /tmp/vamcity-public-theme.css
-          grep -Fq "tokens-base.css?v=8" /tmp/vamcity-public-theme.css
+          grep -Fq "tokens-base.css?v=9" /tmp/vamcity-public-theme.css
           curl --retry 3 --retry-delay 2 --fail --silent --show-error --max-time 15 \
             "https://roofixo.ir/js/app.e76ab352.js?v=otp-ui1" -o /tmp/vamcity-public-otp-bundle.js
           grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' /tmp/vamcity-public-otp-bundle.js
