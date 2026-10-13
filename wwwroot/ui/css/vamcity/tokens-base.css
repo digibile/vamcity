@@ -1,0 +1,30 @@
+/* POLICY: Global design tokens and document-level defaults only. Do not add page-specific rules here. */
+:root {
+  --vc-navy: #102337;
+  --vc-navy-2: #18384e;
+  --vc-gold: #d7ad65;
+  --vc-gold-soft: #f8f0e1;
+  --vc-ink: #17283a;
+  --vc-muted: #718096;
+  --vc-line: #e4eaf0;
+  --vc-page: #f4f6f9;
+  --vc-white: #fff;
+  --vc-green: #16836a;
+  --vc-shadow: 0 10px 28px rgba(16,35,55,.07);
+}
+html { background: var(--vc-page); }
+body, .v-application {
+  font-family: Tahoma, "Vazirmatn", Arial, sans-serif !important;
+  color: var(--vc-ink);
+  background: var(--vc-page) !important;
+}
+.v-application { line-height: 1.8; }
+.v-application .v-main { background: var(--vc-page); }
+.v-application .primary { background-color: var(--vc-navy) !important; border-color: var(--vc-navy) !important; }
+.v-application .accent { background-color: var(--vc-gold) !important; border-color: var(--vc-gold) !important; }
+.v-application .primary--text { color: var(--vc-navy) !important; caret-color: var(--vc-navy) !important; }
+.v-application .accent--text { color: #9b7337 !important; caret-color: #9b7337 !important; }
+.v-application a { color: var(--vc-navy); }
+.v-application .error--text { color: #b94750 !important; }
+.v-application .success--text { color: var(--vc-green) !important; }
+.v-application .v-divider { border-color: var(--vc-line) !important; }
