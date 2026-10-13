@@ -106,6 +106,27 @@ jobs:
                 await page.close();
               }
             }
+            for (const route of ['/login/', '/cl/login', '/cl/register']) {
+              const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+              const errors = [];
+              page.on('pageerror', e => errors.push('PAGEERROR ' + e.message));
+              page.on('requestfailed', r => errors.push('REQUEST_FAILED ' + r.url()));
+              const response = await page.goto('https://roofixo.ir' + route, { waitUntil: 'domcontentloaded', timeout: 45000 });
+              await page.waitForTimeout(3500);
+              const body = (await page.locator('body').innerText().catch(() => '')).replace(/\\s+/g, ' ').trim();
+              const inputs = await page.locator('input').count().catch(() => 0);
+              const passwords = await page.locator('input[type="password"]').count().catch(() => 0);
+              const buttons = await page.locator('button, .v-btn').count().catch(() => 0);
+              console.log('AUTH_PAGE=' + route + ' HTTP=' + (response?.status() ?? 'none') + ' BODY_LENGTH=' + body.length + ' INPUTS=' + inputs + ' PASSWORD_FIELDS=' + passwords + ' BUTTONS=' + buttons);
+              console.log('AUTH_BODY_SAMPLE=' + body.slice(0, 500));
+              console.log('AUTH_BROWSER_ERRORS=' + JSON.stringify(errors.slice(0, 10)));
+              await page.screenshot({ path: 'artifacts/auth-' + route.replace(/[^a-z0-9]+/gi, '-') + '.png', fullPage: true }).catch(() => {});
+              if (!response || response.status() !== 200 || body.length < 50 || errors.length) failed = true;
+              if ((route === '/login/' || route === '/cl/login') && passwords < 1) failed = true;
+              if (route === '/cl/register' && inputs < 2) failed = true;
+              await page.close();
+            }
+
             await browser.close();
             if (failed) process.exit(1);
           })();
