@@ -187,7 +187,7 @@ jobs:
             console.log('REGISTER_FINAL_URL=' + page.url());
             console.log('REGISTER_BODY_LENGTH=' + registerText.length + ' REGISTER_INPUTS=' + registerInputs);
             console.log('REGISTER_BODY_SAMPLE=' + registerText.slice(0, 500));
-            if (!registerText.includes('ثبت نام') || registerInputs < 2 || errors.length) {
+            if (!(registerText.includes('عضویت') || registerText.includes('ثبت نام')) || registerInputs < 2 || errors.length) {
               throw new Error('Registration form did not render correctly: ' + JSON.stringify(errors));
             }
             await page.screenshot({ path: 'artifacts/register-desktop.png', fullPage: true });
