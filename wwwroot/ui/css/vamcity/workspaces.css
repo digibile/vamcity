@@ -314,3 +314,80 @@
   .v-application .v-main .v-card,
   .v-application .v-main .v-btn { transition: none !important; }
 }
+
+
+/* Admin-template workspace system: richer hierarchy and structured surfaces, with all data/actions still Vue-backed. */
+.v-application .v-main {
+  background:
+    radial-gradient(ellipse at 96% 0%,rgba(215,173,101,.09),transparent 27%),
+    linear-gradient(180deg,#f4f6f9 0%,#f8fafc 56%,#f2f5f8 100%) !important;
+}
+.v-application .v-main .v-container > .row:first-child,
+.v-application .v-main .container[id$="-view"] > .row:first-child { margin-bottom:8px; }
+.v-application .v-main .v-card {
+  border:1px solid #e3e9ef !important;
+  border-radius:17px !important;
+  background:#fff;
+  box-shadow:0 8px 26px rgba(16,35,55,.045),0 1px 3px rgba(16,35,55,.035) !important;
+  transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease;
+}
+.v-application .v-main .v-card:hover {
+  border-color:#d7dfe7 !important;
+  box-shadow:0 12px 30px rgba(16,35,55,.075),0 2px 5px rgba(16,35,55,.025) !important;
+}
+.v-application .v-main .v-card__title {
+  padding:18px 20px;
+  font-size:1rem;
+  font-weight:800;
+  letter-spacing:-.15px;
+}
+.v-application .v-main .v-card__text { padding:18px 20px; }
+.v-application .v-main .v-card__actions { padding:12px 20px 18px; gap:8px; }
+.v-application .v-main .v-btn.primary,
+.v-application .v-main .v-btn.v-btn--contained.primary {
+  background:linear-gradient(115deg,#102337,#1c4259) !important;
+  color:#fff !important;
+}
+.v-application .v-main .v-btn.accent {
+  background:linear-gradient(115deg,#e7c783,#d7ad65) !important;
+  color:#17283a !important;
+}
+.v-application .v-main .v-btn:not(.v-btn--text):not(.v-btn--icon):not(.v-btn--fab) {
+  min-height:40px;
+  padding-inline:16px;
+}
+.v-application .v-main .v-data-table {
+  border:1px solid #e2e8ef !important;
+  border-radius:14px !important;
+  box-shadow:none !important;
+  background:#fff;
+}
+.v-application .v-main .v-data-table thead th {
+  height:52px;
+  background:#f5f7fa !important;
+  color:#536477 !important;
+  font-size:.78rem;
+  font-weight:800;
+  border-bottom:1px solid #e3e9ef !important;
+}
+.v-application .v-main .v-data-table tbody tr { transition:background .15s ease; }
+.v-application .v-main .v-data-table tbody tr:hover { background:#fbf7ef !important; }
+.v-application .v-main .v-data-table td {
+  height:50px;
+  border-bottom:1px solid #edf1f5 !important;
+  color:#34485a;
+}
+.v-application .v-main .v-alert { border-radius:13px; }
+.v-application .v-main .v-tabs > .v-tabs-bar { border-bottom:1px solid #e5eaf0; }
+.v-application .v-main .v-chip { font-size:.76rem; }
+.v-application .v-main .v-input__slot { border-radius:11px !important; }
+.v-application .v-main .v-input--is-focused .v-input__slot { box-shadow:0 0 0 3px rgba(215,173,101,.12); }
+.v-application .v-main .v-pagination__item--active { background:#102337 !important; color:#fff !important; }
+.v-application .v-main .v-progress-linear__determinate { background:linear-gradient(90deg,#d7ad65,#f0d7a4) !important; }
+.v-application .v-main .v-simple-table { border-radius:13px; overflow:hidden; }
+@media(max-width:600px) {
+  .v-application .v-main .v-card__title { padding:15px 15px; }
+  .v-application .v-main .v-card__text { padding:15px; }
+  .v-application .v-main .v-card__actions { padding:10px 15px 15px; flex-wrap:wrap; }
+  .v-application .v-main .v-btn:not(.v-btn--text):not(.v-btn--icon):not(.v-btn--fab) { padding-inline:12px; }
+}
