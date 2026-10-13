@@ -171,3 +171,131 @@
 @media (prefers-reduced-motion: reduce) {
   #login-view *, #login-view *::before, #login-view *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+
+/* VamCity premium sign-in refresh v7: stronger visual hierarchy and a real photographic hero. */
+#login-view {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 8% 8%, rgba(218,177,103,.24), transparent 32%),
+    radial-gradient(ellipse at 92% 92%, rgba(27,74,99,.15), transparent 38%),
+    linear-gradient(135deg,#f7f9fc 0%,#eef3f8 52%,#fbf7ef 100%) !important;
+}
+#login-view .v-app-bar {
+  background: rgba(13,31,49,.98) !important;
+  box-shadow: 0 10px 34px rgba(13,31,49,.18) !important;
+  backdrop-filter: blur(14px);
+}
+#login-view > .v-container {
+  padding-top: clamp(26px,5vh,58px);
+  padding-bottom: 56px;
+}
+#login-view .v-container .v-card {
+  max-width: 560px;
+  border: 1px solid rgba(255,255,255,.88);
+  border-radius: 30px !important;
+  box-shadow: 0 32px 90px rgba(20,43,64,.16),0 8px 24px rgba(20,43,64,.06) !important;
+  transform: translateZ(0);
+}
+#login-view .v-card .v-image {
+  height: 224px !important;
+  background: #102b40 !important;
+}
+#login-view .v-card .v-image__image {
+  background-image:
+    linear-gradient(105deg,rgba(9,28,45,.94) 0%,rgba(9,28,45,.60) 50%,rgba(9,28,45,.08) 100%),
+    url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=85") !important;
+  background-position: center, 50% 46% !important;
+  background-size: cover !important;
+  transform: scale(1.01);
+}
+#login-view .v-card .v-image:before {
+  background:
+    linear-gradient(105deg,rgba(8,26,43,.45),rgba(8,26,43,.03)),
+    radial-gradient(circle at 78% 18%,rgba(221,181,108,.40),transparent 32%) !important;
+}
+#login-view .v-card .v-image .v-card__title {
+  min-height: 224px;
+  padding: 28px 30px !important;
+  max-width: 440px;
+  font-size: clamp(1.25rem,2.7vw,1.65rem);
+  line-height: 1.75;
+  text-shadow: 0 2px 18px rgba(0,0,0,.28);
+}
+#login-view .v-card .v-card__text {
+  padding: 24px 30px 10px !important;
+}
+#login-view .v-card .v-btn-toggle {
+  margin-bottom: 12px;
+  border-color: #e0e7ee;
+  background: #f2f5f8;
+}
+#login-view .v-card .v-btn-toggle > .v-btn--active {
+  background: linear-gradient(120deg,#102b40,#245873) !important;
+  box-shadow: 0 7px 18px rgba(16,43,64,.22);
+}
+#login-view .v-card .v-input__slot {
+  border-radius: 15px;
+  transition: border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+#login-view .v-card .v-input--is-focused .v-input__slot {
+  box-shadow: 0 0 0 3px rgba(193,151,84,.12);
+}
+#login-view .v-card .v-btn:not(.v-btn--icon):not(.v-btn--text) {
+  min-height: 48px;
+  border-radius: 15px;
+  transition: transform .16s ease,box-shadow .16s ease;
+}
+#login-view .v-card .v-btn.secondary {
+  background: linear-gradient(115deg,#12334a,#27627b) !important;
+  box-shadow: 0 8px 18px rgba(18,51,74,.16) !important;
+}
+#login-view .v-card .v-btn.secondary:hover {
+  box-shadow: 0 11px 24px rgba(18,51,74,.22) !important;
+  transform: translateY(-1px);
+}
+#login-view .v-card .otp-container {
+  direction: ltr;
+  justify-content: center;
+  gap: 11px;
+  margin: 16px auto 22px;
+}
+#login-view .v-card .otp-container .code-inputs {
+  flex: 0 1 54px;
+  width: 54px;
+  max-width: 54px;
+}
+#login-view .v-card .otp-container .code-inputs .v-input__slot {
+  min-height: 60px;
+  border: 1px solid #d7e1e9;
+  border-radius: 16px;
+  background: linear-gradient(180deg,#fff,#f7fafc);
+  box-shadow: 0 5px 14px rgba(20,43,64,.045);
+}
+#login-view .v-card .otp-container .code-inputs.v-input--is-focused .v-input__slot {
+  border-color: #c29a5b !important;
+  box-shadow: 0 0 0 4px rgba(194,154,91,.14);
+  background: #fff;
+}
+#login-view .v-card .otp-container .code-inputs input {
+  font-size: 1.55rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+#login-view .v-card .text-center.my-3 { padding-bottom: 20px; }
+@media (max-width: 600px) {
+  #login-view > .v-container { padding: 18px 12px 30px; }
+  #login-view .v-container .v-card { border-radius: 23px !important; }
+  #login-view .v-card .v-image,
+  #login-view .v-card .v-image .v-card__title { height: 176px !important; min-height: 176px; }
+  #login-view .v-card .v-image .v-card__title { padding: 20px !important; font-size: 1.2rem; }
+  #login-view .v-card .v-card__text { padding: 18px 18px 8px !important; }
+  #login-view .v-card .otp-container { gap: 7px; }
+  #login-view .v-card .otp-container .code-inputs { flex-basis: 44px; width: 44px; max-width: 44px; }
+  #login-view .v-card .otp-container .code-inputs .v-input__slot { min-height: 52px; border-radius: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #login-view .v-card .v-btn,
+  #login-view .v-card .v-input__slot { transition: none !important; }
+}
