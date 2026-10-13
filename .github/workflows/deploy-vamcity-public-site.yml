@@ -1,12 +1,11 @@
-name: Deploy integrated VamCity public homepage and plans
-run-name: Publish VamCity homepage and modern live plans page
+name: Deploy integrated VamCity public homepage
+run-name: Publish VamCity homepage with live plans and working account links
 
 on:
   push:
     branches: [main]
     paths:
       - "vamcity-public-home.html"
-      - "public-site/plans/index.html"
       - ".github/workflows/deploy-vamcity-public-site.yml"
   workflow_dispatch:
 
@@ -14,33 +13,30 @@ permissions:
   contents: read
 
 concurrency:
-  group: vamcity-roofixo-public-site
+  group: vamcity-roofixo-public-home
   cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate public pages and route targets
+      - name: Validate homepage links and real plans integration
         shell: bash
         run: |
           set -euo pipefail
           test -s vamcity-public-home.html
-          test -s public-site/plans/index.html
           grep -q 'href="/login/"' vamcity-public-home.html
           grep -q 'href="/register/0/"' vamcity-public-home.html
-          grep -q 'href="/plans.html"' vamcity-public-home.html
+          grep -q 'href="/#plans"' vamcity-public-home.html
+          grep -q 'id="plans"' vamcity-public-home.html
           grep -q "fetch('/Loan/List/100'" vamcity-public-home.html
-          grep -q "fetch('/Loan/List/100'" public-site/plans/index.html
           grep -q "const href='/plan/0/'" vamcity-public-home.html
-          grep -q "const href='/plan/0/'" public-site/plans/index.html
           ! grep -q '/cl/plan/' vamcity-public-home.html
-          ! grep -q '/cl/plan/' public-site/plans/index.html
-          echo "PUBLIC_HOME_AND_PLANS_SOURCE_VALID"
+          echo "PUBLIC_HOME_SOURCE_VALID"
 
       - name: Configure SSH
         env:
@@ -55,158 +51,78 @@ jobs:
           test -n "$DEPLOY_SSH_KEY"
           PORT="${DEPLOY_PORT:-22}"
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_public_site_key
-          chmod 600 ~/.ssh/vamcity_public_site_key
+          printf '%s\\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_public_home_key
+          chmod 600 ~/.ssh/vamcity_public_home_key
           ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           echo "PORT=$PORT" >> "$GITHUB_ENV"
           echo "HOST=$DEPLOY_HOST" >> "$GITHUB_ENV"
           echo "USER=$DEPLOY_USER" >> "$GITHUB_ENV"
 
-      - name: Upload validated public pages
+      - name: Upload homepage
         run: |
           set -euo pipefail
-          scp -i ~/.ssh/vamcity_public_site_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+          scp -i ~/.ssh/vamcity_public_home_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
             vamcity-public-home.html "$USER@$HOST:/tmp/vamcity-public-home-$GITHUB_SHA.html"
-          scp -i ~/.ssh/vamcity_public_site_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            public-site/plans/index.html "$USER@$HOST:/tmp/vamcity-public-plans-$GITHUB_SHA.html"
 
-      - name: Backup, publish pages, and install precise plans routes
+      - name: Backup and atomically publish homepage
         shell: bash
         run: |
           set -euo pipefail
-          ssh -i ~/.ssh/vamcity_public_site_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST" \
+          ssh -i ~/.ssh/vamcity_public_home_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST" \
             "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
           set -Eeuo pipefail
           SHA="$1"
           DOMAIN_ROOT=/home/roofixo/domains/roofixo.ir
           PUBLIC="$DOMAIN_ROOT/public_html"
           PRIVATE="$DOMAIN_ROOT/vamcity-app/private"
-          APP_CONTAINER=vamcity-stage-app
-          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' "$APP_CONTAINER")"
-          CUSTOM=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx
-          GENERATED=/usr/local/directadmin/data/users/roofixo/nginx.conf
-          HOME_SRC="/tmp/vamcity-public-home-$SHA.html"
-          PLANS_SRC="/tmp/vamcity-public-plans-$SHA.html"
-          PUBLIC_PLANS_DEST="$PUBLIC/plans.html"
-          APP_PLANS_DEST="$APP_ROOT/wwwroot/plans.html"
-          BACKUP="$PRIVATE/rollback/public-site-$SHA"
+          SRC="/tmp/vamcity-public-home-$SHA.html"
+          DEST="$PUBLIC/vamcity-public-home.html"
+          BACKUP="$PRIVATE/rollback/public-home-$SHA"
           mkdir -p "$BACKUP"
           chmod 700 "$PRIVATE" "$PRIVATE/rollback" "$BACKUP"
-          test -s "$HOME_SRC"
-          test -s "$PLANS_SRC"
-          test -s "$PUBLIC/vamcity-public-home.html"
-          test -n "$APP_ROOT"
-          test -s "$APP_ROOT/wwwroot/index.html"
-          grep -q 'href="/login/"' "$HOME_SRC"
-          grep -q 'href="/register/0/"' "$HOME_SRC"
-          grep -q 'href="/plans.html"' "$HOME_SRC"
-          grep -q "fetch('/Loan/List/100'" "$PLANS_SRC"
-          grep -q "const href='/plan/0/'" "$PLANS_SRC"
-
-          if [ -e "$PUBLIC/vamcity-public-home.html" ]; then cp -p "$PUBLIC/vamcity-public-home.html" "$BACKUP/vamcity-public-home.html.before"; echo existing > "$BACKUP/home.state"; else echo absent > "$BACKUP/home.state"; fi
-          if [ -e "$PUBLIC_PLANS_DEST" ]; then cp -p "$PUBLIC_PLANS_DEST" "$BACKUP/public-plans.html.before"; echo existing > "$BACKUP/public-plans.state"; else echo absent > "$BACKUP/public-plans.state"; fi
-          if [ -e "$APP_PLANS_DEST" ]; then cp -p "$APP_PLANS_DEST" "$BACKUP/app-plans.html.before"; echo existing > "$BACKUP/app-plans.state"; else echo absent > "$BACKUP/app-plans.state"; fi
-          cp -p "$CUSTOM" "$BACKUP/roofixo.ir.cust_nginx.before"
-          chmod 600 "$BACKUP"/*.before "$BACKUP"/*.state
-
-          rollback() {
-            echo "ROLLING_BACK_VAMCITY_PUBLIC_SITE"
-            cp -p "$BACKUP/roofixo.ir.cust_nginx.before" "$CUSTOM"
-            if [ "$(cat "$BACKUP/home.state")" = existing ]; then cp -p "$BACKUP/vamcity-public-home.html.before" "$PUBLIC/vamcity-public-home.html"; else rm -f "$PUBLIC/vamcity-public-home.html"; fi
-            if [ "$(cat "$BACKUP/public-plans.state")" = existing ]; then cp -p "$BACKUP/public-plans.html.before" "$PUBLIC_PLANS_DEST"; else rm -f "$PUBLIC_PLANS_DEST"; fi
-            if [ "$(cat "$BACKUP/app-plans.state")" = existing ]; then cp -p "$BACKUP/app-plans.html.before" "$APP_PLANS_DEST"; else rm -f "$APP_PLANS_DEST"; fi
-            printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
-            /usr/local/directadmin/dataskq d >/dev/null 2>&1 || true
-            nginx -t && systemctl reload nginx || true
-          }
-          STARTED=0
-          on_exit() {
-            rc=$?
-            if [ "$rc" -ne 0 ] && [ "$STARTED" = 1 ]; then rollback || true; fi
-            rm -f "$HOME_SRC" "$PLANS_SRC"
-            exit "$rc"
-          }
-          trap on_exit EXIT
-
-          install -m 644 "$HOME_SRC" "$PUBLIC/.vamcity-public-home-$SHA.tmp"
-          install -m 644 "$PLANS_SRC" "$PUBLIC/.plans-$SHA.tmp"
-          install -m 644 "$PLANS_SRC" "$APP_ROOT/wwwroot/.plans-$SHA.tmp"
-          STARTED=1
-          mv -f "$PUBLIC/.vamcity-public-home-$SHA.tmp" "$PUBLIC/vamcity-public-home.html"
-          mv -f "$PUBLIC/.plans-$SHA.tmp" "$PUBLIC_PLANS_DEST"
-          mv -f "$APP_ROOT/wwwroot/.plans-$SHA.tmp" "$APP_PLANS_DEST"
-
-          python3 - "$CUSTOM" "$PUBLIC" <<'PY'
-          import pathlib, re, sys
-          config = pathlib.Path(sys.argv[1])
-          public = sys.argv[2]
-          text = config.read_text()
-          begin = "# VAMCITY_PUBLIC_PLANS_BEGIN"
-          end = "# VAMCITY_PUBLIC_PLANS_END"
-          if begin in text and end in text:
-              a = text.index(begin)
-              b = text.index(end, a) + len(end)
-              text = text[:a] + text[b:]
-          block = f'''# VAMCITY_PUBLIC_PLANS_BEGIN
-          location = /plans.html {{
-              proxy_pass http://127.0.0.1:5187/plans.html;
-              proxy_http_version 1.1;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
-              proxy_set_header X-Forwarded-Host $host;
-              proxy_connect_timeout 15s;
-              proxy_read_timeout 30s;
-              proxy_redirect off;
-          }}
-          # VAMCITY_PUBLIC_PLANS_END
-          '''
-          text = text.rstrip() + chr(10) + block + chr(10)
-          config.write_text(text)
-          PY
-          chown roofixo:roofixo "$CUSTOM"
-          chmod 644 "$CUSTOM"
-          printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
-          /usr/local/directadmin/dataskq d
-          nginx -t
-          systemctl reload nginx
-          grep -Fq 'location = /plans.html' "$GENERATED"
-          HOME_STATUS="$(curl -k -sS --resolve roofixo.ir:443:127.0.0.1 -o /tmp/vamcity-home-check-$SHA.html -w '%{http_code}' https://roofixo.ir/)"
-          PLANS_STATUS="$(curl -k -sS --resolve roofixo.ir:443:127.0.0.1 -o /tmp/vamcity-plans-check-$SHA.html -w '%{http_code}' https://roofixo.ir/plans.html)"
-          echo "LOCAL_HOME_HTTP=$HOME_STATUS"
-          echo "LOCAL_PLANS_HTTP=$PLANS_STATUS"
-          test "$HOME_STATUS" = 200
-          test "$PLANS_STATUS" = 200
-          grep -q 'href="/login/"' /tmp/vamcity-home-check-$SHA.html
-          grep -q 'href="/register/0/"' /tmp/vamcity-home-check-$SHA.html
-          grep -q 'href="/plans.html"' /tmp/vamcity-home-check-$SHA.html
-          grep -q 'طرح‌های تسهیلات | وام‌سیتی' /tmp/vamcity-plans-check-$SHA.html
-          rm -f /tmp/vamcity-home-check-$SHA.html /tmp/vamcity-plans-check-$SHA.html
-          echo "PUBLIC_SITE_DEPLOY_OK"
-          echo "HOME_FILE=$PUBLIC/vamcity-public-home.html"
-          echo "PUBLIC_PLANS_FILE=$PUBLIC_PLANS_DEST"
-          echo "APP_PLANS_FILE=$APP_PLANS_DEST"
+          test -s "$SRC"
+          test -s "$DEST"
+          grep -q 'href="/login/"' "$SRC"
+          grep -q 'href="/register/0/"' "$SRC"
+          grep -q 'href="/#plans"' "$SRC"
+          grep -q "fetch('/Loan/List/100'" "$SRC"
+          cp -p "$DEST" "$BACKUP/vamcity-public-home.html.before"
+          echo existing > "$BACKUP/home.state"
+          chmod 600 "$BACKUP/vamcity-public-home.html.before" "$BACKUP/home.state"
+          install -m 644 "$SRC" "$PUBLIC/.vamcity-public-home-$SHA.tmp"
+          mv -f "$PUBLIC/.vamcity-public-home-$SHA.tmp" "$DEST"
+          rm -f "$SRC"
+          STATUS="$(curl -k -sS --resolve roofixo.ir:443:127.0.0.1 -o "/tmp/vamcity-home-check-$SHA.html" -w '%{http_code}' https://roofixo.ir/)"
+          echo "LOCAL_HOME_HTTP=$STATUS"
+          test "$STATUS" = 200
+          grep -q 'href="/login/"' "/tmp/vamcity-home-check-$SHA.html"
+          grep -q 'href="/register/0/"' "/tmp/vamcity-home-check-$SHA.html"
+          grep -q 'href="/#plans"' "/tmp/vamcity-home-check-$SHA.html"
+          grep -q 'id="plans"' "/tmp/vamcity-home-check-$SHA.html"
+          rm -f "/tmp/vamcity-home-check-$SHA.html"
+          echo "PUBLIC_HOME_DEPLOY_OK"
+          echo "HOME_FILE=$DEST"
           echo "BACKUP=$BACKUP"
           echo "DATABASE_UNTOUCHED=1"
           echo "APP_CONTAINER_RESTARTED=0"
           REMOTE
 
-      - name: Verify public URLs and live API
+      - name: Verify public homepage, account routes, and live plans API
         shell: bash
         run: |
           set -euo pipefail
           BASE=https://roofixo.ir
           HOME_CODE="$(curl --retry 3 --retry-delay 2 -sS -L --max-time 25 -o /tmp/vamcity-home.html -w '%{http_code}' "$BASE/")"
-          PLANS_CODE="$(curl --retry 3 --retry-delay 2 -sS -L --max-time 25 -o /tmp/vamcity-plans.html -w '%{http_code}' "$BASE/plans.html")"
           echo "PUBLIC_HOME_HTTP=$HOME_CODE"
-          echo "PUBLIC_PLANS_HTTP=$PLANS_CODE"
           test "$HOME_CODE" = 200
-          test "$PLANS_CODE" = 200
           grep -q 'href="/login/"' /tmp/vamcity-home.html
           grep -q 'href="/register/0/"' /tmp/vamcity-home.html
-          grep -q 'href="/plans.html"' /tmp/vamcity-home.html
-          grep -q 'طرح‌های تسهیلات | وام‌سیتی' /tmp/vamcity-plans.html
+          grep -q 'href="/#plans"' /tmp/vamcity-home.html
+          for ROUTE in /login/ /register/0/; do
+            CODE="$(curl --retry 2 --retry-delay 1 -sS -L --max-time 20 -o /dev/null -w '%{http_code}' "$BASE$ROUTE")"
+            echo "ACCOUNT_ROUTE=$ROUTE HTTP=$CODE"
+            test "$CODE" = 200
+          done
           API_CODE="$(curl --retry 3 --retry-delay 2 -sS --max-time 25 -o /tmp/vamcity-plans-api.json -w '%{http_code}' "$BASE/Loan/List/100")"
           echo "LIVE_PLANS_API_HTTP=$API_CODE"
           test "$API_CODE" = 200
@@ -234,29 +150,29 @@ jobs:
             const errors = [];
             const page = await browser.newPage({viewport:{width:1440,height:1000}});
             page.on('pageerror', e => errors.push(e.message));
-            let response = await page.goto('https://roofixo.ir/', {waitUntil:'networkidle',timeout:45000});
+            const response = await page.goto('https://roofixo.ir/', {waitUntil:'networkidle',timeout:45000});
             if (!response || response.status() !== 200) throw new Error('Homepage did not return HTTP 200');
-            for (const href of ['/login/','/register/0/','/plans.html']) {
+            for (const href of ['/login/','/register/0/','/#plans']) {
               if (await page.locator('a[href="'+href+'"]').count() === 0) throw new Error('Homepage missing link '+href);
             }
-            await page.goto('https://roofixo.ir/plans.html', {waitUntil:'networkidle',timeout:45000});
-            if (!(await page.title()).includes('طرح‌های تسهیلات')) throw new Error('Modern plans title missing');
-            await page.waitForTimeout(1500);
-            const cards = await page.locator('.card').count();
-            const bodyText = await page.locator('body').innerText();
-            if (!bodyText.includes('طرح‌های تسهیلات')) throw new Error('Plans page body is empty');
-            console.log('DESKTOP_PLANS_CARD_COUNT='+cards);
-            console.log('DESKTOP_BROWSER_ERRORS='+JSON.stringify(errors));
+            await page.locator('a[href="/#plans"]').first().click();
+            await page.waitForTimeout(1200);
+            if (!page.url().endsWith('#plans')) throw new Error('Plans navigation did not reach homepage plans section');
+            const cards = await page.locator('#plans .plan').count();
+            if (cards < 1) throw new Error('No live plans rendered in homepage');
+            const detailLinks = await page.locator('#plans .plan a[href^="/plan/0/"]').count();
+            if (detailLinks < 1) throw new Error('Plan cards are missing real detail links');
+            console.log('DESKTOP_LIVE_PLAN_CARDS='+cards+' DETAIL_LINKS='+detailLinks);
             await page.setViewportSize({width:390,height:844});
             await page.reload({waitUntil:'networkidle',timeout:45000});
             const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
-            if (overflow) throw new Error('Mobile horizontal overflow detected');
-            for (const href of ['/login/','/register/0/']) {
-              if (await page.locator('a[href="'+href+'"]').count() === 0) throw new Error('Mobile plans page missing '+href);
-            }
             console.log('MOBILE_HORIZONTAL_OVERFLOW='+overflow);
-            if (errors.length) throw new Error('Browser JS errors: '+JSON.stringify(errors));
+            if (overflow) throw new Error('Mobile horizontal overflow detected');
+            const mobileCards = await page.locator('#plans .plan').count();
+            if (mobileCards < 1) throw new Error('No live plans rendered on mobile');
+            if (errors.length) throw new Error('Browser JavaScript errors: '+JSON.stringify(errors));
+            console.log('BROWSER_ERRORS='+JSON.stringify(errors));
             await browser.close();
           })().catch(e => { console.error(e); process.exit(1); });
           JS
-          echo "VAMCITY_PUBLIC_SITE_BROWSER_CHECK_OK"
+          echo "VAMCITY_PUBLIC_HOME_BROWSER_CHECK_OK"
