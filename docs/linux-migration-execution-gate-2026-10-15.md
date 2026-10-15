@@ -14,10 +14,10 @@ Updated: 2026-10-15
 
 - Repository: digibile/vamcity.
 - Legacy app: ASP.NET Core originally targeting .NET 5; recovered source currently targets .NET 9.
-- The recovered project still uses Microsoft.EntityFrameworkCore.SqlServer, UseSqlServer, SQL Server migrations, and Hangfire.SqlServer.
+- The recovered project uses Microsoft.EntityFrameworkCore.SqlServer, UseSqlServer, SQL Server migrations, and Hangfire.SqlServer. These can remain in a Linux deployment when the SQL Server endpoint is itself Linux-compatible; a database-provider migration is a separate project and is not required merely to run ASP.NET Core on Linux.
 - The restored database backup was previously verified on the server as isolated vamcity_stage; prior notes recorded 83 tables at restore verification. This is not proof that every row, attachment, or financial history is present in the target Linux database.
 - The application has platform-sensitive components including DinkToPdf/native libwkhtmltox, System.Drawing, file uploads, certificate handling, scheduled tasks, and external gateways.
-- A PostgreSQL Compose foundation exists, but that alone does not convert the schema, data, queries, or Hangfire storage. Do not connect the current SQL Server application to PostgreSQL.
+- A PostgreSQL Compose foundation exists, but it must not be used as a drop-in replacement for SQL Server. Preserve the current provider unless a separately approved, tested data/provider migration is explicitly required.
 
 ## Execution phases and acceptance gates
 
@@ -36,12 +36,12 @@ Updated: 2026-10-15
 - Leave this variable unset/false for normal startup and route testing.
 - Only enable it after an approved backup, a reviewed migration script, and confirmation that the connection points to the isolated test database.
 
-### 4. Convert database and background jobs
-- Audit SQL Server-only types, raw SQL, functions, stored procedures, identity/sequence behavior, collation, indexes, constraints, and migration annotations.
-- Implement a reviewed PostgreSQL EF Core model/migration baseline before selecting PostgreSQL as the app provider.
-- Replace UseSqlServer and Hangfire.SqlServer with compatible PostgreSQL providers only after the model and job-storage conversion exists.
-- Import source data with a repeatable, idempotent ETL. Compare table-by-table row counts, key relationships, attachments, identity values, and financial totals before/after. Never treat an empty database as a migration.
-- If any SQL Server-specific behavior cannot be translated safely, keep it isolated and report the blocker rather than silently dropping behavior.
+### 4. Database and background jobs
+- First prove that the existing SQL Server database can be reached from the Linux app using the supported SQL client and that the current schema and migrations work unchanged.
+- Keep SQL Server and Hangfire.SqlServer when they are hosted on a supported Linux SQL Server service; do not force a PostgreSQL conversion solely because the application host changed from Windows to Linux.
+- If a separate move to PostgreSQL is explicitly approved, treat it as its own migration: audit SQL Server-only types, raw SQL, functions, stored procedures, identity/sequence behavior, collation, indexes, constraints, and migration annotations; then implement and test a provider-specific EF Core model and Hangfire storage conversion.
+- For any database migration, use a repeatable, idempotent import. Compare table-by-table row counts, key relationships, attachments, identity values, and financial totals before/after. Never treat an empty database as a migration.
+- If a database behavior cannot be translated safely, preserve the source data and report the blocker rather than silently dropping behavior.
 
 ### 5. Linux runtime compatibility
 - Verify Linux x64 native PDF dependencies and required system libraries; never ship Windows .dll native libraries as Linux dependencies.
@@ -62,4 +62,6 @@ Updated: 2026-10-15
 
 ## Current status
 
-This branch begins the controlled migration work. It does not claim the SQL Server-to-PostgreSQL conversion, complete data transfer, every-route verification, or final production cutover is finished. The immediate next gates are the clean Linux build, source/runtime dependency audit, and a complete route/API inventory.
+This branch has a successful .NET 9 Linux publish and a passing source-compatibility inventory on its current baseline. The publish workflow was strengthened to flatten the SPA entrypoint and assert the root HTML, JavaScript bundles, and theme CSS exist in the published web root. A new isolated runtime smoke test is being exercised against an ephemeral SQL Server; it must pass before its claims are accepted. No production deployment or real-data restore is performed by these CI tests.
+
+The migration is not yet production-approved. Outstanding gates include the live Linux runtime test, PDF/native dependency validation, full route/API browser coverage, and row-by-row integrity comparison for any real database copy. The current SQL Server provider is retained by default to reduce data risk; PostgreSQL conversion is not assumed or required just because the app runs on Linux.
