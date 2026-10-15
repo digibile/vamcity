@@ -1,5 +1,6 @@
 name: Diagnose VamCity login route behavior
 run-name: Trace login routes without changing production configuration
+# Read-only diagnostic refresh 2026-10-15: investigate browser smoke-test finding that login/register HTML returns empty visible text.
 
 on:
   push:
