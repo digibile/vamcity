@@ -75,4 +75,19 @@ jobs:
             echo "PUBLIC_ROUTE=$ROUTE HTTP=$STATUS LAST_LOCATION=${FINAL_URL:-none} TITLE=${TITLE:-none} BUNDLE=${BUNDLE:-missing} BYTES=$(wc -c < "$BODY")"
             rm -f "$BODY" "$HEADERS"
           done
+          echo "=== PUBLIC SPA ASSET STATUS AND CONTENT TYPES ==="
+          for ASSET in /js/chunk-vendors.0d0536ea.js /js/app.e76ab352.js /css/chunk-vendors.c0d350b3.css /css/app.65501a28.css /css/vamcity-modern-theme.css?v=11; do
+            BODY="$(mktemp)"
+            HEADERS="$(mktemp)"
+            STATUS="$(curl -k -sS -D "$HEADERS" -o "$BODY" --max-time 20 -w '%{http_code}' "https://roofixo.ir$ASSET" || true)"
+            TYPE="$(grep -i '^content-type:' "$HEADERS" | tail -1 | tr -d '\r' || true)"
+            echo "PUBLIC_ASSET=$ASSET HTTP=$STATUS TYPE=${TYPE:-none} BYTES=$(wc -c < "$BODY")"
+            if [[ "$ASSET" == *.js* ]]; then
+              head -c 100 "$BODY" | tr '\n' ' ' | sed 's/^/ASSET_PREFIX=/'
+              echo
+            fi
+            rm -f "$BODY" "$HEADERS"
+          done
+          echo "=== APP SCRIPT HASH IN DEPLOYED HTML ==="
+          curl -k -sS --max-time 15 https://roofixo.ir/login/ | grep -Eo 'src="[^"]*app\.[a-f0-9]+\.js[^"]*"' | tail -1 || true
           REMOTE
