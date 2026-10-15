@@ -147,7 +147,7 @@ jobs:
           # Remove legacy exact-match plan routes from earlier deployments before adding
           # the single canonical managed block below. This avoids duplicate nginx locations.
           text = re.sub(
-              r'(?ms)^[ \t]*location\s*=\s*(?:/plans\.html|/plans/|/plans|/cl/plans/|/cl/plans)\s*\{\n.*?^[ \t]*\}[ \t]*\n?',
+              r'(?ms)^[ \t]*location\s*=\s*(?:/plans\.html|/plans/|/plans|/cl/plans/0/|/cl/plans/0|/cl/ourplans/0/|/cl/ourplans/0|/cl/plans/|/cl/plans)\s*\{\n.*?^[ \t]*\}[ \t]*\n?',
               '',
               text,
           )
@@ -193,6 +193,20 @@ jobs:
               return 302 /plans.html;
           }}
           location = /cl/plans/ {{
+              return 302 /plans.html;
+          }}
+          # Older customer-portal bookmarks must use the dedicated modern plans page,
+          # not the legacy Vue plans-list UI.
+          location = /cl/plans/0 {{
+              return 302 /plans.html;
+          }}
+          location = /cl/plans/0/ {{
+              return 302 /plans.html;
+          }}
+          location = /cl/ourplans/0 {{
+              return 302 /plans.html;
+          }}
+          location = /cl/ourplans/0/ {{
               return 302 /plans.html;
           }}
           # VAMCITY_PUBLIC_PLANS_END
@@ -261,7 +275,7 @@ jobs:
           echo "PUBLIC_PLANS_HTTP=$PLANS_CODE"
           test "$PLANS_CODE" = 200
           grep -q 'طرح‌های تسهیلات | وام‌سیتی' /tmp/vamcity-plans.html
-          for LEGACY_ROUTE in /cl/plans/ /plans/; do
+          for LEGACY_ROUTE in /cl/plans/ /plans/ /cl/plans/0 /cl/plans/0/ /cl/ourplans/0 /cl/ourplans/0/; do
             LEGACY_FINAL_URL="$(curl --retry 2 --retry-delay 1 -sS -L --max-time 20 -o /tmp/vamcity-legacy-plans.html -w '%{url_effective}' "$BASE$LEGACY_ROUTE")"
             echo "LEGACY_PLANS_ROUTE=$LEGACY_ROUTE FINAL_URL=$LEGACY_FINAL_URL"
             test "$LEGACY_FINAL_URL" = "$BASE/plans.html"
@@ -321,9 +335,11 @@ jobs:
             if (!page.url().includes('/cl/plan/0/')) throw new Error('Plan detail link did not use the registered SPA route');
             if (detailText.length < 100) throw new Error('Plan detail page rendered blank or near-empty content');
             console.log('DESKTOP_DEDICATED_PLAN_CARDS='+cards+' DETAIL_LINKS='+detailLinkCount);
-            await page.goto('https://roofixo.ir/cl/plans/', {waitUntil:'networkidle',timeout:45000});
-            if (!page.url().endsWith('/plans.html')) throw new Error('Legacy plans URL did not redirect to the modern page');
-            if ((await page.locator('.card').count()) < 1) throw new Error('Legacy plans URL did not show modern plan cards');
+            for (const legacyPath of ['/cl/plans/','/plans/','/cl/plans/0','/cl/plans/0/','/cl/ourplans/0','/cl/ourplans/0/']) {
+              const legacyResponse = await page.goto('https://roofixo.ir'+legacyPath, {waitUntil:'networkidle',timeout:45000});
+              if (!legacyResponse || legacyResponse.status() !== 200 || !page.url().endsWith('/plans.html')) throw new Error('Legacy plans URL '+legacyPath+' did not redirect to the modern page');
+              if ((await page.locator('.card').count()) < 1) throw new Error('Legacy plans URL '+legacyPath+' did not show modern plan cards');
+            }
             await page.setViewportSize({width:390,height:844});
             await page.reload({waitUntil:'networkidle',timeout:45000});
             const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
