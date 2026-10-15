@@ -35,10 +35,10 @@ jobs:
           set -euo pipefail
           test -s wwwroot/ui/index.html
           test -s wwwroot/ui/css/vamcity-modern-theme.css
-          grep -Fq '/css/vamcity-modern-theme.css?v=10' wwwroot/ui/index.html
+          grep -Fq '/css/vamcity-modern-theme.css?v=11' wwwroot/ui/index.html
           for file in tokens-base shell-navigation surfaces-actions forms-tables feedback-overlays responsive public-landing accessibility login-authentication workspaces pages-experience; do
             test -s "wwwroot/ui/css/vamcity/$file.css"
-            grep -Fq "$file.css?v=10" wwwroot/ui/css/vamcity-modern-theme.css
+            grep -Fq "$file.css?v=11" wwwroot/ui/css/vamcity-modern-theme.css
           done
           grep -Fq '/js/chunk-vendors.0d0536ea.js' wwwroot/ui/index.html
           grep -Eq '/js/app.e76ab352.js\?v=otp-ui(1|2)' wwwroot/ui/index.html
@@ -138,7 +138,7 @@ jobs:
           tar -xzf "$ARCHIVE" -C "$TMP"
           test -s "$TMP/wwwroot/ui/index.html"
           test -s "$TMP/wwwroot/ui/css/vamcity-modern-theme.css"
-          grep -Fq '/css/vamcity-modern-theme.css?v=10' "$TMP/wwwroot/ui/index.html"
+          grep -Fq '/css/vamcity-modern-theme.css?v=11' "$TMP/wwwroot/ui/index.html"
           grep -Eq '/js/app.e76ab352.js\?v=otp-ui(1|2)' "$TMP/wwwroot/ui/index.html"
           grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' "$TMP/wwwroot/ui/js/app.e76ab352.js"
           grep -Fq 'e=Array.isArray(e)?e.filter((function(t){return t&&"object"===typeof t})):[]' "$TMP/wwwroot/ui/js/views-admin-UserLoanRequests.8e3264fe.js"
@@ -186,9 +186,9 @@ jobs:
             mv "$APP_ROOT/wwwroot/css/vamcity/.$name-$SHA.tmp" "$APP_ROOT/wwwroot/css/vamcity/$name"
           done
 
-          grep -Fq '/css/vamcity-modern-theme.css?v=10' "$APP_ROOT/wwwroot/index.html"
+          grep -Fq '/css/vamcity-modern-theme.css?v=11' "$APP_ROOT/wwwroot/index.html"
           curl --retry 4 --retry-delay 2 --fail --silent --show-error --max-time 10 \
-            "http://127.0.0.1:5187/css/vamcity-modern-theme.css?v=10" -o /dev/null
+            "http://127.0.0.1:5187/css/vamcity-modern-theme.css?v=11" -o /dev/null
           curl --retry 4 --retry-delay 2 --fail --silent --show-error --max-time 10 \
             "http://127.0.0.1:5187/js/app.e76ab352.js?v=otp-ui2" -o /tmp/vamcity-otp-bundle-check.js
           grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' /tmp/vamcity-otp-bundle-check.js
@@ -208,8 +208,8 @@ jobs:
         run: |
           set -euo pipefail
           curl --retry 3 --retry-delay 2 --fail --silent --show-error --max-time 15 \
-            "https://roofixo.ir/css/vamcity-modern-theme.css?v=10" -o /tmp/vamcity-public-theme.css
-          grep -Fq "tokens-base.css?v=10" /tmp/vamcity-public-theme.css
+            "https://roofixo.ir/css/vamcity-modern-theme.css?v=11" -o /tmp/vamcity-public-theme.css
+          grep -Fq "tokens-base.css?v=11" /tmp/vamcity-public-theme.css
           curl --retry 3 --retry-delay 2 --fail --silent --show-error --max-time 15 \
             "https://roofixo.ir/js/app.e76ab352.js?v=otp-ui2" -o /tmp/vamcity-public-otp-bundle.js
           grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' /tmp/vamcity-public-otp-bundle.js
