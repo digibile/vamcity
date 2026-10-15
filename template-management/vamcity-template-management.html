@@ -99,7 +99,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
 .legacy-toolbar strong{font-size:12px}
 .legacy-toolbar button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:7px 12px}
 .legacy-frame{display:block;width:100%;height:calc(100vh - 270px);min-height:620px;border:0;background:#f4f6f9}
-.legacy-loading{padding:20px;color:var(--muted);font-size:12px}
+.legacy-loading{padding:20px;color:var(--muted);font-size:12px}.legacy-fallback{padding:24px;display:grid;gap:12px;background:#fff;color:var(--ink)}.legacy-fallback[hidden]{display:none!important}.legacy-fallback p{margin:0;color:var(--muted)}.legacy-fallback .btn{width:max-content;max-width:100%;text-decoration:none}
 @media(max-width:760px){.legacy-workspace{min-height:70vh}.legacy-frame{height:calc(100vh - 260px);min-height:560px}.legacy-toolbar{align-items:flex-start;flex-direction:column}}
 
 
@@ -232,6 +232,8 @@ tbody tr:hover{background:#f7fafc}
   <a class="navbtn" href="/admin/members/" style="text-decoration:none"><span class="ico">♙</span>اعضا و مشتریان</a>
   <a class="navbtn" href="/admin/users/" style="text-decoration:none"><span class="ico">♧</span>کاربران سامانه</a>
   <a class="navbtn" href="/admin/purchasedPlans" style="text-decoration:none"><span class="ico">▦</span>طرح‌های خریداری‌شده</a>
+  <a class="navbtn" href="/admin/memberAuthorizations/" style="text-decoration:none"><span class="ico">✓</span>تأییدها و مجوزهای اعضا</a>
+  <a class="navbtn" href="/admin/sponsored-loans/" style="text-decoration:none"><span class="ico">◈</span>گزارش تسهیلات حامیان</a>
   <div class="side-label">عملیات و پشتیبانی</div>
   <a class="navbtn" href="/admin/tickets/" style="text-decoration:none"><span class="ico">✉</span>تیکت‌ها و پشتیبانی</a>
   <a class="navbtn" href="/admin/customerOrders/" style="text-decoration:none"><span class="ico">▤</span>سفارش‌های مشتریان</a>
@@ -439,7 +441,8 @@ tbody tr:hover{background:#f7fafc}
     <strong id="legacy-title">بخش عملیاتی سامانه</strong>
     <button type="button" onclick="returnToOverview()">بازگشت به مرکز مدیریت</button>
   </div>
-  <div class="legacy-loading" id="legacy-loading">در حال بارگذاری بخش انتخاب‌شده…</div>
+  <div class="legacy-loading" id="legacy-loading" role="status" aria-live="polite">در حال بارگذاری بخش انتخاب‌شده…</div>
+  <div class="legacy-fallback" id="legacy-fallback" hidden role="alert"><strong>این بخش در قاب داخلی بارگذاری نشد.</strong><p>برای جلوگیری از صفحهٔ سفید، مسیر اصلی سامانه را مستقیم باز کنید. نشست ورود شما حفظ می‌شود.</p><a class="btn primary" id="legacy-direct-link" href="/admin/dashboard" target="_blank" rel="noopener">باز کردن بخش اصلی در زبانهٔ جدید</a><button class="btn" type="button" onclick="returnToOverview()">بازگشت به مرکز مدیریت</button></div>
   <iframe class="legacy-frame" id="legacy-frame" title="امکانات عملیاتی وام‌سیتی" loading="eager"></iframe>
 </section>
 
@@ -466,10 +469,16 @@ const legacyWorkspace=document.getElementById("legacy-workspace");
 const legacyFrame=document.getElementById("legacy-frame");
 const legacyLoading=document.getElementById("legacy-loading");
 const mainSections=Array.from(document.querySelectorAll("main.main > .section"));
+let legacyLoadTimer=null;
 function openLegacy(url,label){
   if(!legacyWorkspace||!legacyFrame)return;
+  if(legacyLoadTimer)clearTimeout(legacyLoadTimer);
   mainSections.forEach(section=>section.style.display="none");
   legacyWorkspace.hidden=false;
+  const fallback=document.getElementById("legacy-fallback");
+  const directLink=document.getElementById("legacy-direct-link");
+  if(fallback)fallback.hidden=true;
+  if(directLink)directLink.href=url;
   document.getElementById("legacy-title").textContent=(label||"امکانات سامانه").replace(/\\s+/g," ").trim();
   legacyLoading.style.display="block";
   legacyFrame.onload=function(){
@@ -500,9 +509,26 @@ function openLegacy(url,label){
     }catch(e){/* Cross-origin or browser policy: keep the original page functional. */}
   };
   legacyFrame.src=url;
+  legacyLoadTimer=setTimeout(function(){
+    try{
+      const doc=legacyFrame.contentDocument;
+      const app=doc&&doc.querySelector("#app");
+      const visibleText=doc&&doc.body?String(doc.body.innerText||"").trim():"";
+      if(!doc||!doc.body||(!visibleText&&(!app||!app.children.length))){
+        legacyLoading.style.display="none";
+        const fallback=document.getElementById("legacy-fallback");
+        if(fallback)fallback.hidden=false;
+      }
+    }catch(e){
+      legacyLoading.style.display="none";
+      const fallback=document.getElementById("legacy-fallback");
+      if(fallback)fallback.hidden=false;
+    }
+  },10000);
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function returnToOverview(){
+  if(legacyLoadTimer)clearTimeout(legacyLoadTimer);
   legacyFrame.src="about:blank";
   legacyWorkspace.hidden=true;
   legacyFrame.onload=null;
