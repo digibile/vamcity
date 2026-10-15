@@ -69,6 +69,7 @@ jobs:
         run: |
           set -euo pipefail
           test -s ./artifacts/vamcity/LoanSystemAvizhe.Site.dll
+          test -s ./artifacts/vamcity/nlog.config
           dotnet ./artifacts/vamcity/LoanSystemAvizhe.Site.dll > "$RUNNER_TEMP/vamcity-linux-runtime.log" 2>&1 &
           APP_PID=$!
           echo "$APP_PID" > "$RUNNER_TEMP/vamcity-linux-runtime.pid"
