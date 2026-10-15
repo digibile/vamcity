@@ -1,0 +1,41 @@
+name: VamCity Linux compatibility inventory
+
+on:
+  pull_request:
+    paths:
+      - "recovered-source/**"
+      - "wwwroot/ui/js/**"
+      - "scripts/audit-linux-compatibility.sh"
+      - ".github/workflows/linux-compatibility-audit.yml"
+  push:
+    branches: [main]
+    paths:
+      - "recovered-source/**"
+      - "wwwroot/ui/js/**"
+      - "scripts/audit-linux-compatibility.sh"
+      - ".github/workflows/linux-compatibility-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Inventory Linux blockers and SPA routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/audit-linux-compatibility.sh . "$RUNNER_TEMP/linux-compatibility-audit.md"
+          cat "$RUNNER_TEMP/linux-compatibility-audit.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: vamcity-linux-compatibility-audit
+          path: ${{ runner.temp }}/linux-compatibility-audit.md
+          if-no-files-found: error
+          retention-days: 14

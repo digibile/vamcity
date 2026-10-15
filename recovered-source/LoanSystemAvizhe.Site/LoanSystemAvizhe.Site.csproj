@@ -11,7 +11,9 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
   </PropertyGroup>
   <PropertyGroup />
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="../../nlog.config" Link="nlog.config" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../LoanSystemAvizhe.Services/LoanSystemAvizhe.Services.csproj" />
     <ProjectReference Include="../LoanSystemAvizhe.Core/LoanSystemAvizhe.Core.csproj" />

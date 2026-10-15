@@ -1,6 +1,5 @@
 using System;
 using LoanSystem.Data;
-using LoanSystem.Services.Users;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -17,22 +16,39 @@ public class Program
 	{
 		NLogBuilder.ConfigureNLog("nlog.config");
 		IWebHost webHost = CreateWebHostBuilder(args).Build();
+
+		// Database schema changes are deliberately opt-in. This app has a real
+		// loan/financial database, so merely starting a new Linux release must
+		// never run migrations or seed data against an unspecified connection.
+		bool autoMigrate = string.Equals(
+			Environment.GetEnvironmentVariable("VAMCITY_AUTO_MIGRATE"),
+			"true",
+			StringComparison.OrdinalIgnoreCase);
+
 		using (IServiceScope serviceScope = webHost.Services.CreateScope())
 		{
-			try
+			ILogger<Startup> logger = serviceScope.ServiceProvider.GetRequiredService<ILogger<Startup>>();
+			if (autoMigrate)
 			{
-				AppDbContext service = serviceScope.ServiceProvider.GetService<AppDbContext>();
-				UserManager service2 = serviceScope.ServiceProvider.GetService<UserManager>();
-				service.Database.Migrate();
-				DBInitializer.Initialize(service);
+				try
+				{
+					AppDbContext db = serviceScope.ServiceProvider.GetRequiredService<AppDbContext>();
+					db.Database.Migrate();
+					DBInitializer.Initialize(db);
+					logger.LogInformation("VamCity database migrations and initialization completed because VAMCITY_AUTO_MIGRATE=true.");
+				}
+				catch (Exception exception)
+				{
+					logger.LogCritical(exception, "Database migration or initialization failed. Refusing to start with an unverified schema.");
+					throw new InvalidOperationException("VamCity database migration or initialization failed; application startup was aborted.", exception);
+				}
 			}
-			catch (Exception exception)
+			else
 			{
-				ILogger<Startup> requiredService = serviceScope.ServiceProvider.GetRequiredService<ILogger<Startup>>();
-				requiredService.LogCritical(exception, "Database migration or initialization failed. Refusing to start with an unverified schema.");
-				throw new InvalidOperationException("VamCity database migration or initialization failed; application startup was aborted.", exception);
+				logger.LogWarning("Automatic database migration is disabled. Set VAMCITY_AUTO_MIGRATE=true only for an explicitly approved migration against a verified backup and the intended database.");
 			}
 		}
+
 		try
 		{
 			webHost.Run();
