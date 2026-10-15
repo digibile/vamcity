@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - "recovered-source/**"
+      - "wwwroot/ui/**"
       - ".github/workflows/linux-build.yml"
   pull_request:
     paths:
       - "recovered-source/**"
+      - "wwwroot/ui/**"
       - ".github/workflows/linux-build.yml"
   workflow_dispatch:
 
@@ -30,19 +32,45 @@ jobs:
       - name: Show SDK
         run: dotnet --info
 
-      - name: Copy frontend assets into web project
+      - name: Assemble Linux web root with SPA entrypoint at the actual web root
+        shell: bash
         run: |
+          set -euo pipefail
           test -f wwwroot/ui/index.html
-          mkdir -p recovered-source/LoanSystemAvizhe.Site/wwwroot
-          cp -a wwwroot/ui recovered-source/LoanSystemAvizhe.Site/wwwroot/
+          APP_WWWROOT="recovered-source/LoanSystemAvizhe.Site/wwwroot"
+          mkdir -p "$APP_WWWROOT"
+          # Keep public images/fonts/static files, then flatten the SPA bundle so
+          # index.html URLs such as /js/app.*.js and /css/*.css resolve at /.
+          cp -a wwwroot/. "$APP_WWWROOT/"
+          cp -a wwwroot/ui/. "$APP_WWWROOT/"
+          test -s "$APP_WWWROOT/index.html"
+          test -s "$APP_WWWROOT/js/app.e76ab352.js"
+          test -s "$APP_WWWROOT/js/chunk-vendors.0d0536ea.js"
+          test -s "$APP_WWWROOT/css/vamcity-modern-theme.css"
+          grep -Fq '/js/app.e76ab352.js' "$APP_WWWROOT/index.html"
+          grep -Fq '/css/vamcity-modern-theme.css' "$APP_WWWROOT/index.html"
+          echo "LINUX_WEBROOT_ENTRYPOINT_OK=true"
+          echo "LINUX_WEBROOT_APP_BUNDLE_OK=true"
+          echo "LINUX_WEBROOT_THEME_CSS_OK=true"
 
       - name: Publish Linux application
         run: dotnet publish recovered-source/LoanSystemAvizhe.Site/LoanSystemAvizhe.Site.csproj --configuration Release --output ./artifacts/vamcity --verbosity minimal
 
-      - name: Verify publish output
+      - name: Verify Linux publish output and browser assets
+        shell: bash
         run: |
-          test -f ./artifacts/vamcity/LoanSystemAvizhe.Site.dll
-          test -f ./artifacts/vamcity/LoanSystemAvizhe.Site.runtimeconfig.json
+          set -euo pipefail
+          test -s ./artifacts/vamcity/LoanSystemAvizhe.Site.dll
+          test -s ./artifacts/vamcity/LoanSystemAvizhe.Site.runtimeconfig.json
+          test -s ./artifacts/vamcity/wwwroot/index.html
+          test -s ./artifacts/vamcity/wwwroot/js/app.e76ab352.js
+          test -s ./artifacts/vamcity/wwwroot/js/chunk-vendors.0d0536ea.js
+          test -s ./artifacts/vamcity/wwwroot/css/vamcity-modern-theme.css
+          grep -Fq 'vamcity-modern-theme.css' ./artifacts/vamcity/wwwroot/index.html
+          echo "PUBLISH_HTML_ENTRYPOINT_OK=true"
+          echo "PUBLISH_APP_BUNDLE_OK=true"
+          echo "PUBLISH_VENDOR_BUNDLE_OK=true"
+          echo "PUBLISH_THEME_CSS_OK=true"
           cat ./artifacts/vamcity/LoanSystemAvizhe.Site.runtimeconfig.json
 
       - name: Upload Linux publish artifact
