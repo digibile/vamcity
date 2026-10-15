@@ -76,7 +76,7 @@ jobs:
             rm -f "$BODY" "$HEADERS"
           done
           echo "=== PUBLIC SPA ASSET STATUS AND CONTENT TYPES ==="
-          for ASSET in /js/chunk-vendors.0d0536ea.js /js/app.e76ab352.js /css/chunk-vendors.c0d350b3.css /css/app.65501a28.css /css/vamcity-modern-theme.css?v=11; do
+          for ASSET in /js/chunk-vendors.0d0536ea.js /js/app.e76ab352.js /js/undefined.js /js/a55b.js /js/73cf.js /css/chunk-vendors.c0d350b3.css /css/app.65501a28.css /css/vamcity-modern-theme.css?v=11; do
             BODY="$(mktemp)"
             HEADERS="$(mktemp)"
             STATUS="$(curl -k -sS -D "$HEADERS" -o "$BODY" --max-time 20 -w '%{http_code}' "https://roofixo.ir$ASSET" || true)"
