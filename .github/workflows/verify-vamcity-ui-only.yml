@@ -156,7 +156,7 @@ jobs:
               page.on('console', msg => { if (msg.type() === 'error') errors.push('CONSOLE ' + msg.text()); });
               page.on('requestfailed', r => errors.push('REQUEST_FAILED ' + r.url() + ' ' + (r.failure()?.errorText || 'unknown')));
               const assetResponses = [];
-              page.on('response', r => { if (new URL(r.url()).hostname === 'roofixo.ir' && (r.status() >= 400 || /\\/js\\/(?:undefined|a55b|73cf)\\.js/.test(r.url()))) assetResponses.push(r.status() + ' ' + r.url() + ' TYPE=' + (r.headers()['content-type'] || 'unknown')); });
+              page.on('response', r => { if (new URL(r.url()).hostname === 'roofixo.ir' && (r.status() >= 400 || /\/js\/(?:undefined|a55b|73cf)\.js/.test(r.url()))) assetResponses.push(r.status() + ' ' + r.url() + ' TYPE=' + (r.headers()['content-type'] || 'unknown')); });
               const response = await page.goto('https://roofixo.ir' + route, { waitUntil: 'domcontentloaded', timeout: 20000 });
               await page.waitForTimeout(6500);
               const body = (await page.locator('body').innerText().catch(() => '')).replace(/\\s+/g, ' ').trim();
