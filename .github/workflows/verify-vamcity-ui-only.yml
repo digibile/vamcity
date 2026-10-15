@@ -165,7 +165,8 @@ jobs:
               const buttons = await page.locator('button, .v-btn').count().catch(() => 0);
               console.log('AUTH_PAGE=' + route + ' FINAL_URL=' + page.url() + ' HTTP=' + (response?.status() ?? 'none') + ' BODY_LENGTH=' + body.length + ' INPUTS=' + inputs + ' PASSWORD_FIELDS=' + passwords + ' BUTTONS=' + buttons);
               console.log('AUTH_BODY_SAMPLE=' + body.slice(0, 500));
-              console.log('AUTH_JS_RESOURCES=' + JSON.stringify((await page.evaluate(() => performance.getEntriesByType('resource').filter(r => /\\.js(?:[?#]|$)/.test(r.name)).map(r => r.name + ' ' + Math.round(r.duration) + 'ms')).catch(() => []).slice(-15))));
+              const jsResources = await page.evaluate(() => performance.getEntriesByType('resource').filter(r => /\\.js(?:[?#]|$)/.test(r.name)).map(r => r.name + ' ' + Math.round(r.duration) + 'ms')).catch(() => []);
+              console.log('AUTH_JS_RESOURCES=' + JSON.stringify(jsResources.slice(-15)));
               console.log('AUTH_ASSET_RESPONSES=' + JSON.stringify(assetResponses.slice(0, 15)));
               console.log('AUTH_BROWSER_ERRORS=' + JSON.stringify(errors.slice(0, 20)));
               await page.screenshot({ path: 'artifacts/auth-' + route.replace(/[^a-z0-9]+/gi, '-') + '.png', fullPage: true }).catch(() => {});
