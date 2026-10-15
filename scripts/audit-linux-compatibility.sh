@@ -45,8 +45,8 @@ if [[ -n "$BUNDLE" ]]; then
 import re, sys
 from pathlib import Path
 text = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
-routes = sorted(set(re.findall(r'["\x27]((?:/)?(?:admin|superadmin|agent|member|sponsor|cl|login|register|plans|plan|ourplans|pop)(?:/[^"\x27\\s]*)?)["\x27]', text)))
-apis = sorted(set(re.findall(r'["\x27]((?:admin|superadmin|agent|member|sponsor|account|loan|userloan|userLoan|Loan)/[A-Za-z0-9_./{}:$-]+)["\x27]', text)))
+routes = sorted(set(re.findall(r"""["']((?:/)?(?:admin|superadmin|agent|member|sponsor|cl|login|register|plans|plan|ourplans|pop)(?:/[^"\\s']*)?)["']""", text)))
+apis = sorted(set(re.findall(r"""["']((?:admin|superadmin|agent|member|sponsor|account|loan|userloan|userLoan|Loan)/[A-Za-z0-9_./{}:$-]+)["']""", text)))
 print(f"- Bundle: {sys.argv[1]}")
 print(f"- Extracted route-like strings: {len(routes)}")
 for item in routes[:250]: print(f"  - Route candidate: {item}")
