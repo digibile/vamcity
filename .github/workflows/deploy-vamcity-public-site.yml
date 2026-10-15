@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: vamcity-roofixo-public-home
+  group: vamcity-roofixo-public-home-release
   cancel-in-progress: false
 
 jobs:
