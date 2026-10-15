@@ -2,14 +2,14 @@
    POLICY: Keep this file as an import manifest only; implement styles in the scoped modules.
    Load order: tokens/base -> shell/navigation -> surfaces/actions -> forms/tables -> feedback/overlays -> responsive.
    Business logic, routes, API calls, authentication and payment behavior must never be implemented here. */
-@import url("./vamcity/tokens-base.css?v=10");
-@import url("./vamcity/shell-navigation.css?v=10");
-@import url("./vamcity/surfaces-actions.css?v=10");
-@import url("./vamcity/forms-tables.css?v=10");
-@import url("./vamcity/feedback-overlays.css?v=10");
-@import url("./vamcity/responsive.css?v=10");
-@import url("./vamcity/public-landing.css?v=10");
-@import url("./vamcity/login-authentication.css?v=10");
-@import url("./vamcity/workspaces.css?v=10");
-@import url("./vamcity/accessibility.css?v=10");
-@import url("./vamcity/pages-experience.css?v=10");
+@import url("./vamcity/tokens-base.css?v=11");
+@import url("./vamcity/shell-navigation.css?v=11");
+@import url("./vamcity/surfaces-actions.css?v=11");
+@import url("./vamcity/forms-tables.css?v=11");
+@import url("./vamcity/feedback-overlays.css?v=11");
+@import url("./vamcity/responsive.css?v=11");
+@import url("./vamcity/public-landing.css?v=11");
+@import url("./vamcity/login-authentication.css?v=11");
+@import url("./vamcity/workspaces.css?v=11");
+@import url("./vamcity/accessibility.css?v=11");
+@import url("./vamcity/pages-experience.css?v=11");
