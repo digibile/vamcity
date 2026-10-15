@@ -24,13 +24,13 @@ done
 say
 say "## Database/background-job blockers"
 for pattern in 'UseSqlServer' 'Microsoft.EntityFrameworkCore.SqlServer' 'Hangfire.SqlServer' 'SqlConnection' 'SqlCommand'; do
-  count="$(grep -RIl --include='*.cs' --include='*.csproj' "$pattern" recovered-source 2>/dev/null | wc -l | tr -d ' ')"
+  count="$((0 + $( (grep -RIl --include='*.cs' --include='*.csproj' "$pattern" recovered-source 2>/dev/null || true) | wc -l | tr -d ' ')))"
   say "- $pattern appears in $count source/project files"
 done
 say
 say "## Platform-sensitive dependencies"
 for pattern in 'System.Drawing' 'DinkToPdf' 'libwkhtmltox' 'Environment.SpecialFolder' 'File\.Open' 'Directory\.CreateDirectory' 'Path\.Combine'; do
-  count="$(grep -RIlE --include='*.cs' --include='*.csproj' "$pattern" recovered-source 2>/dev/null | wc -l | tr -d ' ')"
+  count="$((0 + $( (grep -RIlE --include='*.cs' --include='*.csproj' "$pattern" recovered-source 2>/dev/null || true) | wc -l | tr -d ' ')))"
   say "- $pattern appears in $count source/project files"
 done
 WIN_NATIVE="$(find . -type f \( -iname '*.exe' -o -iname '*win-x64*.dll' -o -iname 'libwkhtmltox.dll' -o -iname 'sni.dll' \) -not -path './.git/*' | wc -l | tr -d ' ')"
