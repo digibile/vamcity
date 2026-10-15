@@ -512,7 +512,8 @@ function returnToOverview(){
 /* Keep the new VamCity shell (header, sidebar and footer) visible while old, authenticated modules run inside its workspace. Public navigation stays normal. */
 document.querySelectorAll('.shell a[href^="/"]').forEach(link=>{
   const href=link.getAttribute("href")||"";
-  const path=href.split("?")[0].replace(/\\/$/,"")||"/";
+  const rawPath=href.split("?")[0];
+  const path=rawPath.length>1&&rawPath.endsWith("/")?rawPath.slice(0,-1):rawPath;
   if(path==="/"||path==="/plans.html"||path==="/login"||path==="/register/0"||path==="/admin/dashboard"||path==="/admin/Dashboard")return;
   if(!path.startsWith("/admin/")&&!path.startsWith("/cl/agentregister/"))return;
   link.addEventListener("click",event=>{
