@@ -378,3 +378,235 @@
     padding: 20px !important;
   }
 }
+
+
+/* v12: redesign legacy loan-plan, plan-detail, authentication and member workspaces.
+   Presentation only: do not fabricate data, replace endpoints, or change existing submit actions. */
+:root {
+  --vc-ink: #17283a;
+  --vc-muted: #687b8e;
+  --vc-border: #e0e8f0;
+  --vc-deep: #102337;
+  --vc-gold: #d7ad65;
+  --vc-surface: #ffffff;
+  --vc-canvas: #f4f7fb;
+}
+html { scroll-behavior: smooth; }
+.v-application {
+  background: var(--vc-canvas);
+  color: var(--vc-ink);
+  font-feature-settings: "kern";
+}
+.v-application .v-main {
+  background:
+    radial-gradient(ellipse at 4% 0%, rgba(215,173,101,.09), transparent 30%),
+    linear-gradient(180deg,#f7f9fc 0%,#f1f5f9 100%);
+}
+.v-application .v-main__wrap { min-height: calc(100vh - 64px); }
+.v-application .v-main .v-container { max-width: 1320px; }
+
+/* Consistent page hierarchy: title, context, actions and content surfaces. */
+.v-application .v-main h1,
+.v-application .v-main h2,
+.v-application .v-main h3 {
+  color: var(--vc-deep);
+  letter-spacing: -.35px;
+  line-height: 1.8;
+}
+.v-application .v-main .text-h4,
+.v-application .v-main .text-h5,
+.v-application .v-main .text-h6 { font-weight: 850 !important; }
+.v-application .v-main .v-card,
+.v-application .v-main .v-sheet:not(.v-color-picker__canvas) {
+  border-color: var(--vc-border);
+}
+.v-application .v-main .v-card {
+  border-radius: 18px;
+  box-shadow: 0 7px 24px rgba(18,42,64,.045);
+}
+.v-application .v-main .v-card__title {
+  padding: 20px 22px 10px;
+  font-weight: 850;
+  color: var(--vc-deep);
+}
+.v-application .v-main .v-card__text {
+  padding: 12px 22px 20px;
+  color: #52687b;
+  line-height: 2;
+}
+.v-application .v-main .v-card__actions {
+  padding: 12px 22px 20px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.v-application .v-main .v-btn:not(.v-btn--icon):not(.v-btn--text) {
+  min-height: 44px;
+  border-radius: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.v-application .v-main .v-btn.primary {
+  box-shadow: 0 7px 17px rgba(16,35,55,.14);
+}
+.v-application .v-main .v-chip {
+  border-radius: 999px;
+  font-weight: 750;
+}
+.v-application .v-main .v-divider { border-color: var(--vc-border); }
+
+/* Loan plan listing: clearer cards and comparison hierarchy, using only values returned by the app. */
+.v-application .v-main .v-row > .col > .v-card,
+.v-application .v-main .v-row > [class*="col-"] > .v-card {
+  height: 100%;
+}
+.v-application .v-main .v-card .v-card__title + .v-card__text {
+  padding-top: 8px;
+}
+.v-application .v-main .v-card .v-card__text .text-h4,
+.v-application .v-main .v-card .v-card__text .text-h5,
+.v-application .v-main .v-card .display-1,
+.v-application .v-main .v-card .display-2 {
+  color: var(--vc-deep);
+  font-weight: 900;
+  letter-spacing: -.6px;
+  line-height: 1.6;
+}
+.v-application .v-main .v-card .v-list {
+  padding-block: 8px;
+  background: transparent;
+}
+.v-application .v-main .v-card .v-list-item {
+  min-height: 48px;
+  border-bottom: 1px solid #edf1f5;
+}
+.v-application .v-main .v-card .v-list-item:last-child { border-bottom: 0; }
+.v-application .v-main .v-card .v-list-item__title {
+  font-weight: 750;
+  white-space: normal;
+  line-height: 1.8;
+}
+.v-application .v-main .v-card .v-list-item__subtitle {
+  white-space: normal;
+  line-height: 1.85;
+}
+.v-application .v-main .v-card .v-progress-linear {
+  border-radius: 99px;
+  overflow: hidden;
+}
+.v-application .v-main .v-data-table {
+  overflow: hidden;
+  border: 1px solid var(--vc-border);
+  border-radius: 16px;
+  box-shadow: 0 7px 24px rgba(18,42,64,.04);
+}
+.v-application .v-main .v-data-table thead th {
+  height: 54px;
+  color: #324d63 !important;
+  background: #f2f6fa;
+  font-size: .82rem;
+  font-weight: 850 !important;
+  white-space: nowrap;
+}
+.v-application .v-main .v-data-table tbody tr:hover { background: #f7fafc !important; }
+.v-application .v-main .v-data-table tbody td { height: 52px; }
+
+/* Login and registration: modern split surfaces while preserving legacy fields and auth behavior. */
+.v-application .v-main .v-form,
+.v-application .v-main form {
+  color: var(--vc-ink);
+}
+.v-application .v-main .v-form .v-input__slot,
+.v-application .v-main form .v-input__slot {
+  min-height: 50px;
+  border-radius: 12px;
+}
+.v-application .v-main .v-form .v-input--is-focused .v-input__slot,
+.v-application .v-main form .v-input--is-focused .v-input__slot {
+  border-color: var(--vc-gold) !important;
+  box-shadow: 0 0 0 3px rgba(215,173,101,.12);
+}
+.v-application .v-main .v-form .v-label,
+.v-application .v-main form .v-label { font-weight: 650; }
+.v-application .v-main .v-form .v-messages,
+.v-application .v-main form .v-messages { line-height: 1.7; }
+.v-application .v-main .v-stepper {
+  overflow: hidden;
+  border: 1px solid var(--vc-border);
+  border-radius: 20px;
+  box-shadow: 0 12px 36px rgba(16,35,55,.055);
+}
+.v-application .v-main .v-stepper__header {
+  background: linear-gradient(180deg,#fff,#f5f8fb);
+  border-bottom: 1px solid var(--vc-border);
+  box-shadow: none;
+}
+.v-application .v-main .v-stepper__content { padding: clamp(16px,3vw,32px); }
+.v-application .v-main .v-alert {
+  border-radius: 14px;
+  line-height: 1.9;
+}
+
+/* Admin/member panels: surface, data and navigation receive layout polish, not merely a color swap. */
+.v-application .v-navigation-drawer {
+  border-inline-start: 0 !important;
+  box-shadow: 0 12px 35px rgba(12,29,44,.08);
+}
+.v-application .v-navigation-drawer .v-list-item {
+  min-height: 46px;
+  margin: 3px 8px;
+  border-radius: 10px;
+}
+.v-application .v-navigation-drawer .v-list-item--active {
+  font-weight: 850;
+}
+.v-application .v-app-bar {
+  border-bottom: 1px solid rgba(220,230,239,.9);
+  box-shadow: 0 4px 18px rgba(16,35,55,.035) !important;
+}
+.v-application .v-main .v-toolbar,
+.v-application .v-main .v-toolbar__content { gap: 8px; }
+.v-application .v-main .v-pagination .v-pagination__item {
+  border-radius: 9px;
+  box-shadow: none;
+}
+.v-application .v-main .v-tabs:not(.v-tabs--vertical) {
+  border-bottom: 1px solid var(--vc-border);
+}
+.v-application .v-main .v-tabs .v-tab {
+  min-height: 48px;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+.v-application .v-main .v-expansion-panels {
+  overflow: hidden;
+  border: 1px solid var(--vc-border);
+  border-radius: 16px;
+}
+.v-application .v-main .v-expansion-panel-header {
+  min-height: 58px;
+  font-weight: 800;
+}
+.v-application .v-main .v-footer {
+  padding-block: 28px;
+  color: #eaf0f5;
+  background: linear-gradient(115deg,#0b1b2a,#18374d) !important;
+  border-top: 1px solid rgba(215,173,101,.45);
+}
+.v-application .v-footer a { color: inherit; text-decoration: none; }
+
+/* Small-screen treatment: avoid squeezed actions, unreadable tables and overflowing step headers. */
+@media (max-width: 760px) {
+  .v-application .v-main .v-container { padding-inline: 14px; }
+  .v-application .v-main .v-card { border-radius: 15px; }
+  .v-application .v-main .v-card__title { padding: 16px 16px 8px; }
+  .v-application .v-main .v-card__text { padding: 9px 16px 16px; }
+  .v-application .v-main .v-card__actions { padding: 8px 16px 16px; }
+  .v-application .v-main .v-card__actions .v-btn { flex: 1 1 auto; }
+  .v-application .v-main .v-data-table__wrapper { overflow-x: auto; }
+  .v-application .v-main .v-stepper { border-radius: 14px; }
+  .v-application .v-main .v-stepper__header { overflow-x: auto; justify-content: flex-start; }
+  .v-application .v-main .v-stepper__step { flex: 0 0 auto; padding: 12px 9px; }
+  .v-application .v-main .v-stepper__content { padding: 14px; }
+  .v-application .v-main .v-form .v-btn--block,
+  .v-application .v-main form .v-btn--block { min-height: 48px; }
+}
