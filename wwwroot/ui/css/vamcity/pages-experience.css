@@ -1,4 +1,4 @@
-/* VamCity public-page experience refresh v10.
+/* VamCity public-page experience refresh v11.
    Presentation only: improve the public landing, loan plans, loan detail, registration and shared page chrome.
    Existing Vue routes, API data, auth state and form actions remain untouched. */
 :root {
@@ -306,5 +306,75 @@
     scroll-behavior: auto !important;
     transition-duration: .01ms !important;
     animation-duration: .01ms !important;
+  }
+}
+
+
+/* v11: modernize the existing partnership/agent-registration page without changing its API or form workflow.
+   The legacy component has an inline #eee root; this scoped selector replaces that dated surface. */
+.v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] {
+  min-height: calc(100vh - 64px);
+  padding-block: clamp(20px, 4vw, 52px);
+  color: #17283a !important;
+  background:
+    radial-gradient(ellipse at 9% 8%, rgba(215,173,101,.18), transparent 32%),
+    radial-gradient(ellipse at 92% 90%, rgba(36,77,101,.12), transparent 36%),
+    linear-gradient(140deg,#f7f9fc 0%,#edf3f8 55%,#fbf7ef 100%) !important;
+}
+.v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] > .v-container {
+  max-width: 1240px !important;
+  padding: clamp(14px, 3vw, 34px) !important;
+}
+.v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] .v-sheet.rounded-xl {
+  overflow: hidden;
+  border: 1px solid rgba(225,233,241,.95) !important;
+  border-radius: 24px !important;
+  background: #fff !important;
+  color: #17283a !important;
+  box-shadow: 0 24px 70px rgba(16,35,55,.12) !important;
+}
+.v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] .v-sheet.rounded-xl > div {
+  padding: clamp(22px, 4vw, 54px) !important;
+  background:
+    radial-gradient(ellipse at 86% 8%, rgba(215,173,101,.12), transparent 36%),
+    linear-gradient(145deg,#fff,#f7f9fc) !important;
+}
+.v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] .v-sheet.rounded-xl h1,
+.v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] .v-sheet.rounded-xl h2,
+.v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] .v-sheet.rounded-xl h3 {
+  color: #102337 !important;
+  line-height: 1.8;
+  font-weight: 800;
+}
+.v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] .v-card {
+  overflow: hidden;
+  border: 1px solid #e3eaf1 !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: 0 10px 28px rgba(16,35,55,.06) !important;
+}
+.v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] .v-card__title {
+  color: #17283a !important;
+  line-height: 1.9;
+  font-weight: 800;
+}
+.v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] .v-btn:not(.v-btn--text):not(.v-btn--icon) {
+  min-height: 44px;
+  border-radius: 12px !important;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] .v-input__slot {
+  border-radius: 12px !important;
+}
+@media (max-width: 760px) {
+  .v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] > .v-container {
+    padding: 10px !important;
+  }
+  .v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] .v-sheet.rounded-xl {
+    border-radius: 16px !important;
+  }
+  .v-application .v-main__wrap > div[style*="background-color: rgb(238, 238, 238)"] .v-sheet.rounded-xl > div {
+    padding: 20px !important;
   }
 }
