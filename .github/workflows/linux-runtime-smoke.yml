@@ -1,0 +1,124 @@
+name: Linux runtime smoke test
+
+on:
+  pull_request:
+    paths:
+      - "recovered-source/**"
+      - "wwwroot/ui/**"
+      - ".github/workflows/linux-runtime-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: "Developer"
+          MSSQL_SA_PASSWORD: "VamCity_CI_only_2026!x"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'VamCity_CI_only_2026!x' -C -Q 'SELECT 1' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 18
+          --health-start-period 30s
+
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://127.0.0.1:5080
+      AppConfig__BaseUrl: http://127.0.0.1:5080
+      AppConfig__JwtSecretKey: "VamCity_CI_only_secret_key_minimum_32_chars"
+      ConnectionStrings__DefaultConnection: "Server=127.0.0.1,1433;Database=master;User Id=sa;Password=VamCity_CI_only_2026!x;TrustServerCertificate=True;Encrypt=False;MultipleActiveResultSets=True"
+      VAMCITY_AUTO_MIGRATE: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Assemble Linux web root
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f wwwroot/ui/index.html
+          APP_WWWROOT="recovered-source/LoanSystemAvizhe.Site/wwwroot"
+          mkdir -p "$APP_WWWROOT"
+          cp -a wwwroot/. "$APP_WWWROOT/"
+          cp -a wwwroot/ui/. "$APP_WWWROOT/"
+          test -s "$APP_WWWROOT/index.html"
+          test -s "$APP_WWWROOT/js/app.e76ab352.js"
+          test -s "$APP_WWWROOT/css/vamcity-modern-theme.css"
+
+      - name: Publish application for Linux runner
+        run: dotnet publish recovered-source/LoanSystemAvizhe.Site/LoanSystemAvizhe.Site.csproj --configuration Release --output ./artifacts/vamcity --verbosity minimal
+
+      - name: Start isolated app against ephemeral SQL Server
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s ./artifacts/vamcity/LoanSystemAvizhe.Site.dll
+          dotnet ./artifacts/vamcity/LoanSystemAvizhe.Site.dll > "$RUNNER_TEMP/vamcity-linux-runtime.log" 2>&1 &
+          APP_PID=$!
+          echo "$APP_PID" > "$RUNNER_TEMP/vamcity-linux-runtime.pid"
+          for attempt in $(seq 1 60); do
+            if curl --silent --show-error --max-time 2 http://127.0.0.1:5080/ -o "$RUNNER_TEMP/home.html"; then
+              echo "LINUX_APP_ROOT_HTTP_OK=true"
+              break
+            fi
+            if ! kill -0 "$APP_PID" 2>/dev/null; then
+              echo "LINUX_APP_PROCESS_EXITED=true"
+              cat "$RUNNER_TEMP/vamcity-linux-runtime.log"
+              exit 1
+            fi
+            sleep 2
+          done
+          test -s "$RUNNER_TEMP/home.html" || { cat "$RUNNER_TEMP/vamcity-linux-runtime.log"; exit 1; }
+          grep -Fq 'id="app"' "$RUNNER_TEMP/home.html"
+          grep -Fq 'vamcity-modern-theme.css' "$RUNNER_TEMP/home.html"
+          echo "LINUX_APP_HTML_ENTRYPOINT_OK=true"
+
+      - name: Verify routes and browser assets on Linux runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          for route in / /login/ /register/0/ /cl/plans/ /admin/dashboard; do
+            code="$(curl --silent --show-error --max-time 10 -o "$RUNNER_TEMP/route.html" -w '%{http_code}' "http://127.0.0.1:5080$route")"
+            echo "ROUTE_HTTP=$code PATH=$route"
+            test "$code" = "200"
+            grep -Fq 'id="app"' "$RUNNER_TEMP/route.html"
+          done
+          for asset in /js/app.e76ab352.js /js/chunk-vendors.0d0536ea.js /css/app.65501a28.css /css/chunk-vendors.c0d350b3.css /css/vamcity-modern-theme.css /myStyle.css; do
+            code="$(curl --silent --show-error --max-time 10 -o /dev/null -w '%{http_code}' "http://127.0.0.1:5080$asset")"
+            echo "ASSET_HTTP=$code PATH=$asset"
+            test "$code" = "200"
+          done
+          echo "LINUX_RUNTIME_ROUTES_AND_ASSETS_OK=true"
+
+      - name: Upload runtime logs if test fails
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vamcity-linux-runtime-failure-logs
+          path: ${{ runner.temp }}/vamcity-linux-runtime.log
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Stop app process
+        if: always()
+        shell: bash
+        run: |
+          if [ -f "$RUNNER_TEMP/vamcity-linux-runtime.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/vamcity-linux-runtime.pid")" 2>/dev/null || true
+          fi
