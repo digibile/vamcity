@@ -301,11 +301,11 @@ jobs:
             const response = await page.goto('https://roofixo.ir/admin/dashboard?browser-smoke=' + Date.now(), { waitUntil: 'domcontentloaded', timeout: 30000 });
             if (!response || response.status() !== 200) throw new Error('Admin dashboard did not return HTTP 200');
             await page.locator('h1').filter({ hasText: 'مرکز مدیریت وام‌سیتی' }).waitFor({ state: 'visible', timeout: 15000 });
-            await page.getByRole('link', { name: /تنظیمات اپلیکیشن/ }).waitFor({ state: 'visible', timeout: 10000 });
-            await page.getByRole('link', { name: /پشتیبان‌گیری/ }).waitFor({ state: 'visible', timeout: 10000 });
-            await page.getByRole('link', { name: /درخواست همکاری و نمایندگی/ }).waitFor({ state: 'visible', timeout: 10000 });
+            await page.locator('.topbar a[href="/admin/appsettings/"]').waitFor({ state: 'visible', timeout: 10000 });
+            await page.locator('.topbar a[href="/admin/appbackup/"]').waitFor({ state: 'visible', timeout: 10000 });
+            await page.locator('.topbar a[href="/cl/agentregister/0/"]').waitFor({ state: 'visible', timeout: 10000 });
             console.log('BROWSER_ADMIN_SHELL_RENDERED=true');
-            await page.getByRole('link', { name: /تنظیمات اپلیکیشن/ }).first().click();
+            await page.locator('.topbar a[href="/admin/appsettings/"]').click();
             await page.waitForTimeout(7000);
             const fallbackVisible = await page.locator('#legacy-fallback').isVisible().catch(() => false);
             const frameUrl = await page.locator('#legacy-frame').getAttribute('src').catch(() => 'missing');
