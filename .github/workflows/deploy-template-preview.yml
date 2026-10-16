@@ -51,6 +51,15 @@ jobs:
           grep -Fq 'href="/superAdmin/smsPatterns/"' "$FILE"
           grep -q 'href="/cl/agentregister/0/"' "$FILE"
           grep -q 'href="/plans.html"' "$FILE"
+          # The original VamCity app remains the source of operational features.
+          # Validate that dashboard shortcuts open real /admin/* routes, not root-level fallbacks.
+          grep -Fq 'loans:["/admin/loans/"' "$FILE"
+          grep -Fq 'applications:["/admin/userLoanRequests/"' "$FILE"
+          grep -Fq 'stores:["/admin/contacts/"' "$FILE"
+          grep -Fq 'products:["/admin/customerOrders/"' "$FILE"
+          grep -Fq 'transactions:["/admin/loanPaymentRequests"' "$FILE"
+          grep -Fq 'settings:["/admin/appsettings/"' "$FILE"
+          grep -Fq 'backup:["/admin/appbackup/"' "$FILE"
           echo "Independent admin template and shared navigation validated."
 
       - name: Configure SSH
