@@ -1,3 +1,4 @@
+# Production deploy retry 2026-10-16T19:58+03:30: deploy the integrated admin template to the existing admin URLs and verify login/session, legacy tools, settings, backup/restore, and all public entry links.
 # Production recovery republish 2026-10-16T19:41+03:30: retry SSH/server publication and rerun live browser checks for the integrated admin UI, existing settings/backup routes, and login compatibility.
 # Production deploy trigger 2026-10-16T18:39+03:30: republish the integrated VamCity management UI to the canonical admin dashboard and preview URLs; retain all legacy features, settings, backup/restore, and verify live routes.
 # Production republish request 2026-10-16T18:20+03:30: reassert the authenticated integrated admin template at the canonical dashboard route and verify all legacy navigation, app settings, backup/restore, login redirects, and live API metrics.
