@@ -309,11 +309,11 @@ jobs:
             await page.waitForTimeout(7000);
             const fallbackVisible = await page.locator('#legacy-fallback').isVisible().catch(() => false);
             const frameUrl = await page.locator('#legacy-frame').getAttribute('src').catch(() => 'missing');
-            const shellTitleVisible = await page.locator('h1').filter({ hasText: 'مرکز مدیریت وام‌سیتی' }).isVisible().catch(() => false);
+            const shellTitleVisible = await page.locator('.topbar').isVisible().catch(() => false) && await page.locator('#vamcity-sidebar').isVisible().catch(() => false);
             console.log('SETTINGS_FRAME_URL=' + frameUrl);
             console.log('SETTINGS_FALLBACK_VISIBLE=' + fallbackVisible);
-            console.log('ADMIN_SHELL_REMAINS_VISIBLE=' + shellTitleVisible);
-            if (!shellTitleVisible) throw new Error('New admin shell disappeared after opening settings');
+            console.log('ADMIN_HEADER_AND_SIDEBAR_REMAIN_VISIBLE=' + shellTitleVisible);
+            if (!shellTitleVisible) throw new Error('New admin header/sidebar disappeared after opening settings');
             if (fallbackVisible) throw new Error('Settings route failed to render inside the new shell; fallback was shown');
             if (pageErrors.length) throw new Error('Browser JavaScript errors: ' + pageErrors.join(' | '));
             console.log('BROWSER_ADMIN_SETTINGS_ROUTE_RENDERED=true');
