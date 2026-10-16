@@ -460,3 +460,28 @@
   #register-view .v-container,
   #agent-register-view .v-container { padding-inline:12px; }
 }
+
+
+/* 2026-10-16 auth layout stability: preserve the existing login/OTP/register logic while fixing clipping and responsive spacing. */
+#login-view,#register-view,#agent-register-view{min-height:100vh;min-height:100dvh;width:100%;overflow-x:clip}
+#login-view .v-main,#register-view .v-main,#agent-register-view .v-main{min-width:0;padding-bottom:24px}
+#login-view .v-container,#register-view .v-container,#agent-register-view .v-container{width:100%;min-width:0;margin-inline:auto}
+#login-view .v-card,#register-view .v-card,#agent-register-view .v-card{min-width:0;max-width:100%}
+#login-view .v-card__text,#register-view .v-card__text,#agent-register-view .v-card__text{overflow-wrap:anywhere}
+#login-view .v-input,#register-view .v-input,#agent-register-view .v-input{min-width:0;max-width:100%}
+#login-view .v-input__control,#register-view .v-input__control,#agent-register-view .v-input__control{min-width:0}
+#login-view input,#register-view input,#agent-register-view input{max-width:100%;min-width:0}
+#login-view .v-card__actions,#register-view .v-card__actions,#agent-register-view .v-card__actions{flex-wrap:wrap;gap:8px}
+#login-view .v-card__actions>.v-btn,#register-view .v-card__actions>.v-btn,#agent-register-view .v-card__actions>.v-btn{max-width:100%;white-space:normal}
+#login-view .v-app-bar .v-toolbar__content,#register-view .v-app-bar .v-toolbar__content,#agent-register-view .v-app-bar .v-toolbar__content{gap:8px;min-width:0}
+#login-view .v-app-bar .v-btn,#register-view .v-app-bar .v-btn,#agent-register-view .v-app-bar .v-btn{letter-spacing:0;text-transform:none;min-width:0}
+#login-view .v-footer,#register-view .v-footer,#agent-register-view .v-footer{height:auto;min-height:0;padding:14px 16px;line-height:1.8;white-space:normal;overflow-wrap:anywhere}
+#login-view .v-footer a,#register-view .v-footer a,#agent-register-view .v-footer a{display:inline-flex;align-items:center;min-height:32px}
+@media(max-width:600px){
+  #login-view .v-app-bar .v-toolbar__content,#register-view .v-app-bar .v-toolbar__content,#agent-register-view .v-app-bar .v-toolbar__content{padding-inline:10px;flex-wrap:wrap}
+  #login-view .v-container,#register-view .v-container,#agent-register-view .v-container{padding-inline:12px}
+  #login-view .v-card__actions,#register-view .v-card__actions,#agent-register-view .v-card__actions{padding-inline:14px}
+  #login-view .v-card__actions>.v-btn,#register-view .v-card__actions>.v-btn,#agent-register-view .v-card__actions>.v-btn{flex:1 1 100%}
+  #login-view .v-footer,#register-view .v-footer,#agent-register-view .v-footer{padding:12px;font-size:11px}
+}
+
