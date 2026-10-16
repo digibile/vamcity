@@ -207,72 +207,72 @@ tbody tr:hover{background:#f7fafc}
 </header>
 <div class="layout">
 <aside class="sidebar">
-  <div class="side-label">نمای کلی</div>
-  <button class="navbtn active" data-page="overview"><span class="ico">▦</span>داشبورد مدیریت</button>
-  <div class="side-label">وام و تسهیلات</div>
-  <a class="navbtn" href="/admin/loans/" style="text-decoration:none"><span class="ico">◈</span>مدیریت طرح‌های تسهیلات</a>
-  <button class="navbtn" data-page="calculator"><span class="ico">▤</span>محاسبه‌گر و مقایسه</button>
-  <a class="navbtn" href="/admin/userLoanRequests/" style="text-decoration:none"><span class="ico">▣</span>درخواست‌های وام</a>
-  <div class="side-label">فروشگاه‌های همکار</div>
-  <a class="navbtn" href="/admin/contacts/" style="text-decoration:none"><span class="ico">▧</span>مخاطبان و پذیرندگان ثبت‌شده</a>
-  <a class="navbtn" href="/cl/agentregister/0/" style="text-decoration:none"><span class="ico">＋</span>درخواست همکاری و نمایندگی</a>
-  <a class="navbtn" href="/admin/customerOrders/" style="text-decoration:none"><span class="ico">◇</span>محصولات و سفارش‌های مشتریان</a>
-  <div class="side-label">پذیرندگان و پرداخت‌یاری</div>
-  <a class="navbtn" href="/admin/contacts/" style="text-decoration:none"><span class="ico">▣</span>پرونده پذیرندگان و مخاطبان</a>
-  <a class="navbtn" href="/cl/agentregister/0/" style="text-decoration:none"><span class="ico">＋</span>ثبت درخواست همکاری پذیرنده</a>
-  <a class="navbtn" href="/admin/loanPaymentRequests" style="text-decoration:none"><span class="ico">⇄</span>پرداخت‌ها و درخواست‌های تسویه</a>
-  <div class="side-label">مدیریت</div>
-  <a class="navbtn" href="#settings" onclick="go('settings');return false;" style="text-decoration:none"><span class="ico">▧</span>تنظیمات قالب و صفحات</a>
-  <a class="navbtn" href="#settings" onclick="go('settings');return false;" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات و دسترسی‌ها</a>
-  <div class="side-label">امکانات موجود سامانه</div>
-  <a class="navbtn" href="/admin/appsettings/" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات اپلیکیشن</a>
-  <a class="navbtn" href="/admin/appbackup/" style="text-decoration:none"><span class="ico">▣</span>پشتیبان‌گیری و بازیابی</a>
-  <a class="navbtn" href="/admin/loans/" style="text-decoration:none"><span class="ico">◈</span>مدیریت وام‌ها</a>
-  <a class="navbtn" href="/admin/userLoanRequests/" style="text-decoration:none"><span class="ico">▤</span>درخواست‌های تسهیلات</a>
+  <div class="side-label">مرکز مدیریت</div>
+  <a class="navbtn active" href="/admin/dashboard" style="text-decoration:none"><span class="ico">▦</span>داشبورد مدیریت</a>
+
+  <div class="side-label">تسهیلات و پرونده‌ها</div>
+  <a class="navbtn" href="/admin/loans/" style="text-decoration:none"><span class="ico">◈</span>طرح‌ها و مدیریت وام‌ها</a>
+  <a class="navbtn" href="/admin/userLoanRequests/" style="text-decoration:none"><span class="ico">▣</span>درخواست‌های وام و تسهیلات</a>
   <a class="navbtn" href="/admin/loanPaymentRequests" style="text-decoration:none"><span class="ico">⇄</span>درخواست‌های پرداخت</a>
-  <a class="navbtn" href="/admin/members/" style="text-decoration:none"><span class="ico">♙</span>اعضا و مشتریان</a>
-  <a class="navbtn" href="/admin/users/" style="text-decoration:none"><span class="ico">♧</span>کاربران سامانه</a>
-  <a class="navbtn" href="/admin/purchasedPlans" style="text-decoration:none"><span class="ico">▦</span>طرح‌های خریداری‌شده</a>
+  <a class="navbtn" href="/admin/purchasedPlans/" style="text-decoration:none"><span class="ico">▦</span>طرح‌های خریداری‌شده</a>
   <a class="navbtn" href="/admin/memberAuthorizations/" style="text-decoration:none"><span class="ico">✓</span>تأییدها و مجوزهای اعضا</a>
-  <a class="navbtn" href="/admin/sponsored-loans/" style="text-decoration:none"><span class="ico">◈</span>گزارش تسهیلات حامیان</a>
-  <div class="side-label">عملیات و پشتیبانی</div>
-  <a class="navbtn" href="/admin/tickets/" style="text-decoration:none"><span class="ico">✉</span>تیکت‌ها و پشتیبانی</a>
-  <a class="navbtn" href="/admin/customerOrders/" style="text-decoration:none"><span class="ico">▤</span>سفارش‌های مشتریان</a>
-  <a class="navbtn" href="/admin/inquirymanagement" style="text-decoration:none"><span class="ico">⌕</span>مدیریت استعلام‌ها</a>
-  <a class="navbtn" href="/admin/smslist" style="text-decoration:none"><span class="ico">◉</span>پیامک‌ها و گزارش ارسال</a>
-  <a class="navbtn" href="#email" onclick="go('email');return false;" style="text-decoration:none"><span class="ico">✉</span>ایمیل‌ها</a>
-  <a class="navbtn" href="/admin/expense" style="text-decoration:none"><span class="ico">▥</span>هزینه‌ها</a>
-  <div class="side-label">گزارش‌ها</div>
-  <a class="navbtn" href="/admin/reports/" style="text-decoration:none"><span class="ico">▤</span>مرکز گزارش‌ها</a>
-  <a class="navbtn" href="/admin/loanStatistics" style="text-decoration:none"><span class="ico">▥</span>آمار تسهیلات</a>
-  <a class="navbtn" href="/admin/report-member-loans" style="text-decoration:none"><span class="ico">♙</span>گزارش وام اعضا</a>
-  <a class="navbtn" href="/admin/report-installments-month" style="text-decoration:none"><span class="ico">▦</span>اقساط ماهانه</a>
-  <a class="navbtn" href="/admin/wallet-transactions" style="text-decoration:none"><span class="ico">⇄</span>گزارش پرداخت‌های آنلاین</a>
-  <div class="side-label">ابزارهای مدیریتی</div>
-  <a class="navbtn" href="/admin/buy" style="text-decoration:none"><span class="ico">▣</span>خرید و تمدید سرویس</a>
+
+  <div class="side-label">اعضا و کاربران</div>
+  <a class="navbtn" href="/admin/members/" style="text-decoration:none"><span class="ico">♙</span>اعضا و مشتریان</a>
+  <a class="navbtn" href="/admin/users/" style="text-decoration:none"><span class="ico">♧</span>کاربران و دسترسی‌ها</a>
+
+  <div class="side-label">شبکه همکاران</div>
   <a class="navbtn" href="/admin/agents/" style="text-decoration:none"><span class="ico">♧</span>مدیریت نمایندگان</a>
   <a class="navbtn" href="/admin/sponsors/" style="text-decoration:none"><span class="ico">♙</span>حامیان تسهیلات</a>
-  <a class="navbtn" href="/admin/contacts/" style="text-decoration:none"><span class="ico">♧</span>مخاطبان و ارتباطات</a>
+  <a class="navbtn" href="/admin/contacts/" style="text-decoration:none"><span class="ico">▧</span>مخاطبان و پذیرندگان</a>
   <a class="navbtn" href="/admin/marketers/" style="text-decoration:none"><span class="ico">♧</span>بازاریابان</a>
-  <a class="navbtn" href="/admin/users/" style="text-decoration:none"><span class="ico">⚿</span>مدیریت نقش‌ها و سطح دسترسی</a>
-  <a class="navbtn" href="/admin/users/" style="text-decoration:none"><span class="ico">▣</span>تأییدها و مجوزهای اعضا</a>
+  <a class="navbtn" href="/cl/agentregister/0/" style="text-decoration:none"><span class="ico">＋</span>درخواست همکاری و نمایندگی</a>
+
+  <div class="side-label">فروش و خدمات</div>
+  <a class="navbtn" href="/admin/customerOrders/" style="text-decoration:none"><span class="ico">◇</span>سفارش‌های مشتریان</a>
+  <a class="navbtn" href="/admin/buy/" style="text-decoration:none"><span class="ico">▣</span>خرید و تمدید سرویس</a>
+  <a class="navbtn" href="/admin/expense/" style="text-decoration:none"><span class="ico">▥</span>هزینه‌ها</a>
+
+  <div class="side-label">حساب‌ها و اطلاعات مالی</div>
+  <a class="navbtn" href="/admin/loanPaymentRequests" style="text-decoration:none"><span class="ico">⇄</span>پرداخت‌ها و درخواست‌های تسویه</a>
   <a class="navbtn" href="/admin/savedMoneyimport" style="text-decoration:none"><span class="ico">⇧</span>ورود اطلاعات پس‌انداز</a>
   <a class="navbtn" href="/admin/installmentsimport" style="text-decoration:none"><span class="ico">⇧</span>ورود اطلاعات اقساط</a>
   <a class="navbtn" href="/admin/remainComparer" style="text-decoration:none"><span class="ico">⇄</span>مقایسه مانده‌ها</a>
-  <div class="side-label">گزارش‌های تکمیلی</div>
-  <a class="navbtn" href="/admin/checkoutThisMonth" style="text-decoration:none"><span class="ico">▦</span>تسویه‌های این ماه</a>
-  <a class="navbtn" href="/admin/checkouted-members" style="text-decoration:none"><span class="ico">♙</span>اعضای تسویه‌شده</a>
+
+  <div class="side-label">پیام‌رسانی و پشتیبانی</div>
+  <a class="navbtn" href="/admin/tickets/" style="text-decoration:none"><span class="ico">✉</span>تیکت‌ها و پشتیبانی</a>
+  <a class="navbtn" href="/admin/smslist" style="text-decoration:none"><span class="ico">◉</span>پیامک‌ها و گزارش ارسال</a>
+  <a class="navbtn" href="/admin/inquirymanagement" style="text-decoration:none"><span class="ico">⌕</span>مدیریت استعلام‌ها</a>
+  <a class="navbtn" href="#email" onclick="go('email');return false;" style="text-decoration:none"><span class="ico">✉</span>ایمیل‌ها</a>
+
+  <div class="side-label">گزارش‌های مدیریتی</div>
+  <a class="navbtn" href="/admin/reports/" style="text-decoration:none"><span class="ico">▤</span>مرکز گزارش‌ها</a>
+  <a class="navbtn" href="/admin/loanStatistics" style="text-decoration:none"><span class="ico">▥</span>آمار تسهیلات</a>
+  <a class="navbtn" href="/admin/report-member-loans" style="text-decoration:none"><span class="ico">♙</span>گزارش وام اعضا</a>
+  <a class="navbtn" href="/admin/report-members" style="text-decoration:none"><span class="ico">♙</span>گزارش اعضا</a>
   <a class="navbtn" href="/admin/latestMembers" style="text-decoration:none"><span class="ico">♙</span>اعضای جدید</a>
-  <a class="navbtn" href="/admin/remainInstallmentCount" style="text-decoration:none"><span class="ico">▦</span>تعداد اقساط باقی‌مانده</a>
-  <a class="navbtn" href="/admin/report-members" style="text-decoration:none"><span class="ico">▤</span>گزارش اعضا</a>
-  <a class="navbtn" href="/admin/report-paid-installments-month" style="text-decoration:none"><span class="ico">▤</span>اقساط پرداخت‌شده ماهانه</a>
+  <a class="navbtn" href="/admin/checkouted-members" style="text-decoration:none"><span class="ico">♙</span>اعضای تسویه‌شده</a>
+  <a class="navbtn" href="/admin/checkoutThisMonth" style="text-decoration:none"><span class="ico">▦</span>تسویه‌های این ماه</a>
+  <a class="navbtn" href="/admin/report-installments-month" style="text-decoration:none"><span class="ico">▦</span>اقساط ماهانه</a>
+  <a class="navbtn" href="/admin/report-paid-installments-month" style="text-decoration:none"><span class="ico">▦</span>اقساط پرداخت‌شده ماهانه</a>
+  <a class="navbtn" href="/admin/remainInstallmentCount" style="text-decoration:none"><span class="ico">▦</span>اقساط باقی‌مانده</a>
   <a class="navbtn" href="/admin/report-saveMonies-month" style="text-decoration:none"><span class="ico">▤</span>گزارش پس‌انداز ماهانه</a>
   <a class="navbtn" href="/admin/report-monthly-balance" style="text-decoration:none"><span class="ico">▤</span>تراز ماهانه</a>
+  <a class="navbtn" href="/admin/wallet-transactions" style="text-decoration:none"><span class="ico">⇄</span>پرداخت‌های آنلاین</a>
+  <a class="navbtn" href="/admin/sponsored-loans" style="text-decoration:none"><span class="ico">◈</span>گزارش تسهیلات حامیان</a>
   <a class="navbtn" href="/admin/iran-validity-reports" style="text-decoration:none"><span class="ico">▤</span>گزارش اعتبارسنجی</a>
   <a class="navbtn" href="/admin/organization-duedated-reports" style="text-decoration:none"><span class="ico">▤</span>سررسیدهای سازمان</a>
   <a class="navbtn" href="/admin/assurances-report" style="text-decoration:none"><span class="ico">▤</span>گزارش ضمانت‌ها</a>
   <a class="navbtn" href="/admin/agentFactors" style="text-decoration:none"><span class="ico">▤</span>فاکتورهای نمایندگان</a>
-  <div class="side-foot">پنل مدیریتی یکپارچه وام‌سیتی. بخش‌های عملیاتی از مسیرهای اصلی سامانه در همین پوسته باز می‌شوند؛ ثبت درخواست همکاری و نمایندگی از فرم موجود سامانه استفاده می‌کند. امکاناتی که API مستقل ندارند به‌عنوان دادهٔ واقعی نمایش داده نمی‌شوند.</div>
+
+  <div class="side-label">تنظیمات و نگهداری سامانه</div>
+  <a class="navbtn" href="/admin/appsettings/" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات اپلیکیشن</a>
+  <a class="navbtn" href="/admin/appbackup/" style="text-decoration:none"><span class="ico">▣</span>پشتیبان‌گیری و بازیابی</a>
+  <a class="navbtn" href="/admin/purchasedPlans/" style="text-decoration:none"><span class="ico">▦</span>اشتراک‌ها و طرح‌های خریداری‌شده</a>
+  <a class="navbtn" href="#settings" onclick="go('settings');return false;" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات قالب و صفحات</a>
+  <a class="navbtn" href="#settings" onclick="go('settings');return false;" style="text-decoration:none"><span class="ico">⚿</span>تنظیمات دسترسی‌ها</a>
+
+  <div class="side-foot">منوی یکپارچه مدیریت وام‌سیتی؛ مسیرهای عملیاتی به صفحات موجود سامانه متصل‌اند. سطح دسترسی نهایی همچنان طبق مجوزهای خود سامانه اعمال می‌شود.</div>
 </aside>
 <main class="main">
 <section class="section active" id="overview">
