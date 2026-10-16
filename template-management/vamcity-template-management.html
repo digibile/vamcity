@@ -10,7 +10,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#102337">
-<meta name="vamcity-admin-ui-release" content="2026-10-16-integrated-admin-v4">
+<meta name="vamcity-admin-ui-release" content="2026-10-16-integrated-admin-v5-live-links">
 <title>مرکز مدیریت وام‌سیتی</title>
 <!-- Production republish 2026-10-13: refresh the admin replacement at /admin/dashboard and verify the same login session, legacy modules, settings and backup routes. -->
 <!-- Final publish retry 2026-10-13: force deployment of the integrated new admin shell to the existing admin URL; preserve legacy business modules and database. -->
@@ -210,7 +210,7 @@ tbody tr:hover{background:#f7fafc}
 <div class="shell">
 <header class="topbar">
   <div class="brand"><div class="brand-mark">◈</div><div><strong>وام‌سیتی</strong><small>پنل یکپارچه مدیریت و عملیات سامانه</small></div></div>
-  <div class="top-actions"><a class="top-pill top-link" href="/" target="_blank" rel="noopener" title="سایت عمومی در زبانه جدید باز می‌شود تا نشست مدیریت حفظ شود">مشاهده سایت ↗</a><a class="top-pill top-link" href="/plans.html">طرح‌های تسهیلات</a><a class="top-pill top-link" href="/login/">ورود کاربران</a><a class="top-pill top-link" href="/register/0/">عضویت</a><a class="top-pill top-link" href="/cl/agentregister/0/">درخواست همکاری و نمایندگی</a><a class="top-pill top-link" href="/admin/dashboard" aria-current="page">پنل مدیریت</a><a class="top-pill top-link" href="#settings" onclick="go('settings');return false;">تنظیمات اپلیکیشن</a><a class="top-pill top-link" href="#backup" onclick="go('backup');return false;">پشتیبان‌گیری</a><a class="top-pill top-link" id="account-link" href="/admin/dashboard" title="حساب کاربری"><span id="account-name">حساب کاربری</span></a><div class="avatar" id="account-avatar" title="کاربر واردشده">م</div></div>
+  <div class="top-actions"><a class="top-pill top-link" href="/" target="_blank" rel="noopener" title="سایت عمومی در زبانه جدید باز می‌شود تا نشست مدیریت حفظ شود">مشاهده سایت ↗</a><a class="top-pill top-link" href="/plans.html">طرح‌های تسهیلات</a><a class="top-pill top-link" href="/login/">ورود کاربران</a><a class="top-pill top-link" href="/register/0/">عضویت</a><a class="top-pill top-link" href="/cl/agentregister/0/">درخواست همکاری و نمایندگی</a><a class="top-pill top-link" href="/admin/dashboard" aria-current="page">پنل مدیریت</a><a class="top-pill top-link" href="/admin/appsettings/">تنظیمات اپلیکیشن</a><a class="top-pill top-link" href="/admin/appbackup/">پشتیبان‌گیری</a><a class="top-pill top-link" id="account-link" href="/admin/dashboard" title="حساب کاربری"><span id="account-name">حساب کاربری</span></a><div class="avatar" id="account-avatar" title="کاربر واردشده">م</div></div>
 </header>
 <div class="layout">
 <aside class="sidebar">
@@ -309,8 +309,8 @@ tbody tr:hover{background:#f7fafc}
   <a class="navbtn" href="/admin/appsettings/" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات اپلیکیشن</a>
   <a class="navbtn" href="/admin/appbackup/" style="text-decoration:none"><span class="ico">▣</span>پشتیبان‌گیری و بازیابی</a>
   <a class="navbtn" href="/admin/purchasedPlans/" style="text-decoration:none"><span class="ico">▦</span>اشتراک‌ها و طرح‌های خریداری‌شده</a>
-  <a class="navbtn" href="#settings" onclick="go('settings');return false;" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات قالب و صفحات</a>
-  <a class="navbtn" href="#settings" onclick="go('settings');return false;" style="text-decoration:none"><span class="ico">⚿</span>تنظیمات دسترسی‌ها</a>
+  <a class="navbtn" href="/admin/appsettings/" style="text-decoration:none"><span class="ico">⚙</span>تنظیمات قالب و صفحات</a>
+  <a class="navbtn" href="/admin/appsettings/" style="text-decoration:none"><span class="ico">⚿</span>تنظیمات دسترسی‌ها</a>
 
   <div class="side-foot">منوی یکپارچه مدیریت وام‌سیتی؛ مسیرهای عملیاتی به صفحات موجود سامانه متصل‌اند. سطح دسترسی نهایی همچنان طبق مجوزهای خود سامانه اعمال می‌شود.</div>
 </aside>
@@ -324,20 +324,20 @@ tbody tr:hover{background:#f7fafc}
     <div class="metric"><div class="metric-top">طرح‌های تسهیلات <span class="metric-icon">◈</span></div><strong id="metric-loans-value" aria-live="polite">در حال دریافت…</strong><small id="metric-loans-status">از سامانه اصلی</small><a class="btn small" href="/admin/loans/">مدیریت طرح‌ها</a></div>
     <div class="metric"><div class="metric-top">اعضا و مشتریان <span class="metric-icon">♙</span></div><strong id="metric-members-value" aria-live="polite">در حال دریافت…</strong><small id="metric-members-status">از سامانه اصلی</small><a class="btn small" href="/admin/members/">مدیریت اعضا</a></div>
     <div class="metric"><div class="metric-top">درخواست‌های ماه اخیر <span class="metric-icon">▣</span></div><strong id="metric-requests-value" aria-live="polite">در حال دریافت…</strong><small id="metric-requests-status">از سامانه اصلی</small><a class="btn small" href="/admin/userLoanRequests/">مشاهده درخواست‌ها</a></div>
-    <div class="metric"><div class="metric-top">ابزارهای مدیریتی <span class="metric-icon">⚙</span></div><strong>متصل</strong><small>تنظیمات و پشتیبان‌گیری موجود</small><a class="btn small" href="#backup" onclick="go('backup');return false;">تنظیمات و بازیابی</a></div>
+    <div class="metric"><div class="metric-top">ابزارهای مدیریتی <span class="metric-icon">⚙</span></div><strong>متصل</strong><small>تنظیمات و پشتیبان‌گیری موجود</small><a class="btn small" href="/admin/appbackup/">تنظیمات و بازیابی</a></div>
   </div>
   <div class="grid2">
     <div class="card"><div class="cardhead"><h3>وضعیت اتصال به اطلاعات سامانه</h3><span class="tag blue" id="live-data-status">در حال بررسی</span></div><div class="activity" id="live-data-checks">
       <div class="activity-item"><div class="activity-icon">◈</div><div><b>طرح‌های تسهیلات</b><small id="live-loans-check">در حال بررسی اتصال به API واقعی</small></div></div>
       <div class="activity-item"><div class="activity-icon">♙</div><div><b>اعضا و مشتریان</b><small id="live-members-check">در حال بررسی اتصال به API واقعی</small></div></div>
       <div class="activity-item"><div class="activity-icon">▤</div><div><b>درخواست‌های تسهیلات</b><small id="live-requests-check">در حال بررسی اتصال به API واقعی</small></div></div>
-      <div class="activity-item"><div class="activity-icon">⚙</div><div><b>ابزارهای قدیمی سامانه</b><small>از همین سایدبار و بدون حذف قابلیت‌های قبلی در دسترس هستند.</small><a class="btn small" href="#settings" onclick="go('settings');return false;">تنظیمات اپلیکیشن</a> <a class="btn small" href="#backup" onclick="go('backup');return false;">پشتیبان‌گیری و بازیابی</a></div></div>
+      <div class="activity-item"><div class="activity-icon">⚙</div><div><b>ابزارهای قدیمی سامانه</b><small>از همین سایدبار و بدون حذف قابلیت‌های قبلی در دسترس هستند.</small><a class="btn small" href="/admin/appsettings/">تنظیمات اپلیکیشن</a> <a class="btn small" href="/admin/appbackup/">پشتیبان‌گیری و بازیابی</a></div></div>
     </div></div>
     <div class="card"><div class="cardhead"><h3>اقدامات و بررسی‌های اخیر</h3><button class="btn small" onclick="openLegacy('/admin/userLoanRequests/','درخواست‌های وام')">مشاهده همه</button></div><div class="activity">
       <div class="activity-item"><div class="activity-icon">◈</div><div><b>مدیریت وام‌ها</b><small>نمایش اطلاعات زنده از سامانه فعلی</small></div><a class="btn small" href="/admin/loans/">بازکردن</a></div>
       <div class="activity-item"><div class="activity-icon">♙</div><div><b>اعضا و مشتریان</b><small>مدیریت از مسیر اصلی سامانه</small></div><a class="btn small" href="/admin/members/">بازکردن</a></div>
       <div class="activity-item"><div class="activity-icon">▤</div><div><b>درخواست‌های تسهیلات</b><small>پیوند به صفحه عملیاتی موجود</small></div><a class="btn small" href="/admin/userLoanRequests/">بازکردن</a></div>
-      <div class="activity-item"><div class="activity-icon">⚙</div><div><b>تنظیمات و پشتیبان‌گیری</b><small>امکانات قبلی حذف نشده‌اند</small></div><a class="btn small" href="#backup" onclick="go('backup');return false;">بازکردن</a></div>
+      <div class="activity-item"><div class="activity-icon">⚙</div><div><b>تنظیمات و پشتیبان‌گیری</b><small>امکانات قبلی حذف نشده‌اند</small></div><a class="btn small" href="/admin/appbackup/">بازکردن</a></div>
     </div></div>
   </div>
   <div class="grid3">
@@ -487,7 +487,7 @@ tbody tr:hover{background:#f7fafc}
   <iframe class="legacy-frame" id="legacy-frame" title="امکانات عملیاتی وام‌سیتی" loading="eager"></iframe>
 </section>
 
-<footer class="footer"><div class="footer-brand"><strong>وام‌سیتی</strong><span>مرکز مدیریت یکپارچه</span></div><nav class="footer-links" aria-label="پیوندهای کاربردی"><a href="/">سایت اصلی</a><a href="/login/">ورود کاربران</a><a href="/register/0/">عضویت</a><a href="/plans.html">طرح‌های تسهیلات</a><a href="/cl/agentregister/0/">درخواست همکاری و نمایندگی</a><a href="#settings" onclick="go('settings');return false;">تنظیمات اپلیکیشن</a><a href="#backup" onclick="go('backup');return false;">پشتیبان‌گیری و بازیابی</a></nav><small>دسترسی به امکانات موجود از مسیرهای اصلی سامانه حفظ شده است.</small></footer>
+<footer class="footer"><div class="footer-brand"><strong>وام‌سیتی</strong><span>مرکز مدیریت یکپارچه</span></div><nav class="footer-links" aria-label="پیوندهای کاربردی"><a href="/">سایت اصلی</a><a href="/login/">ورود کاربران</a><a href="/register/0/">عضویت</a><a href="/plans.html">طرح‌های تسهیلات</a><a href="/cl/agentregister/0/">درخواست همکاری و نمایندگی</a><a href="/admin/appsettings/">تنظیمات اپلیکیشن</a><a href="/admin/appbackup/">پشتیبان‌گیری و بازیابی</a></nav><small>دسترسی به امکانات موجود از مسیرهای اصلی سامانه حفظ شده است.</small></footer>
 </main></div></div>
 <div class="toast" id="toast"></div>
 <script>
