@@ -289,7 +289,7 @@ tbody tr:hover{background:#f7fafc}
       window.location.replace('/login/?returnUrl=' + returnTo);
       return;
     }
-    if (roles.indexOf('superadmin') !== -1) {
+    if (isAdmin) {
       document.addEventListener('DOMContentLoaded', function() {
         var superAdminGroup = document.getElementById('superadmin-nav-group');
         if (superAdminGroup) superAdminGroup.style.display = '';
