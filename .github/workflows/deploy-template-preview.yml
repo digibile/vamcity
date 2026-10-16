@@ -1,3 +1,4 @@
+# Production re-publish 2026-10-16T06:25+03:30: deploy latest integrated admin shell, full legacy sidebar, SuperAdmin navigation, settings and backup/restore routes to canonical dashboard.
 name: Deploy independent VamCity template management
 run-name: Publish VamCity template management preview
 # Deployment refresh 2026-10-13: republish the new admin template at /admin/dashboard and verify preserved legacy feature links, login redirect compatibility, and static route response.
