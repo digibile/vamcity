@@ -278,3 +278,45 @@ jobs:
             rm -f "$ROUTE_FILE"
           done
           echo "ADMIN_DASHBOARD_NEW_UI_LEGACY_LINKS_AND_GLOBAL_NAV_VERIFIED=true"
+
+      - name: Browser smoke test for the actual rendered admin shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          node <<'NODE'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+            const pageErrors = [];
+            page.on('pageerror', error => pageErrors.push(error.message));
+            await page.addInitScript(() => {
+              localStorage.setItem('user', JSON.stringify({
+                accessToken: 'browser-smoke-invalid-token',
+                userData: JSON.stringify({ userRoleNames: ['Admin'], fullName: 'Browser smoke test' })
+              }));
+            });
+            const response = await page.goto('https://roofixo.ir/admin/dashboard?browser-smoke=' + Date.now(), { waitUntil: 'domcontentloaded', timeout: 30000 });
+            if (!response || response.status() !== 200) throw new Error('Admin dashboard did not return HTTP 200');
+            await page.getByRole('heading', { name: 'مرکز مدیریت وام‌سیتی' }).waitFor({ state: 'visible', timeout: 15000 });
+            await page.getByRole('link', { name: /تنظیمات اپلیکیشن/ }).waitFor({ state: 'visible', timeout: 10000 });
+            await page.getByRole('link', { name: /پشتیبان‌گیری/ }).waitFor({ state: 'visible', timeout: 10000 });
+            await page.getByRole('link', { name: /درخواست همکاری و نمایندگی/ }).waitFor({ state: 'visible', timeout: 10000 });
+            console.log('BROWSER_ADMIN_SHELL_RENDERED=true');
+            await page.getByRole('link', { name: /تنظیمات اپلیکیشن/ }).first().click();
+            await page.waitForTimeout(7000);
+            const fallbackVisible = await page.locator('#legacy-fallback').isVisible().catch(() => false);
+            const frameUrl = await page.locator('#legacy-frame').getAttribute('src').catch(() => 'missing');
+            const shellTitleVisible = await page.getByRole('heading', { name: 'مرکز مدیریت وام‌سیتی' }).isVisible().catch(() => false);
+            console.log('SETTINGS_FRAME_URL=' + frameUrl);
+            console.log('SETTINGS_FALLBACK_VISIBLE=' + fallbackVisible);
+            console.log('ADMIN_SHELL_REMAINS_VISIBLE=' + shellTitleVisible);
+            if (!shellTitleVisible) throw new Error('New admin shell disappeared after opening settings');
+            if (fallbackVisible) throw new Error('Settings route failed to render inside the new shell; fallback was shown');
+            if (pageErrors.length) throw new Error('Browser JavaScript errors: ' + pageErrors.join(' | '));
+            console.log('BROWSER_ADMIN_SETTINGS_ROUTE_RENDERED=true');
+            await browser.close();
+          })().catch(error => { console.error(error); process.exit(1); });
+          NODE
