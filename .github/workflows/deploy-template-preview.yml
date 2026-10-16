@@ -44,6 +44,9 @@ jobs:
           grep -Fq "admin/userLoanRequest/list?start=" "$FILE"
           grep -Fq "/admin/member/DynamicListLight" "$FILE"
           grep -Fq "ItemsPerPage:8" "$FILE"
+          grep -Fq "/superadmin/dashboard/get" "$FILE"
+          grep -Fq "/superAdmin/customer/list" "$FILE"
+          grep -Fq "API فعلی ارائه نشده است" "$FILE"
           grep -q 'مرکز مدیریت' "$FILE"
           grep -q 'class="footer-links"' "$FILE"
           grep -Fq 'href="/admin/appsettings/"' "$FILE"
@@ -197,7 +200,7 @@ jobs:
           grep -q "تنظیمات اپلیکیشن" /tmp/vamcity-admin-check.html
           grep -q "پشتیبان‌گیری و بازیابی" /tmp/vamcity-admin-check.html
           grep -q "مرکز مدیریت وام‌سیتی" /tmp/vamcity-admin-check.html
-          grep -Eq 'vamcity-admin-ui-release" content="2026-10-16-integrated-admin-v9-paginated-real-data"' /tmp/vamcity-admin-check.html
+          grep -Eq 'vamcity-admin-ui-release" content="2026-10-16-integrated-admin-v10-role-aware-live-data"' /tmp/vamcity-admin-check.html
           grep -Fq "localStorage.getItem('user')" /tmp/vamcity-admin-check.html
           echo "=== VERIFY THE LEGACY CAPITALIZED LOGIN REDIRECT ROUTE ==="
           LEGACY_ADMIN_URL="https://roofixo.ir/admin/Dashboard?build=$GITHUB_SHA"
@@ -207,7 +210,7 @@ jobs:
           test "$LEGACY_ADMIN_CODE" = "200"
           test "$LEGACY_ADMIN_SIZE" -gt 30000
           grep -q 'id="overview"' /tmp/vamcity-admin-capital-check.html
-          grep -Eq 'vamcity-admin-ui-release" content="2026-10-16-integrated-admin-v9-paginated-real-data"' /tmp/vamcity-admin-capital-check.html
+          grep -Eq 'vamcity-admin-ui-release" content="2026-10-16-integrated-admin-v10-role-aware-live-data"' /tmp/vamcity-admin-capital-check.html
           grep -q 'href="/admin/appsettings/"' /tmp/vamcity-admin-capital-check.html
           grep -q 'href="/admin/appbackup/"' /tmp/vamcity-admin-capital-check.html
           echo "LOWERCASE_AND_LEGACY_CAPITALIZED_ADMIN_ROUTES_SERVE_V3=true"
