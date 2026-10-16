@@ -1,0 +1,121 @@
+name: Verify VamCity blank pages in a real browser
+run-name: Browser check VamCity login, plans, loans and loan requests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-vamcity-blank-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-blank-page-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Install Node and Chromium
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Render and inspect the actual public pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          cat > blank-pages.cjs <<'NODE'
+          const { chromium } = require('playwright');
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const targets = [
+              { name: 'loan-requests', path: '/admin/userLoanRequests/', minText: 60 },
+              { name: 'admin-loans', path: '/admin/loans/', minText: 60 },
+              { name: 'login', path: '/login/', minText: 60 },
+              { name: 'register', path: '/register/0/', minText: 60 },
+              { name: 'plans', path: '/cl/plans/', minText: 250 }
+            ];
+            let failed = false;
+
+            for (const target of targets) {
+              const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+              const errors = [];
+              page.on('pageerror', e => errors.push('PAGEERROR: ' + e.message));
+              page.on('console', m => { if (m.type() === 'error') errors.push('CONSOLE: ' + m.text()); });
+              page.on('requestfailed', r => {
+                if (/\/js\/(app|chunk-vendors|views-admin|layout|default)-/.test(r.url()) ||
+                    /\/js\/app\./.test(r.url())) errors.push('REQUEST_FAILED: ' + r.url() + ' ' + (r.failure()?.errorText || 'unknown'));
+              });
+              page.on('response', r => {
+                if (r.status() >= 400 && new URL(r.url()).hostname === 'roofixo.ir' &&
+                    (/\.js(?:\?|$)/.test(r.url()) || /\.css(?:\?|$)/.test(r.url()))) {
+                  errors.push('ASSET_HTTP_' + r.status() + ': ' + r.url());
+                }
+              });
+
+              try {
+                const response = await page.goto('https://roofixo.ir' + target.path, {
+                  waitUntil: 'domcontentloaded', timeout: 45000
+                });
+                await page.waitForTimeout(7000);
+                const status = response ? response.status() : 0;
+                const finalUrl = page.url();
+                const title = await page.title().catch(() => '');
+                const bodyText = (await page.locator('body').innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+                const appHtml = await page.locator('#app').innerHTML().catch(() => '');
+                const appText = await page.locator('#app').innerText().catch(() => '');
+                console.log('=== ' + target.name.toUpperCase() + ' ===');
+                console.log('REQUESTED_PATH=' + target.path);
+                console.log('FINAL_URL=' + finalUrl);
+                console.log('HTTP=' + status);
+                console.log('TITLE=' + title);
+                console.log('BODY_TEXT_LENGTH=' + bodyText.length);
+                console.log('APP_HTML_LENGTH=' + appHtml.length);
+                console.log('APP_TEXT_LENGTH=' + appText.length);
+                console.log('BODY_SAMPLE=' + bodyText.slice(0, 800));
+                console.log('BROWSER_ERRORS=' + JSON.stringify(errors.slice(0, 15)));
+                await page.screenshot({ path: 'artifacts/' + target.name + '.png', fullPage: true }).catch(() => {});
+
+                if (status !== 200 || bodyText.length < target.minText || appHtml.length < 100) {
+                  console.error('BLANK_OR_UNRENDERED_PAGE=' + target.name);
+                  failed = true;
+                }
+                if (errors.length) {
+                  console.error('BROWSER_ASSET_OR_RUNTIME_ERRORS=' + target.name);
+                  failed = true;
+                }
+                if (target.name === 'plans' && !bodyText.includes('وام سیتی')) {
+                  console.error('PLANS_CONTENT_MISSING');
+                  failed = true;
+                }
+                if (['login', 'register'].includes(target.name) && finalUrl.includes('/login') &&
+                    target.name === 'register') {
+                  console.log('REGISTER_REDIRECTED_TO_LOGIN=true');
+                }
+              } catch (e) {
+                console.error('NAVIGATION_FAILED=' + target.name + ' ' + e.message);
+                failed = true;
+              } finally {
+                await page.close();
+              }
+            }
+            await browser.close();
+            if (failed) process.exit(1);
+            console.log('ALL_TARGET_PAGES_RENDERED_WITHOUT_BROWSER_ERRORS=1');
+          })();
+          NODE
+          node blank-pages.cjs
+      - name: Upload browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vamcity-blank-page-browser-screenshots
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 7
