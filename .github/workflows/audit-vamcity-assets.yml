@@ -1,3 +1,4 @@
+# Read-only diagnostic rerun 2026-10-16: investigate reports of blank authenticated admin screens after Linux migration; capture active release, chunk paths, backend exceptions and database health.
 name: Audit VamCity assets and feature files (blank-page recovery check)
 on:
   push:
