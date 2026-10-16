@@ -184,6 +184,45 @@ tbody tr:hover{background:#f7fafc}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
+
+
+/* 2026-10-16 stability patch: prevent header/sidebar collisions on narrow screens. */
+.topbar{flex-wrap:wrap;min-width:0}
+.top-actions{min-width:0}
+.top-link{overflow-wrap:normal;white-space:nowrap}
+.sidebar .navbtn{display:flex;width:100%;text-align:right;justify-content:flex-start}
+.sidebar #superadmin-nav-group{width:100%}
+.main,.pagehead,.pagehead>div,.card,.metric{min-width:0}
+.legacy-workspace{min-width:0;overflow:hidden}
+.legacy-toolbar{gap:10px;flex-wrap:wrap}
+.legacy-frame{max-width:100%;height:calc(100dvh - 260px);min-height:520px}
+.footer-links{display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap}
+.footer-links a{display:inline-flex;align-items:center;min-height:30px}
+@media(max-width:760px){
+  .topbar{position:relative;top:auto;height:auto;min-height:0;align-items:center;gap:10px;padding:10px 12px}
+  .brand{flex:1 1 145px;min-width:0}
+  .top-actions{flex:1 1 100%;width:100%;max-width:100%;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;padding:2px 0 5px;scrollbar-width:thin}
+  .top-link{flex:0 0 auto}
+  .layout{display:flex;flex-direction:column;min-height:0}
+  .sidebar{position:sticky;top:0;z-index:25;width:100%;max-width:100%;height:auto;min-height:0;display:flex;align-items:center;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:5px;padding:7px 8px;scrollbar-width:thin}
+  .sidebar .side-label,.sidebar .side-foot{display:none!important}
+  .sidebar .navbtn{display:flex;flex:0 0 auto;width:auto;min-height:38px;white-space:nowrap;padding:5px 9px}
+  .sidebar #superadmin-nav-group{display:contents}
+  .main{padding:14px 11px}
+  .pagehead h1{overflow-wrap:anywhere}
+  .footer{margin:20px 0 0;padding:15px}
+  .footer-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 14px}
+  .footer-links a{min-width:0;overflow-wrap:anywhere}
+  .legacy-frame{height:calc(100dvh - 240px);min-height:480px}
+}
+@media(max-width:420px){
+  .brand strong{font-size:14px}
+  .brand small{font-size:9px}
+  .top-actions{gap:5px}
+  .top-link{font-size:10px;padding:5px 7px}
+  .footer-links{grid-template-columns:minmax(0,1fr)}
+}
+
 </style>
 <script>
 (function(){
