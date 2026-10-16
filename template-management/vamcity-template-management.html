@@ -194,6 +194,11 @@ tbody tr:hover{background:#f7fafc}
     var roles = data && data.userRoleNames;
     if (!Array.isArray(roles) || !roles.some(function(role){ return role === 'Admin' || role === 'SuperAdmin'; })) {
       window.location.replace('/login/');
+      return;
+    }
+    var superAdminGroup = document.getElementById('superadmin-nav-group');
+    if (superAdminGroup && roles.indexOf('SuperAdmin') !== -1) {
+      superAdminGroup.style.display = '';
     }
   } catch (_) { window.location.replace('/login/'); }
 })();
@@ -209,6 +214,19 @@ tbody tr:hover{background:#f7fafc}
 <aside class="sidebar">
   <div class="side-label">مرکز مدیریت</div>
   <a class="navbtn active" href="/admin/dashboard" style="text-decoration:none"><span class="ico">▦</span>داشبورد مدیریت</a>
+
+  <div id="superadmin-nav-group" data-role-nav="SuperAdmin" style="display:none">
+    <div class="side-label">مدیریت کل سامانه · Super Admin</div>
+    <a class="navbtn" href="/superadmin/dashboard" style="text-decoration:none"><span class="ico">▦</span>داشبورد کل سامانه</a>
+    <a class="navbtn" href="/superAdmin/customers" style="text-decoration:none"><span class="ico">♙</span>مشتریان سامانه</a>
+    <a class="navbtn" href="/superAdmin/tickets" style="text-decoration:none"><span class="ico">✉</span>تیکت‌های سراسری</a>
+    <a class="navbtn" href="/superAdmin/marketers" style="text-decoration:none"><span class="ico">♧</span>بازاریابان سراسری</a>
+    <a class="navbtn" href="/superAdmin/consultants" style="text-decoration:none"><span class="ico">☏</span>درخواست‌های مشاوره</a>
+    <a class="navbtn" href="/superAdmin/purchases" style="text-decoration:none"><span class="ico">⇄</span>تراکنش‌ها و خریدها</a>
+    <a class="navbtn" href="/superAdmin/inquirymanagement" style="text-decoration:none"><span class="ico">⌕</span>مدیریت استعلام‌های سراسری</a>
+    <a class="navbtn" href="/superAdmin/smsmanagement" style="text-decoration:none"><span class="ico">◉</span>مدیریت پیامک‌ها</a>
+    <a class="navbtn" href="/superAdmin/smsPatterns/" style="text-decoration:none"><span class="ico">✉</span>قالب‌های پیامک</a>
+  </div>
 
   <div class="side-label">تسهیلات و پرونده‌ها</div>
   <a class="navbtn" href="/admin/loans/" style="text-decoration:none"><span class="ico">◈</span>طرح‌ها و مدیریت وام‌ها</a>
