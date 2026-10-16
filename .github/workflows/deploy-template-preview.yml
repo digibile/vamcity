@@ -300,7 +300,7 @@ jobs:
             });
             const response = await page.goto('https://roofixo.ir/admin/dashboard?browser-smoke=' + Date.now(), { waitUntil: 'domcontentloaded', timeout: 30000 });
             if (!response || response.status() !== 200) throw new Error('Admin dashboard did not return HTTP 200');
-            await page.getByRole('heading', { name: 'مرکز مدیریت وام‌سیتی' }).waitFor({ state: 'visible', timeout: 15000 });
+            await page.locator('h1').filter({ hasText: 'مرکز مدیریت وام‌سیتی' }).waitFor({ state: 'visible', timeout: 15000 });
             await page.getByRole('link', { name: /تنظیمات اپلیکیشن/ }).waitFor({ state: 'visible', timeout: 10000 });
             await page.getByRole('link', { name: /پشتیبان‌گیری/ }).waitFor({ state: 'visible', timeout: 10000 });
             await page.getByRole('link', { name: /درخواست همکاری و نمایندگی/ }).waitFor({ state: 'visible', timeout: 10000 });
@@ -309,7 +309,7 @@ jobs:
             await page.waitForTimeout(7000);
             const fallbackVisible = await page.locator('#legacy-fallback').isVisible().catch(() => false);
             const frameUrl = await page.locator('#legacy-frame').getAttribute('src').catch(() => 'missing');
-            const shellTitleVisible = await page.getByRole('heading', { name: 'مرکز مدیریت وام‌سیتی' }).isVisible().catch(() => false);
+            const shellTitleVisible = await page.locator('h1').filter({ hasText: 'مرکز مدیریت وام‌سیتی' }).isVisible().catch(() => false);
             console.log('SETTINGS_FRAME_URL=' + frameUrl);
             console.log('SETTINGS_FALLBACK_VISIBLE=' + fallbackVisible);
             console.log('ADMIN_SHELL_REMAINS_VISIBLE=' + shellTitleVisible);
