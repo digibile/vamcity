@@ -1,4 +1,4 @@
-<!-- Production handoff refresh 2026-10-15T22:36+03:30: republish the exact approved preview management UI at the existing admin dashboard URL; preserve legacy operations, login session and database. -->
+<!-- Production handoff 2026-10-16: live authenticated customer/request data; preserve existing operational routes, session, and database. -->
 <!doctype html>
 <!-- Production recovery republish 2026-10-13: preserve the new management shell, authenticated legacy feature routes, and shared header/footer. -->
 <!-- Final handoff refresh 2026-10-13T20:52+03:30: publish this exact preview UI to the existing admin dashboard URL; keep login/session, legacy operations, app settings and backup/restore links. -->
@@ -10,7 +10,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#102337">
-<meta name="vamcity-admin-ui-release" content="2026-10-16-integrated-admin-v5-live-links">
+<meta name="vamcity-admin-ui-release" content="2026-10-16-integrated-admin-v6-live-data">
 <title>مرکز مدیریت وام‌سیتی</title>
 <!-- Production republish 2026-10-13: refresh the admin replacement at /admin/dashboard and verify the same login session, legacy modules, settings and backup routes. -->
 <!-- Final publish retry 2026-10-13: force deployment of the integrated new admin shell to the existing admin URL; preserve legacy business modules and database. -->
@@ -331,15 +331,11 @@ tbody tr:hover{background:#f7fafc}
       <div class="activity-item"><div class="activity-icon">◈</div><div><b>طرح‌های تسهیلات</b><small id="live-loans-check">در حال بررسی اتصال به API واقعی</small></div></div>
       <div class="activity-item"><div class="activity-icon">♙</div><div><b>اعضا و مشتریان</b><small id="live-members-check">در حال بررسی اتصال به API واقعی</small></div></div>
       <div class="activity-item"><div class="activity-icon">▤</div><div><b>درخواست‌های تسهیلات</b><small id="live-requests-check">در حال بررسی اتصال به API واقعی</small></div></div>
-      <div class="activity-item"><div class="activity-icon">⚙</div><div><b>ابزارهای قدیمی سامانه</b><small>از همین سایدبار و بدون حذف قابلیت‌های قبلی در دسترس هستند.</small><a class="btn small" href="/admin/appsettings/">تنظیمات اپلیکیشن</a> <a class="btn small" href="/admin/appbackup/">پشتیبان‌گیری و بازیابی</a></div></div>
+      <div class="activity-item"><div class="activity-icon">⚙</div><div><b>ابزارهای مدیریتی قبلی</b><small>تنظیمات اپلیکیشن و پشتیبان‌گیری همچنان از همین پنل در دسترس هستند.</small><a class="btn small" href="/admin/appsettings/">تنظیمات اپلیکیشن</a> <a class="btn small" href="/admin/appbackup/">پشتیبان‌گیری و بازیابی</a></div></div>
     </div></div>
-    <div class="card"><div class="cardhead"><h3>اقدامات و بررسی‌های اخیر</h3><button class="btn small" onclick="openLegacy('/admin/userLoanRequests/','درخواست‌های وام')">مشاهده همه</button></div><div class="activity">
-      <div class="activity-item"><div class="activity-icon">◈</div><div><b>مدیریت وام‌ها</b><small>نمایش اطلاعات زنده از سامانه فعلی</small></div><a class="btn small" href="/admin/loans/">بازکردن</a></div>
-      <div class="activity-item"><div class="activity-icon">♙</div><div><b>اعضا و مشتریان</b><small>مدیریت از مسیر اصلی سامانه</small></div><a class="btn small" href="/admin/members/">بازکردن</a></div>
-      <div class="activity-item"><div class="activity-icon">▤</div><div><b>درخواست‌های تسهیلات</b><small>پیوند به صفحه عملیاتی موجود</small></div><a class="btn small" href="/admin/userLoanRequests/">بازکردن</a></div>
-      <div class="activity-item"><div class="activity-icon">⚙</div><div><b>تنظیمات و پشتیبان‌گیری</b><small>امکانات قبلی حذف نشده‌اند</small></div><a class="btn small" href="/admin/appbackup/">بازکردن</a></div>
-    </div></div>
+    <div class="card"><div class="cardhead"><h3>درخواست‌های تسهیلات اخیر</h3><a class="btn small" href="/admin/userLoanRequests/">مشاهده همه</a></div><div id="live-requests-table" class="tablewrap"><div class="empty">در حال دریافت اطلاعات واقعی…</div></div></div>
   </div>
+  <div class="card" style="margin-bottom:18px"><div class="cardhead"><h3>اعضا و مشتریان سامانه</h3><a class="btn small" href="/admin/members/">مدیریت همه مشتریان</a></div><div id="live-customers-table" class="tablewrap"><div class="empty">در حال دریافت فهرست واقعی مشتریان…</div></div><div class="muted" id="live-customers-note" style="font-size:10px;margin-top:10px">اطلاعات از API سامانه اصلی دریافت می‌شود؛ هیچ داده نمونه‌ای در این فهرست درج نمی‌شود.</div></div>
   <div class="grid3">
     <div class="card"><div class="cardhead"><h3>سامانه تسهیلات</h3><span class="tag">مستقل</span></div><p class="muted">طرح‌ها، محاسبات، مقایسه و درخواست‌های وام.</p><button class="btn dark" style="width:100%" onclick="openLegacy('/admin/loans/','مدیریت طرح‌های تسهیلات')">مدیریت تسهیلات ←</button></div>
     <div class="card"><div class="cardhead"><h3>شبکه فروشگاه‌ها</h3><span class="tag blue">مستقل</span></div><p class="muted">پروفایل فروشگاه، محصولات، سفارش‌ها و خرید اعتباری.</p><button class="btn dark" style="width:100%" onclick="openLegacy('/admin/contacts/','مخاطبان و پذیرندگان')">مدیریت فروشگاه‌ها ←</button></div>
@@ -619,10 +615,12 @@ calc();
   } catch(e) { /* Keep the admin interface usable if an older profile shape is present. */ }
 })();
 
-// Load authenticated, real counts from the existing VamCity API. No placeholder numbers.
+// Load authenticated, real records from VamCity APIs. Do not substitute demo data when an endpoint fails.
 (async function loadLiveAdminMetrics(){
-  const faNumber = value => Number(value).toLocaleString('fa-IR');
+  const faNumber = value => Number(value||0).toLocaleString('fa-IR');
   const setText = (id, value) => { const el=document.getElementById(id); if(el) el.textContent=value; };
+  const esc = value => String(value==null?'':value).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const money = value => Number(value||0).toLocaleString('fa-IR')+' تومان';
   const setResult = (key, value, ok, note) => {
     setText('metric-'+key+'-value', ok ? faNumber(value) : '—');
     setText('metric-'+key+'-status', note);
@@ -631,13 +629,21 @@ calc();
   let auth;
   try {
     const stored=localStorage.getItem('user');
-    if(!stored) throw new Error('ورود مدیر لازم است');
+    if(!stored) throw new Error('برای مشاهده اطلاعات واقعی، با حساب مدیر وارد شوید.');
     const user=JSON.parse(stored);
-    if(!user.accessToken) throw new Error('نشست ورود معتبر نیست');
+    if(!user.accessToken) throw new Error('نشست ورود معتبر نیست؛ دوباره وارد شوید.');
+    const data=typeof user.userData==='string'?JSON.parse(user.userData||'{}'):(user.userData||{});
+    const roles=Array.isArray(data.userRoleNames)?data.userRoleNames:[];
+    if(!roles.includes('Admin')&&!roles.includes('SuperAdmin')) throw new Error('این اطلاعات فقط برای مدیر سامانه قابل مشاهده است.');
     auth={Authorization:'Bearer '+user.accessToken};
   } catch(e) {
-    ['loans','members','requests'].forEach(k=>setResult(k,0,false,'برای نمایش آمار زنده، با حساب مدیر وارد شوید.'));
-    setText('live-data-status','نیازمند ورود');
+    ['loans','members','requests'].forEach(k=>setResult(k,0,false,e.message||'ورود مدیر لازم است.'));
+    setText('live-data-status','نیازمند ورود مدیر');
+    setText('live-customers-table','');
+    const customers=document.getElementById('live-customers-table');
+    const requests=document.getElementById('live-requests-table');
+    if(customers)customers.innerHTML='<div class="empty">برای مشاهده فهرست واقعی مشتریان، با حساب مدیر وارد شوید.</div>';
+    if(requests)requests.innerHTML='<div class="empty">برای مشاهده درخواست‌های واقعی، با حساب مدیر وارد شوید.</div>';
     return;
   }
   const parseList = payload => {
@@ -653,13 +659,13 @@ calc();
     }
     return null;
   };
-  const load = async (url) => {
+  const load = async url => {
     const response=await fetch(url,{headers:auth,credentials:'same-origin',cache:'no-store'});
     if(!response.ok) throw new Error(response.status===401||response.status===403?'نشست مدیر منقضی شده یا دسترسی کافی نیست.':'پاسخ API '+response.status);
     const body=await response.json();
     const list=parseList(body);
     if(!list) throw new Error('ساختار پاسخ API قابل شمارش نیست');
-    return list.length;
+    return list.filter(item=>item&&typeof item==='object');
   };
   const start=new Date(); start.setMonth(start.getMonth()-1);
   const requestUrl='/admin/userLoanRequest/list?start='+encodeURIComponent(start.toISOString())+'&end='+encodeURIComponent(new Date().toISOString());
@@ -669,8 +675,32 @@ calc();
     ['requests',requestUrl,'درخواست‌های یک ماه اخیر']
   ];
   const results=await Promise.all(tasks.map(async ([key,url,label])=>{
-    try { const count=await load(url); setResult(key,count,true,label); return true; }
-    catch(error) { setResult(key,0,false,error.message||'دریافت آمار انجام نشد.'); return false; }
+    try {
+      const list=await load(url);
+      setResult(key,list.length,true,label);
+      if(key==='members') {
+        const rows=list.slice(0,8).map(m=>'<tr><td><b>'+esc(m.fullName||m.name||m.userName||'بدون نام')+'</b></td><td>'+esc(m.mobile||'—')+'</td><td>'+esc(m.nationalCode||'—')+'</td><td><span class="tag">'+esc(m.isActive===false?'غیرفعال':'ثبت‌شده')+'</span></td></tr>').join('');
+        const node=document.getElementById('live-customers-table');
+        if(node)node.innerHTML=list.length?'<table><thead><tr><th>نام مشتری</th><th>موبایل</th><th>کد ملی</th><th>وضعیت</th></tr></thead><tbody>'+rows+'</tbody></table>':'<div class="empty">در فهرست فعلی مشتری‌ای یافت نشد.</div>';
+        setText('live-customers-note','تعداد کل دریافت‌شده از سامانه: '+faNumber(list.length)+' مشتری. برای مشاهده، جست‌وجو و ویرایش کامل وارد مدیریت مشتریان شوید.');
+      }
+      if(key==='requests') {
+        const rows=list.slice(0,8).map(item=>{
+          const member=item.memberModel||{};
+          const loan=item.loanModel||{};
+          const date=item.requestDate_Persian&&item.requestDate_Persian.date||item.requestDate||'—';
+          return '<tr><td><b>'+esc(member.fullName||member.userName||'بدون نام')+'</b><small>'+esc(member.mobile||'')+'</small></td><td>'+esc(loan.title||'—')+'</td><td>'+esc(money(item.amount))+'</td><td>'+esc(date)+'</td><td><span class="tag">'+esc(item.str_Status||'نامشخص')+'</span></td></tr>';
+        }).join('');
+        const node=document.getElementById('live-requests-table');
+        if(node)node.innerHTML=list.length?'<table><thead><tr><th>مشتری</th><th>طرح</th><th>مبلغ درخواست</th><th>تاریخ ثبت</th><th>وضعیت</th></tr></thead><tbody>'+rows+'</tbody></table>':'<div class="empty">در بازه یک‌ماهه اخیر درخواستی ثبت نشده است.</div>';
+      }
+      return true;
+    } catch(error) {
+      setResult(key,0,false,error.message||'دریافت اطلاعات انجام نشد.');
+      if(key==='members') { const node=document.getElementById('live-customers-table'); if(node)node.innerHTML='<div class="empty">دریافت فهرست مشتریان ناموفق بود؛ صفحه مدیریت مشتریان را باز کنید.</div>'; }
+      if(key==='requests') { const node=document.getElementById('live-requests-table'); if(node)node.innerHTML='<div class="empty">دریافت درخواست‌ها ناموفق بود؛ صفحه درخواست‌های تسهیلات را باز کنید.</div>'; }
+      return false;
+    }
   }));
   const ok=results.filter(Boolean).length;
   setText('live-data-status',ok===3?'اتصال کامل':ok+' از ۳ منبع متصل');
