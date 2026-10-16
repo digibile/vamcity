@@ -5,6 +5,7 @@ run-name: Publish VamCity template management preview
 # Final production refresh 2026-10-13: republish integrated management shell to the existing admin URL and rerun live route/navigation checks.
 # Production re-publish 2026-10-13: force a fresh deploy after browser reported stale admin UI; verify canonical /admin/dashboard and /admin/Dashboard routes.
 # Reliability fix 2026-10-16: retry transient SSH resets during upload and atomic publish.
+# Final production republish 2026-10-16: redeploy the exact requested admin template to the canonical dashboard, preserve authenticated legacy operations, and verify the live routes end-to-end.
 # Navigation fix 2026-10-16: route the global ticket menu to the existing admin tickets page; the legacy SuperAdmin tickets route is not registered in the Vue router.
 
 on:
