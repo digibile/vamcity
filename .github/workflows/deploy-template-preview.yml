@@ -38,6 +38,16 @@ jobs:
           grep -q 'class="footer-links"' "$FILE"
           grep -Fq 'href="/admin/appsettings/"' "$FILE"
           grep -Fq 'href="/admin/appbackup/"' "$FILE"
+          grep -q 'id="superadmin-nav-group"' "$FILE"
+          grep -Fq 'href="/superadmin/dashboard"' "$FILE"
+          grep -Fq 'href="/superAdmin/customers"' "$FILE"
+          grep -Fq 'href="/superAdmin/tickets"' "$FILE"
+          grep -Fq 'href="/superAdmin/marketers"' "$FILE"
+          grep -Fq 'href="/superAdmin/consultants"' "$FILE"
+          grep -Fq 'href="/superAdmin/purchases"' "$FILE"
+          grep -Fq 'href="/superAdmin/inquirymanagement"' "$FILE"
+          grep -Fq 'href="/superAdmin/smsmanagement"' "$FILE"
+          grep -Fq 'href="/superAdmin/smsPatterns/"' "$FILE"
           grep -q 'href="/cl/agentregister/0/"' "$FILE"
           grep -q 'href="/plans.html"' "$FILE"
           echo "Independent admin template and shared navigation validated."
@@ -182,6 +192,19 @@ jobs:
           grep -q 'href="/admin/appsettings/"' /tmp/vamcity-admin-capital-check.html
           grep -q 'href="/admin/appbackup/"' /tmp/vamcity-admin-capital-check.html
           echo "LOWERCASE_AND_LEGACY_CAPITALIZED_ADMIN_ROUTES_SERVE_V3=true"
+          echo "=== VERIFY SUPERADMIN DASHBOARD USES THE SAME NEW UI ==="
+          SUPERADMIN_URL="https://roofixo.ir/superadmin/dashboard?build=$GITHUB_SHA"
+          SUPERADMIN_CODE="$(curl -k -sS -L --max-time 25 -o /tmp/vamcity-superadmin-check.html -w '%{http_code}' "$SUPERADMIN_URL")"
+          SUPERADMIN_SIZE="$(wc -c < /tmp/vamcity-superadmin-check.html)"
+          echo "$SUPERADMIN_URL HTTP $SUPERADMIN_CODE bytes=$SUPERADMIN_SIZE"
+          test "$SUPERADMIN_CODE" = "200"
+          test "$SUPERADMIN_SIZE" -gt 30000
+          grep -q 'id="superadmin-nav-group"' /tmp/vamcity-superadmin-check.html
+          grep -q 'href="/superAdmin/customers"' /tmp/vamcity-superadmin-check.html
+          grep -q 'href="/superAdmin/smsPatterns/"' /tmp/vamcity-superadmin-check.html
+          grep -q 'href="/admin/appsettings/"' /tmp/vamcity-superadmin-check.html
+          grep -q 'href="/admin/appbackup/"' /tmp/vamcity-superadmin-check.html
+          echo "SUPERADMIN_NEW_UI_ROUTE_VERIFIED=true"
           grep -q 'href="/admin/reports/"' /tmp/vamcity-admin-check.html
           grep -q 'href="/admin/loans/"' /tmp/vamcity-admin-check.html
           grep -q 'href="/admin/userLoanRequests/"' /tmp/vamcity-admin-check.html
@@ -201,6 +224,16 @@ jobs:
             ROUTE_STATUS="$(curl -k -sS -L --max-time 15 -o "$ROUTE_FILE" -w '%{http_code}' "https://roofixo.ir$ROUTE?navcheck=$GITHUB_SHA" || true)"
             APP_BUNDLE="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$ROUTE_FILE" | head -1 || true)"
             echo "SIDEBAR_ROUTE=$ROUTE HTTP=$ROUTE_STATUS APP_BUNDLE=$APP_BUNDLE"
+            test "$ROUTE_STATUS" = "200"
+            test -n "$APP_BUNDLE"
+            rm -f "$ROUTE_FILE"
+          done
+          echo "=== VERIFY EXISTING SUPERADMIN OPERATIONS STILL REACH THE LEGACY APP ==="
+          for ROUTE in /superAdmin/customers /superAdmin/tickets /superAdmin/marketers /superAdmin/consultants /superAdmin/purchases /superAdmin/inquirymanagement /superAdmin/smsmanagement /superAdmin/smsPatterns/; do
+            ROUTE_FILE="$(mktemp)"
+            ROUTE_STATUS="$(curl -k -sS -L --max-time 15 -o "$ROUTE_FILE" -w '%{http_code}' "https://roofixo.ir$ROUTE?navcheck=$GITHUB_SHA" || true)"
+            APP_BUNDLE="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$ROUTE_FILE" | head -1 || true)"
+            echo "SUPERADMIN_LEGACY_ROUTE=$ROUTE HTTP=$ROUTE_STATUS APP_BUNDLE=$APP_BUNDLE"
             test "$ROUTE_STATUS" = "200"
             test -n "$APP_BUNDLE"
             rm -f "$ROUTE_FILE"
