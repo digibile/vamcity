@@ -1,5 +1,5 @@
 name: VamCity live link audit
-# Re-audit after repairing loan detail links to the registered /cl/plan route; crawl all public entry points and verify rendered pages, browser errors, 404s and 5xx responses.
+# Expanded live audit 2026-10-16: include all legacy admin and SuperAdmin menu destinations so blank pages, missing chunks, browser errors, 404s and 5xx responses are surfaced.
 on:
   push:
     branches: [main]
@@ -27,7 +27,28 @@ jobs:
           const { chromium } = require('playwright');
           (async () => {
             const base = 'https://roofixo.ir';
-            const starts = ['/', '/login/', '/cl/login/', '/cl/register/', '/cl/agentregister/0', '/plans/0/', '/cl/plans/', '/c/lplans/0/', '/clplans/0/', '/cl/ourplans/0'];
+            const starts = [
+              '/', '/login/', '/register/0/', '/cl/login/', '/cl/register/',
+              '/cl/agentregister/0/', '/plans/0/', '/cl/plans/', '/c/lplans/0/',
+              '/clplans/0/', '/cl/ourplans/0', '/admin/dashboard', '/admin/Dashboard',
+              '/admin/loans/', '/admin/userLoanRequests/', '/admin/loanPaymentRequests',
+              '/admin/members/', '/admin/users/', '/admin/tickets/', '/admin/reports/',
+              '/admin/loanStatistics', '/admin/report-member-loans',
+              '/admin/report-installments-month', '/admin/wallet-transactions',
+              '/admin/checkoutThisMonth', '/admin/checkouted-members',
+              '/admin/latestMembers', '/admin/remainInstallmentCount',
+              '/admin/report-members', '/admin/report-paid-installments-month',
+              '/admin/report-saveMonies-month', '/admin/report-monthly-balance',
+              '/admin/iran-validity-reports', '/admin/organization-duedated-reports',
+              '/admin/assurances-report', '/admin/agentFactors', '/admin/savedMoneyimport',
+              '/admin/installmentsimport', '/admin/remainComparer', '/admin/contacts/',
+              '/admin/customerOrders/', '/admin/inquirymanagement', '/admin/smslist',
+              '/admin/expense', '/admin/appsettings/', '/admin/appbackup/',
+              '/superadmin/dashboard', '/superAdmin/customers', '/superAdmin/tickets',
+              '/superAdmin/marketers', '/superAdmin/consultants', '/superAdmin/purchases',
+              '/superAdmin/inquirymanagement', '/superAdmin/smsmanagement',
+              '/superAdmin/smsPatterns/'
+            ];
             const browser = await chromium.launch({headless:true});
             const context = await browser.newContext({ignoreHTTPSErrors:true});
             const page = await context.newPage();
