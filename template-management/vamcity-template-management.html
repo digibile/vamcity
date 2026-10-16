@@ -196,9 +196,11 @@ tbody tr:hover{background:#f7fafc}
       window.location.replace('/login/');
       return;
     }
-    var superAdminGroup = document.getElementById('superadmin-nav-group');
-    if (superAdminGroup && roles.indexOf('SuperAdmin') !== -1) {
-      superAdminGroup.style.display = '';
+    if (roles.indexOf('SuperAdmin') !== -1) {
+      document.addEventListener('DOMContentLoaded', function() {
+        var superAdminGroup = document.getElementById('superadmin-nav-group');
+        if (superAdminGroup) superAdminGroup.style.display = '';
+      });
     }
   } catch (_) { window.location.replace('/login/'); }
 })();
