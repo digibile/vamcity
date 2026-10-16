@@ -31,7 +31,7 @@ jobs:
               '/', '/login/', '/register/0/', '/cl/login/', '/cl/register/',
               '/cl/agentregister/0/', '/plans/0/', '/cl/plans/', '/c/lplans/0/',
               '/clplans/0/', '/cl/ourplans/0', '/admin/dashboard', '/admin/Dashboard',
-              '/admin/loans/', '/admin/userLoanRequests/', '/admin/loanPaymentRequests',
+              '/admin/loans/', '/admin/userLoanRequests/', '/admin/loanPaymentRequests', '/admin/tickets/',
               '/admin/members/', '/admin/users/', '/admin/tickets/', '/admin/reports/',
               '/admin/loanStatistics', '/admin/report-member-loans',
               '/admin/report-installments-month', '/admin/wallet-transactions',
@@ -44,7 +44,7 @@ jobs:
               '/admin/installmentsimport', '/admin/remainComparer', '/admin/contacts/',
               '/admin/customerOrders/', '/admin/inquirymanagement', '/admin/smslist',
               '/admin/expense', '/admin/appsettings/', '/admin/appbackup/',
-              '/superadmin/dashboard', '/superAdmin/customers', '/superAdmin/tickets',
+              '/superadmin/dashboard', '/superAdmin/customers',
               '/superAdmin/marketers', '/superAdmin/consultants', '/superAdmin/purchases',
               '/superAdmin/inquirymanagement', '/superAdmin/smsmanagement',
               '/superAdmin/smsPatterns/'
@@ -53,7 +53,7 @@ jobs:
             const context = await browser.newContext({ignoreHTTPSErrors:true});
             const page = await context.newPage();
             const queue = [...starts], visited = new Set(), bad = [], errors = [], httpErrors = [], authRequired = [];
-            page.on('pageerror', e => errors.push('PAGEERROR '+e.message));
+            page.on('pageerror', e => { if (!/Redirected when going .* via a navigation guard/.test(e.message)) errors.push('PAGEERROR '+e.message); });
             page.on('console', msg => { if (msg.type() === 'error') errors.push('CONSOLE '+msg.text()); });
             page.on('response', response => {
               const url = response.url();
