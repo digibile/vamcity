@@ -1,4 +1,5 @@
 name: Deploy VamCity UI only (preserve app and database)
+# Production republish 2026-10-16: refresh the full modern UI bundle and shared page styles without changing business data.
 # This release copies presentation assets only; it never rebuilds the app or restores a database.
 # The paired live regression workflow checks plans, login modes, registration, and mobile rendering.
 # Keep deployment idempotent so browser checks can be repeated after test-only changes.
