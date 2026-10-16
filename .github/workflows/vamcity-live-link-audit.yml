@@ -1,5 +1,6 @@
 name: VamCity live link audit
 # Expanded live audit 2026-10-16: include all legacy admin and SuperAdmin menu destinations so blank pages, missing chunks, browser errors, 404s and 5xx responses are surfaced.
+# Re-run requested full production route audit after legacy Linux route compatibility review.
 on:
   push:
     branches: [main]
