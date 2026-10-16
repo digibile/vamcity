@@ -634,7 +634,7 @@ document.querySelectorAll('.shell a[href^="/"]').forEach(link=>{
   const href=link.getAttribute("href")||"";
   const rawPath=href.split("?")[0];
   const path=rawPath.length>1&&rawPath.endsWith("/")?rawPath.slice(0,-1):rawPath;
-  if(path==="/"||path==="/plans.html"||path==="/login"||path==="/register/0"||path==="/admin/dashboard"||path==="/admin/Dashboard"||path==="/superadmin/dashboard")return;
+  if(path==="/"||path==="/cl/plans"||path==="/login"||path==="/register/0"||path==="/admin/dashboard"||path==="/admin/Dashboard"||path==="/superadmin/dashboard")return;
   if(!path.startsWith("/admin/")&&!path.startsWith("/cl/agentregister/")&&!path.startsWith("/superAdmin/")&&!path.startsWith("/superadmin/"))return;
   link.addEventListener("click",event=>{
     if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||link.target==="_blank")return;
