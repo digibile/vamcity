@@ -1,3 +1,4 @@
+# Production publish requested 2026-10-16: republish homepage navigation and modern live-plan discovery UI to roofixo.ir.
 # 2026-10-15: explicitly republish latest homepage + dedicated live plans page and validate canonical routes.
 name: Deploy integrated VamCity public homepage
 run-name: Publish VamCity homepage with live plans and working account links
