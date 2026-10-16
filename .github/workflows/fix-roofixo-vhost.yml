@@ -337,7 +337,16 @@ jobs:
           rm -f "$ADMIN_BODY"
           echo "=== VERIFY SUPERADMIN LOGIN LANDING ROUTE ==="
           SUPERADMIN_BODY="$(mktemp)"
-          SUPERADMIN_STATUS="$(curl -k -sS -o "$SUPERADMIN_BODY" --max-time 15 -w '%{http_code}' "https://roofixo.ir/superadmin/dashboard?route-check=$TS")"
+          SUPERADMIN_STATUS="000"
+          # The template deployment and vhost rewrite are separate workflows; allow the atomic file publish to finish.
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            SUPERADMIN_STATUS="$(curl -k -sS -o "$SUPERADMIN_BODY" --max-time 15 -w '%{http_code}' "https://roofixo.ir/superadmin/dashboard?route-check=$TS" || true)"
+            if [ "$SUPERADMIN_STATUS" = "200" ] && grep -q 'id="superadmin-nav-group"' "$SUPERADMIN_BODY"; then
+              echo "SUPERADMIN_TEMPLATE_VISIBLE_ON_ATTEMPT=$attempt"
+              break
+            fi
+            sleep 5
+          done
           echo "SUPERADMIN_NEW_DASHBOARD_HTTP=$SUPERADMIN_STATUS"
           test "$SUPERADMIN_STATUS" = "200"
           grep -q "مرکز مدیریت وام‌سیتی" "$SUPERADMIN_BODY"
