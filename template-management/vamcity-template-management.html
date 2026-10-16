@@ -11,7 +11,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#102337">
-<meta name="vamcity-admin-ui-release" content="2026-10-16-integrated-admin-v7-live-data">
+<meta name="vamcity-admin-ui-release" content="2026-10-16-integrated-admin-v8-live-data">
 <title>مرکز مدیریت وام‌سیتی</title>
 <!-- Production republish 2026-10-13: refresh the admin replacement at /admin/dashboard and verify the same login session, legacy modules, settings and backup routes. -->
 <!-- Final publish retry 2026-10-13: force deployment of the integrated new admin shell to the existing admin URL; preserve legacy business modules and database. -->
@@ -587,9 +587,36 @@ function openLegacy(url,label){
           ".v-alert,.v-chip,.v-dialog>.v-card{border-radius:10px!important}",
           ".v-toolbar__content,.v-card__title{font-weight:600!important;color:#17283a!important}",
           ".v-main__wrap .container{max-width:none!important}",
+          ".v-application,.v-application button,.v-application input,.v-application textarea,.v-application select{font-family:Tahoma,Vazirmatn,Arial,sans-serif!important;letter-spacing:0!important}",
+          ".v-main,.v-main__wrap{background:#f4f6f9!important}",
+          ".v-card,.v-sheet,.v-dialog>.v-card,.v-menu__content{border-radius:14px!important}",
+          ".v-card{overflow:hidden!important}",
+          ".v-card__title{font-size:15px!important;padding:18px 20px!important}",
+          ".v-card__text{color:#34465a!important;line-height:1.9!important}",
+          ".v-btn{min-height:38px!important;box-shadow:none!important}",
+          ".v-btn:not(.v-btn--icon):not(.v-btn--fab){padding-inline:15px!important}",
+          ".v-btn.v-btn--contained.primary,.v-btn.primary{background:#17364c!important;border-color:#17364c!important;color:#fff!important}",
+          ".v-btn.v-btn--outlined{border-color:#d7e0e8!important}",
+          ".v-input__slot{border-radius:10px!important}",
+          ".v-text-field--outlined fieldset,.v-select--outlined fieldset,.v-textarea--outlined fieldset{border-color:#dce4eb!important}",
+          ".v-label,.v-input input,.v-select__selection,.v-textarea textarea{font-size:13px!important}",
+          ".v-data-table{background:#fff!important}",
+          ".v-data-table table{border-collapse:separate!important;border-spacing:0!important}",
+          ".v-data-table-header th,.v-data-table thead th{height:44px!important;white-space:nowrap!important;border-bottom:1px solid #e5eaf0!important}",
+          ".v-data-table tbody tr:hover{background:#f7f9fb!important}",
+          ".v-data-table td{height:48px!important;border-bottom:1px solid #edf1f5!important}",
+          ".v-chip{font-weight:600!important}",
+          ".v-alert{border:1px solid #e5eaf0!important}",
+          ".v-toolbar{background:#fff!important;box-shadow:none!important}",
+          ".v-list-item{min-height:42px!important}",
+          ".v-pagination__item,.v-pagination__navigation{border-radius:9px!important;box-shadow:none!important}",
+          ".v-dialog .v-card__actions{padding:12px 20px 18px!important}",
+          "a{transition:color .15s ease}",
+          ":focus-visible{outline:2px solid #c99b51!important;outline-offset:2px!important}",
+          "@media(max-width:760px){.v-card__title{font-size:14px!important;padding:14px!important}.v-card__text{padding:12px!important}.v-btn{min-height:36px!important}.v-data-table td{padding:8px!important}}",
           "#app{min-height:0!important}",
           "@media(max-width:760px){.v-main__wrap{padding:8px!important}.v-card__text{padding:12px!important}.v-data-table{font-size:12px!important}}"
-        ].join("\\n");
+        ].join("\n");
         doc.head.appendChild(style);
       }
     }catch(e){/* Cross-origin or browser policy: keep the original page functional. */}
