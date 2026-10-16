@@ -1,6 +1,6 @@
 name: Repair VamCity blank legacy pages by syncing the runtime bundle
 
-run-name: Sync matching VamCity SPA chunks to roofixo.ir
+run-name: Sync matching VamCity SPA chunks to roofixo.ir (2026-10-16 legacy blank-page repair)
 
 on:
   push:
