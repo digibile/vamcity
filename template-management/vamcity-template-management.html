@@ -905,5 +905,167 @@ calc();
   window.addEventListener('resize',function(){if(window.innerWidth>760)closeMenu();});
 })();
 </script>
+
+<!-- VAMCITY_LIVE_DATA_WORKSPACE_V1: Critical admin lists render directly in the new shell using authenticated production APIs. -->
+<script>
+(function(){
+  'use strict';
+  const routeMap = {
+    '/admin/loans': {kind:'loans', title:'طرح‌ها و وام‌های ثبت‌شده'},
+    '/admin/userLoanRequests': {kind:'requests', title:'درخواست‌های واقعی وام'},
+    '/admin/members': {kind:'customers', title:'مشتریان و اعضای واقعی'},
+    '/admin/users': {kind:'customers', title:'کاربران و مشتریان سامانه'},
+    '/superAdmin/customers': {kind:'superCustomers', title:'حساب‌های سازمانی واقعی'}
+  };
+  const workspace = document.getElementById('legacy-workspace');
+  const frame = document.getElementById('legacy-frame');
+  const loading = document.getElementById('legacy-loading');
+  const fallback = document.getElementById('legacy-fallback');
+  const toolbarTitle = document.getElementById('legacy-title');
+  const sections = Array.from(document.querySelectorAll('main.main > .section'));
+  let lastRoute = null;
+
+  function esc(value){
+    return String(value == null || value === '' ? '—' : value)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function fa(value){ try{return Number(value||0).toLocaleString('fa-IR');}catch(_){return String(value||0);} }
+  function normalize(path){ return path.length>1&&path.endsWith('/')?path.slice(0,-1):path; }
+  function parseList(payload){
+    if(Array.isArray(payload)) return payload;
+    const keys=['data','Data','items','Items','result','Result','results','Results','value','Value','members','Members','loans','Loans','userLoanRequests','UserLoanRequests','list','List','rows','Rows'];
+    for(const key of keys){
+      if(payload&&payload[key]!==undefined){
+        if(Array.isArray(payload[key])) return payload[key];
+        if(payload[key]&&typeof payload[key]==='object'){
+          const nested=parseList(payload[key]);
+          if(nested) return nested;
+        }
+      }
+    }
+    return null;
+  }
+  function valueOf(obj, keys){
+    for(const key of keys){
+      if(obj && obj[key]!==undefined && obj[key]!==null && obj[key]!=='') return obj[key];
+      const lower=key.toLowerCase();
+      if(obj) for(const actual of Object.keys(obj)) if(actual.toLowerCase()===lower && obj[actual]!==undefined && obj[actual]!==null && obj[actual]!=='') return obj[actual];
+    }
+    return '—';
+  }
+  function currentUser(){
+    const raw=localStorage.getItem('user');
+    if(!raw) throw new Error('نشست ورود پیدا نشد؛ دوباره وارد پنل شوید.');
+    const user=JSON.parse(raw);
+    if(!user || !user.accessToken) throw new Error('توکن نشست ورود در دسترس نیست؛ دوباره وارد شوید.');
+    const data=typeof user.userData==='string'?JSON.parse(user.userData||'{}'):(user.userData||{});
+    const rawRoles=data.userRoleNames||data.roles||data.roleNames||user.userRoleNames||user.roles||[];
+    const roles=(Array.isArray(rawRoles)?rawRoles:String(rawRoles).split(/[,;|]/)).map(r=>String(r&& (r.name||r.roleName||r)||'').trim().toLowerCase());
+    if(!roles.some(r=>r==='admin'||r==='superadmin')) throw new Error('این بخش فقط برای حساب مدیر مجاز است.');
+    return {user,roles};
+  }
+  async function request(url, options){
+    const {user}=currentUser();
+    const response=await fetch(url,Object.assign({credentials:'same-origin',cache:'no-store'},options||{},{
+      headers:Object.assign({Authorization:'Bearer '+user.accessToken},(options&&options.headers)||{})
+    }));
+    if(!response.ok) throw new Error(response.status===401||response.status===403?'دسترسی API رد شد (HTTP '+response.status+'). نشست یا مجوز نقش مدیر را بررسی کنید.':'خطای API سامانه: HTTP '+response.status);
+    return response.json();
+  }
+  async function getRows(kind){
+    const {roles}=currentUser();
+    if(kind==='loans'){
+      const body=await request('/admin/loan/list/true');
+      const rows=parseList(body);
+      if(!rows) throw new Error('پاسخ API طرح‌های وام قالب فهرست شناخته‌شده‌ای ندارد.');
+      return {rows,cols:[['عنوان طرح',['name','title','loanName','loanTitle','displayName']],['مبلغ',['amount','maxAmount','loanAmount','creditAmount']],['مدت',['duration','months','installmentCount','period']],['نرخ/کارمزد',['profitPercent','interestRate','feePercent']],['وضعیت',['isActive','active','status','statusName']]]};
+    }
+    if(kind==='requests'){
+      if(roles.includes('superadmin')&&!roles.includes('admin')) throw new Error('API درخواست‌های فردی در نسخه فعلی فقط برای نقش Admin مجاز است؛ برای جلوگیری از نمایش داده ساختگی این بخش باز نشده است.');
+      const start=new Date();start.setMonth(start.getMonth()-12);
+      const url='/admin/userLoanRequest/list?start='+encodeURIComponent(start.toISOString())+'&end='+encodeURIComponent(new Date().toISOString());
+      const body=await request(url);
+      const rows=parseList(body);
+      if(!rows) throw new Error('پاسخ API درخواست‌های وام قالب فهرست شناخته‌شده‌ای ندارد.');
+      return {rows,cols:[['متقاضی',['fullName','name','userName','memberName','customerName']],['موبایل',['mobile','phoneNumber','phone']],['طرح',['loanName','loanTitle','title']],['تاریخ ثبت',['createdAt','createDate','registerDate','date']],['وضعیت',['statusName','status','stateName']]]};
+    }
+    if(kind==='customers'){
+      if(roles.includes('superadmin')&&!roles.includes('admin')) throw new Error('فهرست اعضای فردی از API مخصوص نقش Admin ارائه می‌شود؛ برای جلوگیری از نمایش داده نادرست، این بخش باز نشده است.');
+      const body=await request('/admin/member/DynamicListLight',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({Page:1,ItemsPerPage:50,All:true,Search:''})
+      });
+      const payload=body&&(body.data!==undefined?body.data:body.Data!==undefined?body.Data:body);
+      const rows=parseList(payload);
+      if(!rows) throw new Error('پاسخ API مشتریان فهرست قابل نمایش ندارد.');
+      return {rows,cols:[['نام مشتری',['fullName','name','userName','businessName','customerName']],['موبایل',['mobile','phoneNumber','phone']],['کد ملی',['nationalCode','nationalId']],['وضعیت',['isActive','active','status','statusName']]]};
+    }
+    if(kind==='superCustomers'){
+      const body=await request('/superAdmin/customer/list');
+      const rows=parseList(body);
+      if(!rows) throw new Error('پاسخ API حساب‌های سازمانی قالب فهرست شناخته‌شده‌ای ندارد.');
+      return {rows,cols:[['حساب سازمانی',['businessName','name','title','customerName']],['اعضا',['membersCount']],['وام‌های ثبت‌شده',['userLoansCount']],['طرح‌ها',['loansCount']]]};
+    }
+    throw new Error('بخش در این نمای داده‌ای پشتیبانی نشده است.');
+  }
+  function showLive(kind,title){
+    lastRoute={kind,title};
+    if(!workspace) return;
+    sections.forEach(section=>section.style.display='none');
+    workspace.hidden=false;
+    if(frame){frame.onload=null;frame.src='about:blank';frame.style.display='none';}
+    if(loading) loading.style.display='none';
+    if(fallback) fallback.hidden=true;
+    if(toolbarTitle) toolbarTitle.textContent=title;
+    let host=document.getElementById('vamcity-live-data-view');
+    if(!host){
+      host=document.createElement('div');
+      host.id='vamcity-live-data-view';
+      host.className='card';
+      host.style.cssText='margin:14px 0;padding:18px;min-height:240px';
+      workspace.appendChild(host);
+    }
+    host.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h2 style="margin:0 0 5px;font-size:19px">'+esc(title)+'</h2><p style="margin:0;color:#718096;font-size:12px">اطلاعات مستقیماً از API سامانه دریافت می‌شود؛ داده نمونه استفاده نمی‌شود.</p></div><button type="button" class="btn dark" id="vamcity-live-refresh">تازه‌سازی اطلاعات</button></div><div id="vamcity-live-data-result" style="margin-top:18px"><div class="empty">در حال دریافت اطلاعات واقعی…</div></div>';
+    document.getElementById('vamcity-live-refresh').addEventListener('click',()=>loadLive(kind,title));
+    loadLive(kind,title);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  async function loadLive(kind,title){
+    const result=document.getElementById('vamcity-live-data-result');
+    if(!result)return;
+    result.innerHTML='<div class="empty">در حال دریافت اطلاعات واقعی از سامانه…</div>';
+    try{
+      const data=await getRows(kind);
+      const rows=data.rows;
+      const head='<thead><tr>'+data.cols.map(c=>'<th>'+esc(c[0])+'</th>').join('')+'</tr></thead>';
+      const body=rows.slice(0,100).map(row=>'<tr>'+data.cols.map((c,index)=>{
+        let v=valueOf(row,c[1]);
+        if(typeof v==='boolean')v=v?'فعال':'غیرفعال';
+        if(c[0]==='مبلغ'||c[0]==='اعضا'||c[0]==='وام‌های ثبت‌شده'||c[0]==='طرح‌ها')v=typeof v==='number'?fa(v):v;
+        if(typeof v==='object')v=JSON.stringify(v);
+        return '<td>'+esc(v)+'</td>';
+      }).join('')+'</tr>').join('');
+      result.innerHTML='<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;color:#718096;font-size:12px"><span>تعداد رکوردهای دریافت‌شده: <b>'+fa(rows.length)+'</b></span><span>نمایش حداکثر ۱۰۰ رکورد نخست</span></div>'+(rows.length?'<div style="overflow:auto"><table class="data-table" style="width:100%;border-collapse:collapse">'+head+'<tbody>'+body+'</tbody></table></div>':'<div class="empty">API پاسخ موفق داد اما رکوردی برای نمایش برنگرداند.</div>');
+    }catch(error){
+      result.innerHTML='<div class="legacy-fallback" style="display:block!important" role="alert"><strong>دریافت اطلاعات واقعی ناموفق بود.</strong><p>'+esc(error&&error.message||'خطای نامشخص')+'</p><p>هیچ داده ساختگی جایگزین نشده است. متن خطا برای تشخیص مشکل مجوز یا API نمایش داده شده.</p><button type="button" class="btn" id="vamcity-live-retry">تلاش دوباره</button></div>';
+      const retry=document.getElementById('vamcity-live-retry');
+      if(retry)retry.addEventListener('click',()=>loadLive(kind,title));
+    }
+  }
+  document.addEventListener('click',function(event){
+    const link=event.target&&event.target.closest?event.target.closest('.shell a[href^="/"]'):null;
+    if(!link)return;
+    const path=normalize((link.getAttribute('href')||'').split('?')[0]);
+    const route=routeMap[path];
+    if(!route)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    showLive(route.kind,route.title);
+  },true);
+  window.addEventListener('pageshow',function(){if(lastRoute&&document.getElementById('vamcity-live-data-view'))loadLive(lastRoute.kind,lastRoute.title);});
+})();
+</script>
+
 </body>
 </html>
