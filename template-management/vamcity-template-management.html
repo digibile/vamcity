@@ -11,7 +11,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#102337">
-<meta name="vamcity-admin-ui-release" content="2026-10-16-integrated-admin-v9-paginated-real-data">
+<meta name="vamcity-admin-ui-release" content="2026-10-16-integrated-admin-v10-role-aware-live-data">
 <title>مرکز مدیریت وام‌سیتی</title>
 <!-- Production republish 2026-10-13: refresh the admin replacement at /admin/dashboard and verify the same login session, legacy modules, settings and backup routes. -->
 <!-- Final publish retry 2026-10-13: force deployment of the integrated new admin shell to the existing admin URL; preserve legacy business modules and database. -->
@@ -753,13 +753,15 @@ calc();
     setText('live-'+key+'-check', ok ? 'اتصال برقرار؛ '+faNumber(value)+' مورد دریافت شد.' : note);
   };
   let auth;
+  let roles=[];
+  let userData={};
   try {
     const stored=localStorage.getItem('user');
     if(!stored) throw new Error('برای مشاهده اطلاعات واقعی، با حساب مدیر وارد شوید.');
     const user=JSON.parse(stored);
     if(!user.accessToken) throw new Error('نشست ورود معتبر نیست؛ دوباره وارد شوید.');
-    const data=typeof user.userData==='string'?JSON.parse(user.userData||'{}'):(user.userData||{});
-    const roles=Array.isArray(data.userRoleNames)?data.userRoleNames:[];
+    userData=typeof user.userData==='string'?JSON.parse(user.userData||'{}'):(user.userData||{});
+    roles=Array.isArray(userData.userRoleNames)?userData.userRoleNames:[];
     if(!roles.includes('Admin')&&!roles.includes('SuperAdmin')) throw new Error('این اطلاعات فقط برای مدیر سامانه قابل مشاهده است.');
     auth={Authorization:'Bearer '+user.accessToken};
   } catch(e) {
@@ -810,6 +812,40 @@ calc();
     const total=Number(payload.countAll!==undefined?payload.countAll:payload.CountAll);
     return {items:members,total:Number.isFinite(total)?total:members.length};
   };
+  // SuperAdmin has a separate, role-protected API surface. Do not call Admin-only
+  // member/request endpoints with a SuperAdmin-only token or fabricate empty records.
+  if(roles.includes('SuperAdmin')&&!roles.includes('Admin')) {
+    try {
+      const dashboardResponse=await apiResponse('/superadmin/dashboard/get');
+      const dashboard=dashboardResponse&&(dashboardResponse.data!==undefined?dashboardResponse.data:dashboardResponse.Data);
+      if(!dashboard) throw new Error('API داشبورد کلان پاسخ معتبر برنگرداند.');
+      const totalLoans=Number(dashboard.totalUserLoan!==undefined?dashboard.totalUserLoan:dashboard.TotalUserLoan)||0;
+      const totalAccounts=Number(dashboard.totalRegister!==undefined?dashboard.totalRegister:dashboard.TotalRegister)||0;
+      const loansLabel=document.querySelector('.metrics .metric:nth-child(1) .metric-top');
+      const membersLabel=document.querySelector('.metrics .metric:nth-child(2) .metric-top');
+      if(loansLabel&&loansLabel.firstChild)loansLabel.firstChild.textContent='وام‌های ثبت‌شده ';
+      if(membersLabel&&membersLabel.firstChild)membersLabel.firstChild.textContent='حساب‌های سازمانی ';
+      setResult('loans',totalLoans,true,'کل وام‌های ثبت‌شده در سامانه');
+      setResult('members',totalAccounts,true,'حساب‌های سازمانی ثبت‌شده');
+      setResult('requests',0,false,'فهرست درخواست‌های وام برای نقش SuperAdmin در API فعلی ارائه نشده است.');
+      setText('live-data-status','اتصال SuperAdmin');
+      const customers=await load('/superAdmin/customer/list');
+      const rows=customers.slice(0,8).map(c=>'<tr><td><b>'+esc(c.businessName||c.name||c.title||c.customerName||'حساب سازمانی')+'</b></td><td>'+faNumber(c.membersCount||c.MembersCount||0)+'</td><td>'+faNumber(c.userLoansCount||c.UserLoansCount||0)+'</td><td>'+faNumber(c.loansCount||c.LoansCount||0)+'</td></tr>').join('');
+      const table=document.getElementById('live-customers-table');
+      if(table)table.innerHTML=customers.length?'<table><thead><tr><th>حساب سازمانی</th><th>اعضا</th><th>وام‌های ثبت‌شده</th><th>طرح‌ها</th></tr></thead><tbody>'+rows+'</tbody></table>':'<div class="empty">حساب سازمانی‌ای از API دریافت نشد.</div>';
+      setText('live-customers-note','فهرست واقعی حساب‌های سازمانی؛ '+faNumber(customers.length)+' حساب در پاسخ API.');
+      const requests=document.getElementById('live-requests-table');
+      if(requests)requests.innerHTML='<div class="empty">برای نمایش و مدیریت درخواست‌های فردی وام، API فعلی فقط نقش Admin را مجاز می‌داند. برای SuperAdmin باید مجوز و endpoint سمت سرور اضافه شود؛ این صفحه داده ساختگی نشان نمی‌دهد.</div>';
+    } catch(error) {
+      ['loans','members','requests'].forEach(k=>setResult(k,0,false,error.message||'دریافت اطلاعات SuperAdmin ناموفق بود.'));
+      setText('live-data-status','خطا در API SuperAdmin');
+      const customers=document.getElementById('live-customers-table');
+      const requests=document.getElementById('live-requests-table');
+      if(customers)customers.innerHTML='<div class="empty">دریافت اطلاعات حساب‌های سازمانی ناموفق بود: '+esc(error.message||'خطای نامشخص')+'</div>';
+      if(requests)requests.innerHTML='<div class="empty">اطلاعات درخواست‌ها از API نقش SuperAdmin در دسترس نیست.</div>';
+    }
+    return;
+  }
   const start=new Date(); start.setMonth(start.getMonth()-1);
   const requestUrl='/admin/userLoanRequest/list?start='+encodeURIComponent(start.toISOString())+'&end='+encodeURIComponent(new Date().toISOString());
   const tasks=[
