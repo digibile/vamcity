@@ -3,7 +3,7 @@ run-name: Publish VamCity template management preview
 # Deployment refresh 2026-10-13: republish the new admin template at /admin/dashboard and verify preserved legacy feature links, login redirect compatibility, and static route response.
 # Final production refresh 2026-10-13: republish integrated management shell to the existing admin URL and rerun live route/navigation checks.
 # Production re-publish 2026-10-13: force a fresh deploy after browser reported stale admin UI; verify canonical /admin/dashboard and /admin/Dashboard routes.
-# Reliability fix 2026-10-13: retry transient SSH resets during atomic publish instead of leaving the old admin UI live.
+# Reliability fix 2026-10-16: retry transient SSH resets during upload and atomic publish.
 
 on:
   push:
@@ -63,11 +63,26 @@ jobs:
           echo "HOST=$DEPLOY_HOST" >> "$GITHUB_ENV"
           echo "USER=$DEPLOY_USER" >> "$GITHUB_ENV"
 
-      - name: Upload independent admin template
+      - name: Upload independent admin template with SSH retry
+        shell: bash
         run: |
           set -euo pipefail
-          scp -i ~/.ssh/template_preview_key -P "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            template-management/vamcity-template-management.html "$USER@$HOST:/tmp/vamcity-template-management-$GITHUB_SHA.html"
+          DEST="$USER@$HOST:/tmp/vamcity-template-management-$GITHUB_SHA.html"
+          for attempt in 1 2 3 4 5; do
+            if scp -i ~/.ssh/template_preview_key -P "$PORT" \
+              -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=10 \
+              -o ServerAliveCountMax=3 -o StrictHostKeyChecking=yes \
+              template-management/vamcity-template-management.html "$DEST"; then
+              echo "TEMPLATE_UPLOAD_SUCCEEDED_ON_ATTEMPT=$attempt"
+              exit 0
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "::error::Template upload failed after 5 attempts"
+              exit 1
+            fi
+            echo "SSH upload reset; retrying in 8 seconds (attempt $attempt/5)"
+            sleep 8
+          done
 
       - name: Publish to isolated web paths
         run: |
