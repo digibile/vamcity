@@ -1,3 +1,4 @@
+# Production republish request 2026-10-16T18:20+03:30: reassert the authenticated integrated admin template at the canonical dashboard route and verify all legacy navigation, app settings, backup/restore, login redirects, and live API metrics.
 # Production re-publish 2026-10-16T06:25+03:30: deploy latest integrated admin shell, full legacy sidebar, SuperAdmin navigation, settings and backup/restore routes to canonical dashboard.
 name: Deploy independent VamCity template management
 run-name: Publish VamCity template management preview
