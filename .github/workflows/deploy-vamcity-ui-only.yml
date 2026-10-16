@@ -1,3 +1,4 @@
+# Production refresh 2026-10-16T18:40+03:30: republish current shared header/footer, modern authentication styles, registration experience, responsive workspaces and preserve original app bundle/data.
 name: Deploy VamCity UI only (preserve app and database)
 # Production republish 2026-10-16: refresh the full modern UI bundle and shared page styles without changing business data.
 # This release copies presentation assets only; it never rebuilds the app or restores a database.
