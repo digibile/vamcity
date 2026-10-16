@@ -1,3 +1,4 @@
+# Re-run 2026-10-16: user reports authenticated legacy admin routes rendering blank after the integrated dashboard deployment; re-sync exact webpack manifest and all matching hashed chunks without touching DB or restarting app.
 name: Repair VamCity blank legacy pages by syncing the runtime bundle
 
 run-name: Sync matching VamCity SPA chunks to roofixo.ir (2026-10-16 legacy blank-page repair)
