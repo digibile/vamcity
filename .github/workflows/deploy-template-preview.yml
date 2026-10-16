@@ -55,7 +55,7 @@ jobs:
           grep -Fq 'href="/superAdmin/smsmanagement"' "$FILE"
           grep -Fq 'href="/superAdmin/smsPatterns/"' "$FILE"
           grep -q 'href="/cl/agentregister/0/"' "$FILE"
-          grep -q 'href="/cl/plans/"' "$FILE"
+          grep -q 'href="/plans.html"' "$FILE"
           # The original VamCity app remains the source of operational features.
           # Validate that dashboard shortcuts open real /admin/* routes, not root-level fallbacks.
           grep -Fq 'loans:["/admin/loans/"' "$FILE"
@@ -127,7 +127,7 @@ jobs:
           grep -q 'id="overview"' "$SRC"
           grep -q 'class="footer-links"' "$SRC"
           grep -q 'href="/cl/agentregister/0/"' "$SRC"
-          grep -q 'href="/cl/plans/"' "$SRC"
+          grep -q 'href="/plans.html"' "$SRC"
           grep -Fq "localStorage.getItem('user')" "$SRC"
           grep -Fq "window.location.replace('/login/?returnUrl='" "$SRC"
           install -d -m 755 "$DEST" "$PREVIEW" "$ADMIN"
@@ -232,23 +232,28 @@ jobs:
           grep -Fq 'href="/admin/appbackup/"' /tmp/vamcity-admin-check.html
           grep -q 'class="footer-links"' /tmp/vamcity-admin-check.html
           grep -q 'href="/cl/agentregister/0/"' /tmp/vamcity-admin-check.html
-          grep -q 'href="/cl/plans/"' /tmp/vamcity-admin-check.html
-          echo "=== VERIFY PUBLIC ENTRY LINKS SERVE THE REAL VAMCITY APP ==="
-          for ROUTE in /cl/plans/ /login/ /register/0/ /cl/agentregister/0/; do
+          grep -q 'href="/plans.html"' /tmp/vamcity-admin-check.html
+          echo "=== VERIFY PUBLIC PLANS PAGE AND ITS LEGACY ALIAS ==="
+          for ROUTE in /plans.html /cl/plans/; do
+            ROUTE_FILE="$(mktemp)"
+            ROUTE_STATUS="$(curl -k -sS -L --max-time 20 -o "$ROUTE_FILE" -w '%{http_code}' "https://roofixo.ir$ROUTE?navcheck=$GITHUB_SHA" || true)"
+            echo "PUBLIC_PLANS_ROUTE=$ROUTE HTTP=$ROUTE_STATUS TITLE=$(grep -oE '<title[^>]*>[^<]*</title>' "$ROUTE_FILE" | head -1 || true) BYTES=$(wc -c < "$ROUTE_FILE")"
+            test "$ROUTE_STATUS" = "200"
+            grep -q 'id="all-plans"' "$ROUTE_FILE"
+            grep -q 'طرح‌های تسهیلات' "$ROUTE_FILE"
+            rm -f "$ROUTE_FILE"
+          done
+          echo "=== VERIFY PUBLIC AUTH AND PARTNERSHIP ENTRY LINKS ==="
+          for ROUTE in /login/ /register/0/ /cl/agentregister/0/; do
             ROUTE_FILE="$(mktemp)"
             ROUTE_STATUS="$(curl -k -sS -L --max-time 15 -o "$ROUTE_FILE" -w '%{http_code}' "https://roofixo.ir$ROUTE?navcheck=$GITHUB_SHA" || true)"
             APP_BUNDLE="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$ROUTE_FILE" | head -1 || true)"
             echo "PUBLIC_ENTRY_ROUTE=$ROUTE HTTP=$ROUTE_STATUS APP_BUNDLE=$APP_BUNDLE"
             test "$ROUTE_STATUS" = "200"
-            if [ "$ROUTE" = "/cl/plans/" ]; then
-              # The public plans entry is served by the existing Vue SPA mount; its chunk bundle may be injected by the route-specific shell.
-              grep -q 'id="app"' "$ROUTE_FILE"
-            else
-              test -n "$APP_BUNDLE"
-            fi
+            test -n "$APP_BUNDLE"
             rm -f "$ROUTE_FILE"
           done
-          grep -Fq 'href="/cl/plans/"' /tmp/vamcity-admin-check.html
+          grep -Fq 'href="/plans.html"' /tmp/vamcity-admin-check.html
           echo "PUBLIC_ENTRY_LINKS_VERIFIED=true"
           echo "=== VERIFY ADMIN SIDEBAR TARGETS HIT THE LEGACY SPA, NOT THE PUBLIC ROOT ==="
           for ROUTE in /admin/loans/ /admin/userLoanRequests/ /admin/loanPaymentRequests /admin/members/ /admin/users/ /admin/tickets/ /admin/reports/ /admin/loanStatistics /admin/report-member-loans /admin/report-installments-month /admin/wallet-transactions /admin/checkoutThisMonth /admin/checkouted-members /admin/latestMembers /admin/remainInstallmentCount /admin/report-members /admin/report-paid-installments-month /admin/report-saveMonies-month /admin/report-monthly-balance /admin/iran-validity-reports /admin/organization-duedated-reports /admin/assurances-report /admin/agentFactors /admin/savedMoneyimport /admin/installmentsimport /admin/remainComparer /admin/contacts/ /admin/customerOrders/ /admin/inquirymanagement /admin/smslist /admin/expense /admin/appsettings/ /admin/appbackup/; do
