@@ -189,15 +189,19 @@ tbody tr:hover{background:#f7fafc}
 (function(){
   try {
     var raw = localStorage.getItem('user');
-    if (!raw) { window.location.replace('/login/'); return; }
-    var user = JSON.parse(raw);
-    var data = typeof user.userData === 'string' ? JSON.parse(user.userData) : user.userData;
-    var roles = data && data.userRoleNames;
-    if (!Array.isArray(roles) || !roles.some(function(role){ return role === 'Admin' || role === 'SuperAdmin'; })) {
-      window.location.replace('/login/');
+    var returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+    if (!raw) { window.location.replace('/login/?returnUrl=' + returnTo); return; }
+    var user = JSON.parse(raw) || {};
+    var data = typeof user.userData === 'string' ? JSON.parse(user.userData || '{}') : (user.userData || {});
+    var roleValue = (data && (data.userRoleNames || data.roles || data.roleNames)) || user.userRoleNames || user.roles || [];
+    var roles = Array.isArray(roleValue) ? roleValue : (typeof roleValue === 'string' ? roleValue.split(/[,;|]/) : []);
+    roles = roles.map(function(role){ return String(role && (role.name || role.roleName || role) || '').trim().toLowerCase(); });
+    var isAdmin = roles.some(function(role){ return role === 'admin' || role === 'superadmin'; });
+    if (!isAdmin) {
+      window.location.replace('/login/?returnUrl=' + returnTo);
       return;
     }
-    if (roles.indexOf('SuperAdmin') !== -1) {
+    if (roles.indexOf('superadmin') !== -1) {
       document.addEventListener('DOMContentLoaded', function() {
         var superAdminGroup = document.getElementById('superadmin-nav-group');
         if (superAdminGroup) superAdminGroup.style.display = '';
@@ -477,7 +481,10 @@ tbody tr:hover{background:#f7fafc}
 <section class="legacy-workspace" id="legacy-workspace" hidden aria-label="امکانات عملیاتی سامانه">
   <div class="legacy-toolbar">
     <strong id="legacy-title">بخش عملیاتی سامانه</strong>
-    <button type="button" onclick="returnToOverview()">بازگشت به مرکز مدیریت</button>
+    <div class="actions">
+      <a class="btn small" id="legacy-toolbar-direct-link" href="/admin/loans/" target="_blank" rel="noopener">باز کردن مستقیم</a>
+      <button type="button" onclick="returnToOverview()">بازگشت به مرکز مدیریت</button>
+    </div>
   </div>
   <div class="legacy-loading" id="legacy-loading" role="status" aria-live="polite">در حال بارگذاری بخش انتخاب‌شده…</div>
   <div class="legacy-fallback" id="legacy-fallback" hidden role="alert"><strong>این بخش در قاب داخلی بارگذاری نشد.</strong><p>برای جلوگیری از صفحهٔ سفید، مسیر اصلی سامانه را مستقیم باز کنید. نشست ورود شما حفظ می‌شود.</p><a class="btn primary" id="legacy-direct-link" href="/admin/dashboard" target="_blank" rel="noopener">باز کردن بخش اصلی در زبانهٔ جدید</a><button class="btn" type="button" onclick="returnToOverview()">بازگشت به مرکز مدیریت</button></div>
@@ -517,6 +524,8 @@ function openLegacy(url,label){
   const directLink=document.getElementById("legacy-direct-link");
   if(fallback)fallback.hidden=true;
   if(directLink)directLink.href=url;
+  const toolbarDirectLink=document.getElementById("legacy-toolbar-direct-link");
+  if(toolbarDirectLink)toolbarDirectLink.href=url;
   document.getElementById("legacy-title").textContent=(label||"امکانات سامانه").replace(/\\s+/g," ").trim();
   legacyLoading.style.display="block";
   legacyFrame.onload=function(){
@@ -570,7 +579,7 @@ function openLegacy(url,label){
       const fallback=document.getElementById("legacy-fallback");
       if(fallback)fallback.hidden=false;
     }
-  },10000);
+  },6000);
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function returnToOverview(){
