@@ -5,6 +5,7 @@ run-name: Publish VamCity template management preview
 # Final production refresh 2026-10-13: republish integrated management shell to the existing admin URL and rerun live route/navigation checks.
 # Production re-publish 2026-10-13: force a fresh deploy after browser reported stale admin UI; verify canonical /admin/dashboard and /admin/Dashboard routes.
 # Reliability fix 2026-10-16: retry transient SSH resets during upload and atomic publish.
+# Navigation fix 2026-10-16: route the global ticket menu to the existing admin tickets page; the legacy SuperAdmin tickets route is not registered in the Vue router.
 
 on:
   push:
@@ -42,7 +43,7 @@ jobs:
           grep -q 'id="superadmin-nav-group"' "$FILE"
           grep -Fq 'href="/superadmin/dashboard"' "$FILE"
           grep -Fq 'href="/superAdmin/customers"' "$FILE"
-          grep -Fq 'href="/superAdmin/tickets"' "$FILE"
+          grep -Fq 'href="/admin/tickets/"' "$FILE"
           grep -Fq 'href="/superAdmin/marketers"' "$FILE"
           grep -Fq 'href="/superAdmin/consultants"' "$FILE"
           grep -Fq 'href="/superAdmin/purchases"' "$FILE"
