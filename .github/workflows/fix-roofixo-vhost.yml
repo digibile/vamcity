@@ -190,6 +190,29 @@ jobs:
           location = /admin/Dashboard/ {
               return 302 /admin/dashboard;
           }
+          # SuperAdmin's existing login handler redirects to lowercase /superadmin/dashboard.
+          # Serve the same new management shell there, without changing the legacy SuperAdmin feature routes.
+          location = /superadmin/dashboard {
+              alias /home/roofixo/domains/roofixo.ir/public_html/vamcity-admin/index.html;
+              default_type text/html;
+              add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+              add_header Pragma "no-cache" always;
+              expires -1;
+          }
+          location = /superadmin/dashboard/ {
+              return 302 /superadmin/dashboard;
+          }
+          # Preserve case-compatible bookmarks from the original Vue application.
+          location = /superAdmin/dashboard {
+              alias /home/roofixo/domains/roofixo.ir/public_html/vamcity-admin/index.html;
+              default_type text/html;
+              add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+              add_header Pragma "no-cache" always;
+              expires -1;
+          }
+          location = /superAdmin/dashboard/ {
+              return 302 /superadmin/dashboard;
+          }
           location = /admin {
               return 302 /admin/dashboard;
           }
@@ -312,6 +335,16 @@ jobs:
           grep -q "مرکز مدیریت وام‌سیتی" "$ADMIN_BODY"
           test "$ADMIN_STATUS" = "200"
           rm -f "$ADMIN_BODY"
+          echo "=== VERIFY SUPERADMIN LOGIN LANDING ROUTE ==="
+          SUPERADMIN_BODY="$(mktemp)"
+          SUPERADMIN_STATUS="$(curl -k -sS -o "$SUPERADMIN_BODY" --max-time 15 -w '%{http_code}' "https://roofixo.ir/superadmin/dashboard?route-check=$TS")"
+          echo "SUPERADMIN_NEW_DASHBOARD_HTTP=$SUPERADMIN_STATUS"
+          test "$SUPERADMIN_STATUS" = "200"
+          grep -q "مرکز مدیریت وام‌سیتی" "$SUPERADMIN_BODY"
+          grep -q 'id="superadmin-nav-group"' "$SUPERADMIN_BODY"
+          grep -q 'href="/superAdmin/smsPatterns/"' "$SUPERADMIN_BODY"
+          grep -q 'href="/admin/appbackup/"' "$SUPERADMIN_BODY"
+          rm -f "$SUPERADMIN_BODY"
           for ROUTE in /admin/appSettings /admin/appBackup; do
             LEGACY_BODY="$(mktemp)"
             LEGACY_STATUS="$(curl -k -sS -o "$LEGACY_BODY" --max-time 15 -w '%{http_code}' "https://roofixo.ir$ROUTE?route-check=$TS" || true)"
