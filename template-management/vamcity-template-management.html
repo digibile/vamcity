@@ -535,11 +535,19 @@ function openLegacy(url,label){
     try{
       const doc=legacyFrame.contentDocument;
       const app=doc&&doc.querySelector("#app");
-      const visibleText=doc&&doc.body?String(doc.body.innerText||"").trim():"";
-      if(!doc||!doc.body||(!visibleText&&(!app||!app.children.length))){
+      const visibleText=doc&&doc.body?String(doc.body.innerText||"").replace(/\\s+/g," ").trim():"";
+      const meaningfulContent=visibleText.replace(/\\s/g,"").length>=8;
+      const appMounted=!!(app&&app.children&&app.children.length);
+      // Vue can leave #app children behind even when a route component has crashed.
+      // Treat an empty rendered page as a failed route, not as a successful iframe load.
+      if(!doc||!doc.body||!appMounted||!meaningfulContent){
         legacyLoading.style.display="none";
         const fallback=document.getElementById("legacy-fallback");
-        if(fallback)fallback.hidden=false;
+        if(fallback){
+          fallback.hidden=false;
+          const message=fallback.querySelector("p");
+          if(message)message.textContent="این مسیر پاسخ داده، اما محتوای صفحه در رابط قدیمی رندر نشده است. برای جلوگیری از صفحه سفید، مسیر مستقیم را باز کنید یا به مرکز مدیریت برگردید.";
+        }
       }
     }catch(e){
       legacyLoading.style.display="none";
