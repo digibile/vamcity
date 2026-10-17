@@ -1,4 +1,5 @@
 name: Linux build validation
+# Fresh read-only rebuild 2026-10-17 after reported Windows-to-Linux runtime issues; publish only to CI artifact, never production.
 
 on:
   push:
