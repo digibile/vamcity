@@ -1,3 +1,4 @@
+# Terminal/server recovery republish 2026-10-17: republish canonical homepage and live-plan page, then verify login, registration, plans, and cooperation links after reported server terminal error.
 # Production republish 2026-10-16T18:42+03:30: refresh canonical public homepage, dedicated live plans page, login/register/cooperation links, and verify deployed routes.
 # Production publish requested 2026-10-16: republish homepage navigation and modern live-plan discovery UI to roofixo.ir.
 # Trigger deployment after user reported missing modern UI and legacy plan-route leakage.
