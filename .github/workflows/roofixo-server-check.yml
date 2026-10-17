@@ -105,3 +105,5 @@ jobs:
           pgrep -af 'LoanSystemAvizhe.Site|LoanSystem.Site.dll|vamcity' || true
           echo "READ_ONLY_PREFLIGHT_FINISHED"
           REMOTE
+
+# Read-only rerun 2026-10-17: inspect server pressure and current VamCity routing after terminal error report.
