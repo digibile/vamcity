@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: vamcity-integrated-admin-production
+  group: vamcity-roofixo-domain-release
   cancel-in-progress: false
 
 jobs:
