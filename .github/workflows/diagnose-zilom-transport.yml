@@ -27,7 +27,7 @@ jobs:
               done
             done
           done
-      - name: Inspect server nginx routing and local app reachability (read only)
+      - name: Inspect zilom routing and local app reachability on port 3040 (read only)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -52,7 +52,7 @@ jobs:
           echo "=== NGINX VHOST MATCHES ==="
           sudo nginx -T 2>&1 | grep -in -C 3 -E 'server_name .*zilom|server_name .*roofixo|proxy_pass|http2' | head -240
           echo "=== LOCAL APP ==="
-          curl --http1.1 -sS -o /dev/null -w 'LOCAL_5187_HTTP=%{http_code} bytes=%{size_download}\n' --max-time 10 http://127.0.0.1:5187/admin/dashboard/ 2>&1
+          curl --http1.1 -sS -o /dev/null -w 'LOCAL_3040_HTTP=%{http_code} bytes=%{size_download}\n' --max-time 10 http://127.0.0.1:3040/admin/dashboard/ 2>&1
           echo "=== PUBLIC PROTOCOL FROM SERVER ==="
           for p in --http1.1 --http2; do
             curl "$p" -k -sS -o /dev/null -w "ZILOM $p HTTP=%{http_code} bytes=%{size_download} version=%{http_version}\n" --max-time 10 https://zilom.ir/js/app.e76ab352.js 2>&1
