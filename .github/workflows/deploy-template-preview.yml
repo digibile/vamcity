@@ -1,3 +1,4 @@
+# Terminal/server recovery republish 2026-10-17: retry canonical admin UI deployment and verify /admin/dashboard, /vamcity-template-preview/, legacy sidebar links, settings and backup/restore after reported terminal server error.
 # Manual publication retry 2026-10-16T23:00+03:30: deploy integrated admin template to canonical dashboard and verify live routes after prior SSH terminal errors.
 # Independent preview republish request 2026-10-16T22:54+03:30: redeploy the standalone management HTML to /vamcity-template-preview/ and verify its live URL; keep canonical admin route untouched by this preview-only refresh.
 # Production publish retry 2026-10-16T22:42+03:30: republish integrated admin template to canonical admin/dashboard routes; verify live output and preserve legacy admin features.
