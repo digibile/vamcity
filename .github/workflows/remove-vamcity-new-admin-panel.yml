@@ -1,0 +1,171 @@
+name: Remove standalone VamCity admin panel and restore legacy admin routes
+run-name: Roll back standalone admin panel on roofixo.ir
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/remove-vamcity-new-admin-panel.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vamcity-admin-panel-rollback
+  cancel-in-progress: false
+
+jobs:
+  restore-legacy-admin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/vamcity_deploy_key
+          chmod 600 ~/.ssh/vamcity_deploy_key
+          PORT="${DEPLOY_PORT:-22}"
+          for attempt in 1 2 3 4 5; do
+            if ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null; then break; fi
+            sleep 3
+          done
+          test -s ~/.ssh/known_hosts
+          echo "DEPLOY_PORT_EFFECTIVE=$PORT" >> "$GITHUB_ENV"
+          echo "DEPLOY_HOST_EFFECTIVE=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "DEPLOY_USER_EFFECTIVE=$DEPLOY_USER" >> "$GITHUB_ENV"
+      - name: Back up and disable standalone panel routes
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/vamcity_deploy_key -p "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE" 'bash -s' <<'REMOTE'
+          set -Eeuo pipefail
+          DOMAIN_ROOT=/home/roofixo/domains/roofixo.ir
+          BASE="$DOMAIN_ROOT/vamcity-app"
+          CUSTOM=/usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.cust_nginx
+          GENERATED=/usr/local/directadmin/data/users/roofixo/nginx.conf
+          TS="$(date -u +%Y%m%dT%H%M%SZ)"
+          BACKUP="$BASE/private/rollback/remove-new-admin-panel-$TS"
+          mkdir -p "$BACKUP/public_html"
+          chmod 700 "$BASE/private" "$BASE/private/rollback" "$BACKUP"
+          test -s "$CUSTOM"
+          cp -a "$CUSTOM" "$BACKUP/roofixo.ir.cust_nginx.before"
+          cp -a "$GENERATED" "$BACKUP/nginx.conf.before"
+          printf '%s\n' "$BACKUP" > "$BASE/private/last-admin-panel-rollback"
+          chmod 600 "$BASE/private/last-admin-panel-rollback"
+
+          rollback() {
+            echo "ROLLING_BACK_ADMIN_PANEL_REMOVAL"
+            cp -a "$BACKUP/roofixo.ir.cust_nginx.before" "$CUSTOM"
+            for name in vamcity-admin vamcity-template-preview; do
+              if [ -d "$BACKUP/public_html/$name" ] && [ ! -e "$DOMAIN_ROOT/public_html/$name" ]; then
+                mv "$BACKUP/public_html/$name" "$DOMAIN_ROOT/public_html/$name"
+              fi
+            done
+            /usr/local/directadmin/custombuild/build rewrite_confs >/dev/null 2>&1 || true
+            nginx -t && systemctl reload nginx || true
+          }
+          trap 'rc=$?; if [ "$rc" -ne 0 ]; then rollback; fi' EXIT
+
+          echo "=== ARCHIVE NEW STANDALONE UI FILES PRIVATELY (NOT PERMANENTLY DELETED) ==="
+          for name in vamcity-admin vamcity-template-preview; do
+            if [ -d "$DOMAIN_ROOT/public_html/$name" ]; then
+              mv "$DOMAIN_ROOT/public_html/$name" "$BACKUP/public_html/$name"
+              echo "ARCHIVED_PUBLIC_DIR=$name"
+            else
+              echo "PUBLIC_DIR_NOT_PRESENT=$name"
+            fi
+          done
+
+          echo "=== REMOVE ONLY STANDALONE PANEL NGINX LOCATIONS ==="
+          python3 - "$CUSTOM" <<'PY'
+          import re, sys
+          path = sys.argv[1]
+          with open(path, encoding="utf-8") as f:
+              lines = f.readlines()
+          targets = {
+              "/vamcity-template-preview", "/vamcity-template-preview/",
+              "/admin/dashboard", "/admin/dashboard/",
+              "/admin/Dashboard", "/admin/Dashboard/",
+              "/superadmin/dashboard", "/superadmin/dashboard/",
+              "/superAdmin/dashboard", "/superAdmin/dashboard/",
+              "/admin", "/admin/",
+          }
+          out = []
+          removed = []
+          i = 0
+          while i < len(lines):
+              line = lines[i]
+              m = re.match(r"\s*location\s*=\s*(\S+)\s*\{", line)
+              if m and m.group(1) in targets:
+                  target = m.group(1)
+                  depth = 0
+                  started = False
+                  while i < len(lines):
+                      cur = lines[i]
+                      depth += cur.count("{") - cur.count("}")
+                      started = started or "{" in cur
+                      i += 1
+                      if started and depth == 0:
+                          break
+                  removed.append(target)
+                  continue
+              out.append(line)
+              i += 1
+          redirects = [
+              "          # Return dashboard entry points to the original authenticated Vue application.\n",
+              "          location = /admin/dashboard { return 302 /admin/Dashboard; }\n",
+              "          location = /admin/dashboard/ { return 302 /admin/Dashboard; }\n",
+              "          location = /admin { return 302 /admin/Dashboard; }\n",
+              "          location = /admin/ { return 302 /admin/Dashboard; }\n",
+              "          location = /admin/Dashboard/ { return 302 /admin/Dashboard; }\n",
+          ]
+          marker = "          location = / {\n"
+          text = "".join(out)
+          if marker not in text:
+              raise SystemExit("Could not find public root location; refusing to write config")
+          text = text.replace(marker, "".join(redirects) + marker, 1)
+          with open(path, "w", encoding="utf-8") as f:
+              f.write(text)
+          print("REMOVED_STANDALONE_LOCATIONS=" + ",".join(removed))
+          print("RESTORED_LEGACY_DASHBOARD_REDIRECTS=true")
+          PY
+          chown roofixo:roofixo "$CUSTOM"
+          chmod 644 "$CUSTOM"
+          /usr/local/directadmin/custombuild/build rewrite_confs >/dev/null
+          nginx -t
+          systemctl reload nginx
+
+          echo "=== VERIFY ADMIN ROUTE RETURNS TO ORIGINAL APP ==="
+          BODY="$(mktemp)"
+          STATUS="$(curl -k -sS -L -o "$BODY" --max-time 20 -w '%{http_code}' "https://roofixo.ir/admin/Dashboard?rollback-check=$TS")"
+          echo "LEGACY_ADMIN_ROUTE_HTTP=$STATUS"
+          echo "LEGACY_ADMIN_ROUTE_BYTES=$(wc -c < "$BODY")"
+          APP_BUNDLE="$(grep -Eo '/js/app\.[a-f0-9]+\.js' "$BODY" | head -1 || true)"
+          echo "LEGACY_ADMIN_APP_BUNDLE=$APP_BUNDLE"
+          test "$STATUS" = "200"
+          test -n "$APP_BUNDLE"
+          rm -f "$BODY"
+
+          echo "=== VERIFY NEW TEMPLATE FILES ARE NO LONGER PUBLIC ==="
+          for path in /vamcity-template-preview/ /admin/dashboard; do
+            CODE="$(curl -k -sS -o /dev/null --max-time 15 -w '%{http_code}' "https://roofixo.ir$path?rollback-check=$TS" || true)"
+            echo "DISABLED_NEW_PANEL_PATH=$path HTTP=$CODE"
+          done
+          echo "NEW_STANDALONE_PANEL_DISABLED=true"
+          echo "OLD_AUTHENTICATED_VUE_ADMIN_RESTORED=true"
+          echo "DATABASE_UNTOUCHED=true"
+          echo "APP_CONTAINER_RESTARTED=false"
+          echo "PRIVATE_ROLLBACK_BACKUP=$BACKUP"
+          trap - EXIT
+          REMOTE
