@@ -25,7 +25,7 @@ jobs:
       - name: Capture browser errors and asset failures
         run: |
           set -euo pipefail
-          cat > /tmp/diagnose.cjs <<'JS'
+          cat > diagnose.cjs <<'JS'
           const { chromium } = require('playwright');
           (async () => {
             const browser = await chromium.launch({headless:true});
@@ -40,7 +40,7 @@ jobs:
             const url = 'https://zilom.ir/admin/dashboard/';
             const response = await page.goto(url,{waitUntil:'networkidle',timeout:60000}).catch(e => { consoleErrors.push('NAVIGATION: '+e.message); return null; });
             await page.waitForTimeout(5000);
-            await page.screenshot({path:'/tmp/zilom-admin-dashboard.png',fullPage:true}).catch(()=>{});
+            await page.screenshot({path:'zilom-admin-dashboard.png',fullPage:true}).catch(()=>{});
             console.log('URL='+page.url());
             console.log('HTTP='+(response ? response.status() : 'none'));
             console.log('TITLE='+await page.title());
@@ -52,7 +52,7 @@ jobs:
             await browser.close();
           })().catch(e=>{console.error(e);process.exit(1)});
           JS
-          node /tmp/diagnose.cjs 2>&1 | tee /tmp/zilom-dashboard-diagnostics.txt
+          node diagnose.cjs 2>&1 | tee zilom-dashboard-diagnostics.txt
 
       - name: Upload browser diagnostics
         if: always()
@@ -60,6 +60,6 @@ jobs:
         with:
           name: zilom-admin-dashboard-diagnostics
           path: |
-            /tmp/zilom-dashboard-diagnostics.txt
-            /tmp/zilom-admin-dashboard.png
+            zilom-dashboard-diagnostics.txt
+            zilom-admin-dashboard.png
           if-no-files-found: warn
