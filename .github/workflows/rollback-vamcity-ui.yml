@@ -33,8 +33,12 @@ jobs:
           test -n "$DEPLOY_USER"
           test -n "$DEPLOY_SSH_KEY"
           install -m 700 -d "$HOME/.ssh"
-          printf '%s\\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          printf '%s' "$DEPLOY_SSH_KEY" | tr -d '\\r' > "$RUNNER_TEMP/deploy_key"
+          if ! grep -q '^-----BEGIN ' "$RUNNER_TEMP/deploy_key" && [[ "$DEPLOY_SSH_KEY" == *'\\n'* ]]; then
+            printf '%b' "$DEPLOY_SSH_KEY" | tr -d '\\r' > "$RUNNER_TEMP/deploy_key"
+          fi
           chmod 600 "$RUNNER_TEMP/deploy_key"
+          ssh-keygen -y -f "$RUNNER_TEMP/deploy_key" >/dev/null
           PORT="${DEPLOY_PORT:-22}"
           ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
           chmod 600 "$HOME/.ssh/known_hosts"
