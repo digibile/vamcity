@@ -961,17 +961,28 @@ calc();
     const user=JSON.parse(raw);
     if(!user || !user.accessToken) throw new Error('توکن نشست ورود در دسترس نیست؛ دوباره وارد شوید.');
     const data=typeof user.userData==='string'?JSON.parse(user.userData||'{}'):(user.userData||{});
+    const customer=data.customer||data.customerModel||user.customer||{};
     const rawRoles=data.userRoleNames||data.roles||data.roleNames||user.userRoleNames||user.roles||[];
     const roles=(Array.isArray(rawRoles)?rawRoles:String(rawRoles).split(/[,;|]/)).map(r=>String(r&& (r.name||r.roleName||r)||'').trim().toLowerCase());
     if(!roles.some(r=>r==='admin'||r==='superadmin')) throw new Error('این بخش فقط برای حساب مدیر مجاز است.');
-    return {user,roles};
+    return {user,roles,userId:data.id||data.userId||user.id,customerId:customer.id||data.customerId||user.customerId};
   }
   async function request(url, options){
-    const {user}=currentUser();
-    const response=await fetch(url,Object.assign({credentials:'same-origin',cache:'no-store'},options||{},{
-      headers:Object.assign({Authorization:'Bearer '+user.accessToken},(options&&options.headers)||{})
-    }));
+    const {user,userId,customerId}=currentUser();
+    const headers=Object.assign({Accept:'application/json',Authorization:'Bearer '+user.accessToken},(options&&options.headers)||{});
+    // The legacy VamCity API reads these identity headers in addition to the bearer token.
+    if(customerId!==undefined&&customerId!==null&&customerId!=='') headers.JETAQSAAT_APP_CID=String(customerId);
+    if(userId!==undefined&&userId!==null&&userId!=='') headers.JETAQSAAT_APP_UID=String(userId);
+    let response;
+    try{
+      response=await fetch(url,Object.assign({credentials:'same-origin',cache:'no-store'},options||{},{headers}));
+    }catch(networkError){
+      const detail=networkError&&networkError.message?networkError.message:'خطای شبکه';
+      throw new Error('اتصال مرورگر به API برقرار نشد ('+detail+'). نشانی درخواست: '+new URL(url,window.location.origin).href+'؛ اتصال سرور، مسیر API و خطای Network مرورگر باید بررسی شود.');
+    }
     if(!response.ok) throw new Error(response.status===401||response.status===403?'دسترسی API رد شد (HTTP '+response.status+'). نشست یا مجوز نقش مدیر را بررسی کنید.':'خطای API سامانه: HTTP '+response.status);
+    const contentType=response.headers.get('content-type')||'';
+    if(!contentType.toLowerCase().includes('json')) throw new Error('مسیر API به‌جای JSON، پاسخ غیر JSON برگرداند (HTTP '+response.status+'). احتمالاً مسیر API به صفحه پنل هدایت شده است.');
     return response.json();
   }
   async function getRows(kind){
