@@ -123,6 +123,8 @@ jobs:
               out.append(line)
               i += 1
           redirects = [
+              "          location = /vamcity-template-preview { return 410; }\n",
+              "          location = /vamcity-template-preview/ { return 410; }\n",
               "          # Return dashboard entry points to the original authenticated Vue application.\n",
               "          location = /admin/dashboard { return 302 /admin/Dashboard; }\n",
               "          location = /admin/dashboard/ { return 302 /admin/Dashboard; }\n",
@@ -158,10 +160,14 @@ jobs:
           rm -f "$BODY"
 
           echo "=== VERIFY NEW TEMPLATE FILES ARE NO LONGER PUBLIC ==="
-          for path in /vamcity-template-preview/ /admin/dashboard; do
+          for path in /vamcity-template-preview /vamcity-template-preview/; do
             CODE="$(curl -k -sS -o /dev/null --max-time 15 -w '%{http_code}' "https://roofixo.ir$path?rollback-check=$TS" || true)"
             echo "DISABLED_NEW_PANEL_PATH=$path HTTP=$CODE"
+            test "$CODE" = "410"
           done
+          CODE="$(curl -k -sS -o /dev/null --max-time 15 -w '%{http_code}' "https://roofixo.ir/admin/dashboard?rollback-check=$TS" || true)"
+          echo "LEGACY_ADMIN_REDIRECT_HTTP=$CODE"
+          test "$CODE" = "302"
           echo "NEW_STANDALONE_PANEL_DISABLED=true"
           echo "OLD_AUTHENTICATED_VUE_ADMIN_RESTORED=true"
           echo "DATABASE_UNTOUCHED=true"
