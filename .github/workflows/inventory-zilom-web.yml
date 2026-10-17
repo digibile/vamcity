@@ -54,6 +54,23 @@ jobs:
               sudo find "$d" -maxdepth 3 -type f \( -iname 'package.json' -o -iname '*.csproj' -o -iname '*.sln' -o -iname 'index.html' -o -iname '*.js' -o -iname '*.css' -o -iname '*.html' -o -iname '*.tsx' -o -iname '*.ts' -o -iname '*.vue' -o -iname '*.json' \) ! -iname 'appsettings*.json' -printf '%p\t%s bytes\t%TY-%Tm-%Td %TH:%TM\n' 2>/dev/null | head -180
             fi
           done
+          echo "=== EXTRACTED ARCHIVE INVENTORY (PATHS ONLY) ==="
+          for a in /home/roofixo/domains/zilom.ir/public_html/Publish.rar /home/roofixo/domains/zilom.ir/public_html/wwwroot/ui/dist.rar /home/roofixo/domains/zilom.ir/public_html/wwwroot/ui/Publish.rar; do
+            if sudo test -f "$a"; then
+              echo "--- $a ---"
+              if command -v unrar >/dev/null 2>&1; then
+                sudo unrar lb "$a" 2>&1 | head -240
+              elif command -v 7z >/dev/null 2>&1; then
+                sudo 7z l -ba "$a" 2>&1 | head -240
+              elif command -v bsdtar >/dev/null 2>&1; then
+                sudo bsdtar -tf "$a" 2>&1 | head -240
+              else
+                echo "No RAR listing utility installed; archive exists but contents not inspected."
+              fi
+            fi
+          done
+          echo "=== ACTUAL EXTRACTED FILES (WEB/SOURCE EXTENSIONS, PATH AND SIZE ONLY) ==="
+          sudo find /home/roofixo/domains/zilom.ir/public_html -maxdepth 5 -type f \\( -iname '*.cs' -o -iname '*.csproj' -o -iname '*.sln' -o -iname '*.ts' -o -iname '*.tsx' -o -iname '*.vue' -o -iname '*.html' -o -iname '*.css' -o -iname '*.js' -o -iname '*.rar' -o -iname '*.zip' -o -iname 'package.json' -o -iname 'vite.config.*' \\) ! -path '*/App_Data/*' -printf '%p\\t%s bytes\\n' 2>/dev/null | head -300
           echo "=== POSSIBLE SENSITIVE FILES OUTSIDE ZIP (PATH ONLY) ==="
           sudo find /home/roofixo/domains/zilom.ir -maxdepth 6 -type f \( -iname '*.env*' -o -iname '*secret*' -o -iname '*credential*' -o -iname '*.pem' -o -iname '*.key' -o -iname '*.pfx' -o -iname '*.p12' -o -iname '*.bak' -o -iname '*.backup' -o -iname '*.sql' -o -iname '*.mdf' -o -iname '*.ldf' \) -printf '%p\t%s bytes\n' 2>/dev/null | head -180
           REMOTE
