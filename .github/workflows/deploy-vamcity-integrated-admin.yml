@@ -123,7 +123,7 @@ jobs:
           done
           chmod 600 "$BACKUP"/*
           echo "REMOTE_BACKUP_OK=$BACKUP"
-          grep -Fq 'localStorage.getItem('''user''')' "$SRC"
+          grep -Fq "localStorage.getItem('user')" "$SRC"
           grep -Fq 'href="/admin/appsettings/"' "$SRC"
           grep -Fq 'href="/admin/appbackup/"' "$SRC"
           echo "REMOTE_TEMPLATE_CHECKS_OK"
