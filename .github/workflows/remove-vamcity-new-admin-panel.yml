@@ -131,8 +131,8 @@ jobs:
               "          location = /admin/Dashboard/ { return 302 /admin/Dashboard; }\n",
           ]
           text = "".join(out)
-          pattern = re.compile(r"(?m)^(\\s*location\\s*=\\s*/\\s*\\{\\s*)$")
-          updated, count = pattern.subn(lambda m: "".join(redirects) + m.group(1) + "\\n", text, count=1)
+          pattern = re.compile(r"(?m)^\s*location\s*=\s*/\s*\{\s*$")
+          updated, count = pattern.subn(lambda m: "".join(redirects) + m.group(0) + "\n", text, count=1)
           if count != 1:
               raise SystemExit("Could not find public root location; refusing to write config")
           with open(path, "w", encoding="utf-8") as f:
