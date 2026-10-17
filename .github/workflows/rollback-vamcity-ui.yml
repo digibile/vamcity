@@ -33,9 +33,9 @@ jobs:
           test -n "$DEPLOY_USER"
           test -n "$DEPLOY_SSH_KEY"
           install -m 700 -d "$HOME/.ssh"
-          printf '%s' "$DEPLOY_SSH_KEY" | tr -d '\\r' > "$RUNNER_TEMP/deploy_key"
-          if ! grep -q '^-----BEGIN ' "$RUNNER_TEMP/deploy_key" && [[ "$DEPLOY_SSH_KEY" == *'\\n'* ]]; then
-            printf '%b' "$DEPLOY_SSH_KEY" | tr -d '\\r' > "$RUNNER_TEMP/deploy_key"
+          printf '%s' "$DEPLOY_SSH_KEY" | tr -d '\r' > "$RUNNER_TEMP/deploy_key"
+          if ! grep -q '^-----BEGIN ' "$RUNNER_TEMP/deploy_key" && [[ "$DEPLOY_SSH_KEY" == *'\n'* ]]; then
+            printf '%b' "$DEPLOY_SSH_KEY" | tr -d '\r' > "$RUNNER_TEMP/deploy_key"
           fi
           chmod 600 "$RUNNER_TEMP/deploy_key"
           ssh-keygen -y -f "$RUNNER_TEMP/deploy_key" >/dev/null
@@ -90,7 +90,7 @@ jobs:
             if grep -q 'vamcity-modern-theme.css' "$candidate/index.html"; then continue; fi
             RESTORE="$candidate"
             break
-          done < <(find "$BACKUPS" -mindepth 2 -maxdepth 2 -type f -name index.html -printf '%T@ %h\\n' | sort -nr | cut -d' ' -f2-)
+          done < <(find "$BACKUPS" -mindepth 2 -maxdepth 2 -type f -name index.html -printf '%T@ %h\n' | sort -nr | cut -d' ' -f2-)
 
           if [ -z "$RESTORE" ]; then
             echo "SAFE_PRE_THEME_BACKUP_NOT_FOUND; nothing changed"
