@@ -38,6 +38,17 @@ jobs:
             printf '%b' "$DEPLOY_SSH_KEY" | tr -d '\r' > "$RUNNER_TEMP/deploy_key"
           fi
           chmod 600 "$RUNNER_TEMP/deploy_key"
+          if ! ssh-keygen -y -f "$RUNNER_TEMP/deploy_key" >/dev/null 2>&1; then
+            printf '%b' "$DEPLOY_SSH_KEY" | tr -d '\\r' > "$RUNNER_TEMP/deploy_key.escaped"
+            if ssh-keygen -y -f "$RUNNER_TEMP/deploy_key.escaped" >/dev/null 2>&1; then
+              mv "$RUNNER_TEMP/deploy_key.escaped" "$RUNNER_TEMP/deploy_key"
+            elif printf '%s' "$DEPLOY_SSH_KEY" | base64 -d > "$RUNNER_TEMP/deploy_key.b64" 2>/dev/null && ssh-keygen -y -f "$RUNNER_TEMP/deploy_key.b64" >/dev/null 2>&1; then
+              mv "$RUNNER_TEMP/deploy_key.b64" "$RUNNER_TEMP/deploy_key"
+            else
+              echo "DEPLOY_SSH_KEY_FORMAT_INVALID"
+              exit 1
+            fi
+          fi
           ssh-keygen -y -f "$RUNNER_TEMP/deploy_key" >/dev/null
           PORT="${DEPLOY_PORT:-22}"
           ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
