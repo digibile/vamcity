@@ -84,6 +84,19 @@ jobs:
               grep -n -B 8 -A 18 'proxy_pass http://127.0.0.1:5187' "$cfg" | head -80 || true
             fi
           done
+          echo "=== DISK / MEMORY / SWAP / CONTAINERS ==="
+          df -h /
+          free -h
+          docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep -E 'NAMES|vamcity|roofixo' || true
+          DOMAIN_IP="$(awk -F= '$1=="ip" {print $2; exit}' /usr/local/directadmin/data/users/roofixo/domains/roofixo.ir.conf)"
+          echo "DOMAIN_IP=$DOMAIN_IP"
+          echo "=== CANONICAL VHOST ROUTES ON DOMAIN IP ==="
+          for path in / /admin/dashboard /admin/Dashboard /vamcity-template-preview/ /plans.html /login/ /register/0/; do
+            status="$(curl --resolve "roofixo.ir:443:$DOMAIN_IP" -k -sS -o /tmp/vamcity-check-body --max-time 10 -w '%{http_code}' "https://roofixo.ir$path" || true)"
+            bytes="$(wc -c < /tmp/vamcity-check-body 2>/dev/null || echo 0)"
+            title="$(grep -oE '<title>[^<]*</title>' /tmp/vamcity-check-body | head -1 || true)"
+            echo "DOMAIN_VHOST https $status $path BODY_BYTES=$bytes TITLE=$title"
+          done
           echo "=== APP LOOPBACK ROUTES ==="
           for path in / /cl/plans/ /login/ /cl/login/ /cl/register/; do
             status="$(curl -sS -o /tmp/vamcity-check-body --max-time 8 -w '%{http_code}' "http://127.0.0.1:5187$path" || true)"
@@ -107,3 +120,5 @@ jobs:
           REMOTE
 
 # Read-only rerun 2026-10-17: inspect server pressure and current VamCity routing after terminal error report.
+
+# Extend read-only diagnostic with domain-IP vhost checks and disk/memory snapshots.
