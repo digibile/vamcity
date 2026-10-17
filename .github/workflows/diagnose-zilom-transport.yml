@@ -1,4 +1,4 @@
-name: Inspect zilom dashboard routing and runtime
+name: Inspect zilom runtime deployment
 
 on:
   push:
@@ -11,11 +11,11 @@ permissions:
   contents: read
 
 jobs:
-  inspect-zilom:
+  inspect-runtime:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Inspect zilom dashboard and app routing
+      - name: Identify container and deployment configuration for zilom
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -33,22 +33,25 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           ssh -i ~/.ssh/diag_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set +e
-          echo "=== ZILOM CUSTOM NGINX ==="
-          sudo sed -n '1,240p' /usr/local/directadmin/data/users/roofixo/domains/zilom.ir.cust_nginx 2>&1
-          echo "=== ZILOM DOMAIN CONFIG ==="
-          sudo sed -n '1,220p' /usr/local/directadmin/data/users/roofixo/domains/zilom.ir.conf 2>&1
-          echo "=== VAMCITY APP DIR ==="
-          sudo find /home/roofixo/domains/zilom.ir -maxdepth 4 -type f \( -name '*.dll' -o -name '*.runtimeconfig.json' -o -name 'appsettings*.json' -o -name 'package.json' -o -name 'docker-compose*.yml' -o -name 'Dockerfile' \) -printf '%p\n' 2>/dev/null | head -160
-          echo "=== LISTENING APP PORTS ==="
-          sudo ss -lntp 2>&1 | grep -E ':(3040|5187)\b' || true
-          echo "=== APP RESPONSE 5187 ==="
-          curl --http1.1 -sS -o /tmp/zilom-app-page.html -w 'HTTP=%{http_code} bytes=%{size_download}\n' --max-time 10 http://127.0.0.1:5187/admin/dashboard/ 2>&1
-          grep -Eo '<script[^>]+src="[^"]+"|<base[^>]+>|<title>[^<]*' /tmp/zilom-app-page.html | head -50
-          echo "=== LOCAL STATIC AND API ==="
-          for p in /js/app.e76ab352.js /js/chunk-vendors.0d0536ea.js /admin/appSettings/get; do
-            curl --http1.1 -sS -o /dev/null -w "$p HTTP=%{http_code} bytes=%{size_download}\n" --max-time 8 "http://127.0.0.1:5187$p" 2>&1
+          echo "=== RUNNING CONTAINERS ==="
+          sudo docker ps --no-trunc --format 'NAME={{.Names}} IMAGE={{.Image}} PORTS={{.Ports}} STATUS={{.Status}}'
+          echo "=== CONTAINER BINDING 5187 ==="
+          CID=$(sudo docker ps -q --filter publish=5187 | head -1)
+          if [ -n "$CID" ]; then
+            sudo docker inspect "$CID" --format 'NAME={{.Name}} IMAGE={{.Config.Image}} ENTRYPOINT={{json .Config.Entrypoint}} CMD={{json .Config.Cmd}} PORTS={{json .HostConfig.PortBindings}} RESTART={{.HostConfig.RestartPolicy.Name}}'
+            sudo docker inspect "$CID" --format 'MOUNTS={{json .Mounts}}'
+            sudo docker inspect "$CID" --format 'ENV={{json .Config.Env}}' | sed -E 's/(PASSWORD|PASS|TOKEN|SECRET|KEY|CONNECTIONSTRING)=[^",}]*/\1=[REDACTED]/Ig'
+          else
+            echo "No container published on 5187"
+          fi
+          echo "=== COMPOSE AND SERVICE FILES ==="
+          sudo find /home/roofixo/domains/zilom.ir /home/roofixo/domains/roofixo.ir/vamcity-app /opt /etc/systemd/system /usr/local/directadmin/data/users/roofixo -maxdepth 5 -type f \( -iname '*compose*.yml' -o -iname '*compose*.yaml' -o -name 'Dockerfile' -o -iname '*vamcity*.service' -o -iname '*zilom*.service' -o -iname '*deploy*.sh' \) -print 2>/dev/null | head -160
+          echo "=== DOMAIN FILE HASH AND PUBLIC ASSET TRANSPORT ==="
+          sha256sum /home/roofixo/domains/zilom.ir/public_html/LoanSystemAvizhe.Site.dll /home/roofixo/domains/zilom.ir/public_html/js/app.e76ab352.js 2>/dev/null
+          for proto in --http1.1 --http2; do
+            for p in /js/app.e76ab352.js /js/chunk-vendors.0d0536ea.js; do
+              curl "$proto" -k -sS -o /dev/null -w "$proto $p HTTP=%{http_code} bytes=%{size_download} version=%{http_version}\n" --max-time 12 "https://zilom.ir$p" 2>&1
+            done
           done
-          echo "=== NGINX TEST ==="
-          sudo nginx -t 2>&1
           REMOTE
           rm -f ~/.ssh/diag_key
