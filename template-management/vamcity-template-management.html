@@ -762,9 +762,16 @@ calc();
     const user=JSON.parse(stored);
     if(!user.accessToken) throw new Error('نشست ورود معتبر نیست؛ دوباره وارد شوید.');
     userData=typeof user.userData==='string'?JSON.parse(user.userData||'{}'):(user.userData||{});
-    roles=Array.isArray(userData.userRoleNames)?userData.userRoleNames:[];
-    if(!roles.includes('Admin')&&!roles.includes('SuperAdmin')) throw new Error('این اطلاعات فقط برای مدیر سامانه قابل مشاهده است.');
+    const rawRoles=userData.userRoleNames||userData.roles||userData.roleNames||user.roles||[];
+    roles=(Array.isArray(rawRoles)?rawRoles:String(rawRoles).split(/[,;|]/)).map(r=>String(r&&(r.name||r.roleName||r)||'').trim().toLowerCase());
+    if(!roles.includes('admin')&&!roles.includes('superadmin')) throw new Error('این اطلاعات فقط برای مدیر سامانه قابل مشاهده است.');
+    const customer=userData.customer||userData.customerModel||user.customer||{};
+    const userId=userData.id||userData.userId||user.id;
+    const customerId=customer.id||userData.customerId||user.customerId;
     auth={Authorization:'Bearer '+user.accessToken};
+    // Match the legacy API's identity context; bearer token alone is insufficient for some account-scoped endpoints.
+    if(customerId!==undefined&&customerId!==null&&customerId!=='') auth.JETAQSAAT_APP_CID=String(customerId);
+    if(userId!==undefined&&userId!==null&&userId!=='') auth.JETAQSAAT_APP_UID=String(userId);
   } catch(e) {
     ['loans','members','requests'].forEach(k=>setResult(k,0,false,e.message||'ورود مدیر لازم است.'));
     setText('live-data-status','نیازمند ورود مدیر');
@@ -815,7 +822,7 @@ calc();
   };
   // SuperAdmin has a separate, role-protected API surface. Do not call Admin-only
   // member/request endpoints with a SuperAdmin-only token or fabricate empty records.
-  if(roles.includes('SuperAdmin')&&!roles.includes('Admin')) {
+  if(roles.includes('superadmin')&&!roles.includes('admin')) {
     try {
       const dashboardResponse=await apiResponse('/superadmin/dashboard/get');
       const dashboard=dashboardResponse&&(dashboardResponse.data!==undefined?dashboardResponse.data:dashboardResponse.Data);
