@@ -1,4 +1,4 @@
-name: Diagnose zilom HTTP2 and upstream failures
+name: Diagnose zilom app upstream on port 3040
 
 on:
   push:
@@ -11,23 +11,21 @@ permissions:
   contents: read
 
 jobs:
-  diagnose-transport:
+  diagnose-zilom:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Probe public zilom and roofixo endpoints over HTTP/1.1 and HTTP/2
+      - name: Check public zilom transport
         shell: bash
         run: |
           set -u
-          for host in zilom.ir roofixo.ir; do
-            for proto in --http1.1 --http2; do
-              for path in /js/app.e76ab352.js /js/chunk-vendors.0d0536ea.js /admin/appSettings/get; do
-                echo "===== HOST=$host PROTO=$proto PATH=$path ====="
-                curl "$proto" -k -sS -o /dev/null -D - --max-time 15 "https://$host$path" 2>&1 | head -25 || true
-              done
+          for proto in --http1.1 --http2; do
+            for path in / /admin/dashboard/ /js/app.e76ab352.js /js/chunk-vendors.0d0536ea.js /admin/appSettings/get; do
+              echo "===== ZILOM PROTO=$proto PATH=$path ====="
+              curl "$proto" -k -sS -o /dev/null -D - --max-time 12 "https://zilom.ir$path" 2>&1 | head -20 || true
             done
           done
-      - name: Inspect zilom routing and local app reachability on port 3040 (read only)
+      - name: Inspect zilom virtual host, listeners and app process (read only)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -48,15 +46,24 @@ jobs:
           ssh -i ~/.ssh/diag_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set +e
           echo "=== HOST ==="; hostname
-          echo "=== DNS ==="; getent ahosts zilom.ir; getent ahosts roofixo.ir
-          echo "=== NGINX VHOST MATCHES ==="
-          sudo nginx -T 2>&1 | grep -in -C 3 -E 'server_name .*zilom|server_name .*roofixo|proxy_pass|http2' | head -240
-          echo "=== LOCAL APP ==="
-          curl --http1.1 -sS -o /dev/null -w 'LOCAL_3040_HTTP=%{http_code} bytes=%{size_download}\n' --max-time 10 http://127.0.0.1:3040/admin/dashboard/ 2>&1
-          echo "=== PUBLIC PROTOCOL FROM SERVER ==="
-          for p in --http1.1 --http2; do
-            curl "$p" -k -sS -o /dev/null -w "ZILOM $p HTTP=%{http_code} bytes=%{size_download} version=%{http_version}\n" --max-time 10 https://zilom.ir/js/app.e76ab352.js 2>&1
-            curl "$p" -k -sS -o /dev/null -w "ROOFIXO $p HTTP=%{http_code} bytes=%{size_download} version=%{http_version}\n" --max-time 10 https://roofixo.ir/js/app.e76ab352.js 2>&1
-          done
+          echo "=== ZILOM DNS ==="; getent ahosts zilom.ir
+          echo "=== NGINX ZILOM VHOST ONLY ==="
+          sudo nginx -T 2>&1 | grep -in -C 8 -E 'server_name[^;]*zilom\.ir' | head -180
+          echo "=== LISTENERS 3040 AND KNOWN APP PORTS ==="
+          sudo ss -lntp 2>&1 | grep -E ':(3040|5187|5000|5001|5100|5101|4000|3000|3100)\b' || true
+          echo "=== PROCESS MATCHES ==="
+          ps auxww | grep -Ei '[v]amcity|[d]otnet|[n]ode.*(3040|5187)|[n]ginx' | head -100
+          echo "=== DOCKER CONTAINERS ==="
+          (sudo docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Ports}}\t{{.Status}}' 2>&1 || true)
+          echo "=== SYSTEMD MATCHES ==="
+          (systemctl list-units --type=service --all --no-pager 2>/dev/null | grep -Ei 'zilom|vamcity|dotnet|node' | head -80 || true)
+          echo "=== ZILOM DOMAIN FILES ==="
+          (sudo find /usr/local/directadmin/data/users /etc/nginx /home -maxdepth 5 \( -iname '*zilom*' -o -iname '*vamcity*' \) -print 2>/dev/null | head -160 || true)
+          echo "=== LOCAL PORT 3040 ==="
+          curl --http1.1 -sS -o /dev/null -w 'LOCAL_3040_HTTP=%{http_code} bytes=%{size_download}\n' --max-time 8 http://127.0.0.1:3040/admin/dashboard/ 2>&1 || true
+          echo "=== LOCAL PORT 5187 ==="
+          curl --http1.1 -sS -o /dev/null -w 'LOCAL_5187_HTTP=%{http_code} bytes=%{size_download}\n' --max-time 8 http://127.0.0.1:5187/admin/dashboard/ 2>&1 || true
+          echo "=== ZILOM RESPONSE HEADERS ==="
+          curl --http1.1 -k -sS -o /dev/null -D - --max-time 8 https://zilom.ir/admin/dashboard/ 2>&1 | head -25
           REMOTE
           rm -f ~/.ssh/diag_key
