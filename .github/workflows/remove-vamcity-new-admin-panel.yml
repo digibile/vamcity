@@ -130,13 +130,13 @@ jobs:
               "          location = /admin/ { return 302 /admin/Dashboard; }\n",
               "          location = /admin/Dashboard/ { return 302 /admin/Dashboard; }\n",
           ]
-          marker = "          location = / {\n"
           text = "".join(out)
-          if marker not in text:
+          pattern = re.compile(r"(?m)^(\\s*location\\s*=\\s*/\\s*\\{\\s*)$")
+          updated, count = pattern.subn(lambda m: "".join(redirects) + m.group(1) + "\\n", text, count=1)
+          if count != 1:
               raise SystemExit("Could not find public root location; refusing to write config")
-          text = text.replace(marker, "".join(redirects) + marker, 1)
           with open(path, "w", encoding="utf-8") as f:
-              f.write(text)
+              f.write(updated)
           print("REMOVED_STANDALONE_LOCATIONS=" + ",".join(removed))
           print("RESTORED_LEGACY_DASHBOARD_REDIRECTS=true")
           PY
