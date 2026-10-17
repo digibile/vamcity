@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Inspect uploaded web archives and extracted files (metadata only)
+      - name: Inspect web archive contents and extracted source candidates
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -33,18 +33,28 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           ssh -i ~/.ssh/inventory_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set +e
-          echo "=== ZILOM DOMAIN ROOTS ==="
-          for d in /home/roofixo/domains/zilom.ir /home/roofixo/domains/zilom.ir/public_html /home/roofixo/domains/zilom.ir/private_html /home/roofixo/domains/zilom.ir/public_html/web; do
-            if [ -e "$d" ]; then
+          ZIP=/home/roofixo/domains/zilom.ir/public_html/web.zip
+          echo "=== ZIP VALIDATION ==="
+          if [ -f "$ZIP" ]; then
+            sudo file "$ZIP"
+            sudo unzip -t "$ZIP" 2>&1 | tail -8
+            echo "=== ZIP CONTENTS (PATH AND SIZE ONLY, FIRST 500) ==="
+            sudo zipinfo -1 "$ZIP" 2>/dev/null | head -500
+            echo "=== ZIP RISKY FILE PATHS ==="
+            sudo zipinfo -1 "$ZIP" 2>/dev/null | grep -Ei '(^|/)(\.env[^/]*|appsettings[^/]*\.json|.*secret.*|.*credential.*|.*password.*|.*\.pem|.*\.key|.*\.pfx|.*\.p12|.*\.sql|.*\.bak|.*\.backup|.*\.mdf|.*\.ldf|.*id_rsa|.*\.pdb)$|(^|/)(App_Data|certs|backups?|database|db)(/|$)' | head -200
+            echo "=== ZIP SOURCE INDICATORS ==="
+            sudo zipinfo -1 "$ZIP" 2>/dev/null | grep -Ei '(^|/)(package\.json|vite\.config\.[^/]+|next\.config\.[^/]+|webpack\.config\.[^/]+|tsconfig\.json|\.csproj|\.sln|Program\.cs|Startup\.cs|index\.html|README[^/]*|src/|source/|client/|frontend/|web/)' | head -240
+          else
+            echo "web.zip missing"
+          fi
+          echo "=== EXTRACTED SOURCE/WEB DIRECTORIES ==="
+          for d in /home/roofixo/domains/zilom.ir/public_html/web /home/roofixo/domains/zilom.ir/public_html/www /home/roofixo/domains/zilom.ir/public_html/ui /home/roofixo/domains/zilom.ir/public_html/statics /home/roofixo/domains/zilom.ir/public_html/vamcity-template-preview /home/roofixo/domains/zilom.ir/public_html; do
+            if [ -d "$d" ]; then
               echo "--- $d ---"
-              sudo find "$d" -maxdepth 3 -type f -printf '%p\t%s bytes\t%TY-%Tm-%Td %TH:%TM\n' 2>/dev/null | sort | head -350
+              sudo find "$d" -maxdepth 3 -type f \( -iname 'package.json' -o -iname '*.csproj' -o -iname '*.sln' -o -iname 'index.html' -o -iname '*.js' -o -iname '*.css' -o -iname '*.html' -o -iname '*.tsx' -o -iname '*.ts' -o -iname '*.vue' -o -iname '*.json' \) ! -iname 'appsettings*.json' -printf '%p\t%s bytes\t%TY-%Tm-%Td %TH:%TM\n' 2>/dev/null | head -180
             fi
           done
-          echo "=== ARCHIVES / WEB SOURCE CANDIDATES UNDER ROOFIXO ACCOUNT ==="
-          sudo find /home/roofixo/domains/zilom.ir /home/roofixo/domains/roofixo.ir/public_html -maxdepth 5 -type f \( -iname '*.zip' -o -iname '*.tar' -o -iname '*.tar.gz' -o -iname '*.tgz' -o -iname '*.7z' -o -iname '*.html' -o -iname 'package.json' -o -iname 'vite.config.*' -o -iname 'next.config.*' -o -iname 'webpack.config.*' \) -printf '%p\t%s bytes\t%TY-%Tm-%Td %TH:%TM\n' 2>/dev/null | sort | head -350
-          echo "=== PUBLIC_HTML TOP LEVEL ==="
-          sudo ls -lah /home/roofixo/domains/zilom.ir/public_html 2>/dev/null | head -160
-          echo "=== EXCLUSION COUNTS (NO CONTENT READ) ==="
-          sudo find /home/roofixo/domains/zilom.ir -type f \( -iname '*.env' -o -iname '*secret*' -o -iname '*credential*' -o -iname '*.pem' -o -iname '*.key' -o -iname '*.pfx' -o -iname '*.p12' -o -iname '*.bak' -o -iname '*.backup' -o -iname '*.sql' -o -iname '*.mdf' -o -iname '*.ldf' -o -iname '*.zip' \) -printf '%p\t%s bytes\n' 2>/dev/null | head -160
+          echo "=== POSSIBLE SENSITIVE FILES OUTSIDE ZIP (PATH ONLY) ==="
+          sudo find /home/roofixo/domains/zilom.ir -maxdepth 6 -type f \( -iname '*.env*' -o -iname '*secret*' -o -iname '*credential*' -o -iname '*.pem' -o -iname '*.key' -o -iname '*.pfx' -o -iname '*.p12' -o -iname '*.bak' -o -iname '*.backup' -o -iname '*.sql' -o -iname '*.mdf' -o -iname '*.ldf' \) -printf '%p\t%s bytes\n' 2>/dev/null | head -180
           REMOTE
           rm -f ~/.ssh/inventory_key
