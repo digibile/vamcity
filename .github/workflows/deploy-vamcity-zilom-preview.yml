@@ -129,6 +129,19 @@ jobs:
             exit 1
           fi
           systemctl reload nginx
+          echo "========== APP DIRECT HOST CHECKS =========="
+          for HOSTNAME in roofixo.ir zilom.ir; do
+            printf '%s ' "$HOSTNAME"
+            curl -sS --max-time 10 -H "Host: $HOSTNAME" -o "/tmp/vamcity-direct-$HOSTNAME.html" -w 'HTTP=%{http_code} SIZE=%{size_download}\n' http://127.0.0.1:5187/ || true
+          done
+          echo "========== ACTIVE ZILOM SERVER ROUTE =========="
+          nginx -T 2>/dev/null | awk '
+            /server_name[^;]*zilom\\.ir/ {show=1; count=0}
+            show {print; count++}
+            show && count>=35 {show=0}
+          ' | head -n 100
+          echo "========== GENERATED CONFIG PROXY REFERENCES =========="
+          grep -n -B4 -A12 -F 'proxy_pass http://127.0.0.1:5187;' "$GENERATED" | head -n 80 || true
           STATUS="$(curl -k -sS --max-time 20 --resolve "zilom.ir:443:$DOMAIN_IP" -o "/tmp/zilom-vamcity-check-$SHA.html" -w '%{http_code}' https://zilom.ir/)"
           echo "ZILOM_HTTP=$STATUS"
           echo "ZILOM_BYTES=$(wc -c < "/tmp/zilom-vamcity-check-$SHA.html")"
