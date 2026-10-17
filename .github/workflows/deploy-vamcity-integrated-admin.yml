@@ -175,7 +175,8 @@ jobs:
               return 302 /vamcity-template-preview/;
           }}
           location = /vamcity-template-preview/ {{
-              alias {public}/vamcity-template-preview/index.html;
+              root {public};
+              try_files /vamcity-template-preview/index.html =404;
               default_type text/html;
               add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
               add_header Pragma "no-cache" always;
