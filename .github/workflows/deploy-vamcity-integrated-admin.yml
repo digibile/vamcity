@@ -94,7 +94,7 @@ jobs:
             -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=10 \
             -o ServerAliveCountMax=3 -o StrictHostKeyChecking=yes "$USER@$HOST" \
             "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
-          set -Eeuo pipefail
+          set -euxo pipefail
           SHA="$1"
           DOMAIN=/home/roofixo/domains/roofixo.ir
           PUBLIC="$DOMAIN/public_html"
@@ -107,6 +107,7 @@ jobs:
           test -s "$CUSTOM"
           test -s "$PUBLIC/vamcity-public-home.html"
           docker inspect -f '{{.State.Running}}' vamcity-stage-app | grep -qx true
+          echo "REMOTE_PRECHECKS_OK"
           install -d -m 700 "$PRIVATE" "$PRIVATE/rollback" "$BACKUP"
           install -d -m 755 "$PUBLIC/vamcity-template-preview" "$PUBLIC/vamcity-admin" "$PUBLIC/vamcity-template-management"
           cp -p "$CUSTOM" "$BACKUP/roofixo.ir.cust_nginx.before"
@@ -121,9 +122,11 @@ jobs:
             fi
           done
           chmod 600 "$BACKUP"/*
+          echo "REMOTE_BACKUP_OK=$BACKUP"
           grep -Fq 'localStorage.getItem('''user''')' "$SRC"
           grep -Fq 'href="/admin/appsettings/"' "$SRC"
           grep -Fq 'href="/admin/appbackup/"' "$SRC"
+          echo "REMOTE_TEMPLATE_CHECKS_OK"
           install -m 644 "$SRC" "$PUBLIC/vamcity-template-preview/.index-$SHA.tmp"
           install -m 644 "$SRC" "$PUBLIC/vamcity-admin/.index-$SHA.tmp"
           install -m 644 "$SRC" "$PUBLIC/vamcity-template-management/.index-$SHA.tmp"
@@ -135,7 +138,9 @@ jobs:
           chown -R roofixo:roofixo "$PUBLIC/vamcity-template-preview" "$PUBLIC/vamcity-admin" "$PUBLIC/vamcity-template-management" "$PUBLIC/vamcity-template-management.html"
           chmod 755 "$PUBLIC/vamcity-template-preview" "$PUBLIC/vamcity-admin" "$PUBLIC/vamcity-template-management"
           chmod 644 "$PUBLIC/vamcity-template-preview/index.html" "$PUBLIC/vamcity-admin/index.html" "$PUBLIC/vamcity-template-management/index.html" "$PUBLIC/vamcity-template-management.html"
+          echo "REMOTE_TEMPLATE_FILES_INSTALLED"
 
+          echo "REMOTE_BEFORE_NGINX_ROUTE_EDIT"
           python3 - "$CUSTOM" "$PUBLIC" <<'PY'
           import re, sys
           path, public = sys.argv[1], sys.argv[2]
