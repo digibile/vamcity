@@ -1,0 +1,62 @@
+name: Diagnose zilom HTTP2 and upstream failures
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-zilom-transport.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-transport:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Probe public zilom and roofixo endpoints over HTTP/1.1 and HTTP/2
+        shell: bash
+        run: |
+          set -u
+          for host in zilom.ir roofixo.ir; do
+            for proto in --http1.1 --http2; do
+              for path in /js/app.e76ab352.js /js/chunk-vendors.0d0536ea.js /admin/appSettings/get; do
+                echo "===== HOST=$host PROTO=$proto PATH=$path ====="
+                curl "$proto" -k -sS -o /dev/null -D - --max-time 15 "https://$host$path" 2>&1 | head -25 || true
+              done
+            done
+          done
+      - name: Inspect server nginx routing and local app reachability (read only)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/diag_key
+          chmod 600 ~/.ssh/diag_key
+          ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          chmod 600 ~/.ssh/known_hosts
+          ssh -i ~/.ssh/diag_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set +e
+          echo "=== HOST ==="; hostname
+          echo "=== DNS ==="; getent ahosts zilom.ir; getent ahosts roofixo.ir
+          echo "=== NGINX VHOST MATCHES ==="
+          sudo nginx -T 2>&1 | grep -in -C 3 -E 'server_name .*zilom|server_name .*roofixo|proxy_pass|http2' | head -240
+          echo "=== LOCAL APP ==="
+          curl --http1.1 -sS -o /dev/null -w 'LOCAL_5187_HTTP=%{http_code} bytes=%{size_download}\n' --max-time 10 http://127.0.0.1:5187/admin/dashboard/ 2>&1
+          echo "=== PUBLIC PROTOCOL FROM SERVER ==="
+          for p in --http1.1 --http2; do
+            curl "$p" -k -sS -o /dev/null -w "ZILOM $p HTTP=%{http_code} bytes=%{size_download} version=%{http_version}\n" --max-time 10 https://zilom.ir/js/app.e76ab352.js 2>&1
+            curl "$p" -k -sS -o /dev/null -w "ROOFIXO $p HTTP=%{http_code} bytes=%{size_download} version=%{http_version}\n" --max-time 10 https://roofixo.ir/js/app.e76ab352.js 2>&1
+          done
+          REMOTE
+          rm -f ~/.ssh/diag_key
