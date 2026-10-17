@@ -84,6 +84,16 @@ jobs:
               grep -n -B 8 -A 18 'proxy_pass http://127.0.0.1:5187' "$cfg" | head -80 || true
             fi
           done
+          echo "=== TOP MEMORY PROCESSES ==="
+          ps -eo pid,ppid,user,%mem,%cpu,rss,comm,args --sort=-%mem | head -20
+          echo "=== CONTAINER RESOURCE SNAPSHOT ==="
+          docker stats --no-stream --format 'CONTAINER={{.Name}} CPU={{.CPUPerc}} MEM={{.MemUsage}} MEM_PCT={{.MemPerc}}' 2>&1 | head -30 || true
+          echo "=== RECENT KERNEL OOM / MEMORY EVENTS ==="
+          journalctl -k --since "3 hours ago" --no-pager 2>/dev/null | grep -Ei 'out of memory|oom-kill|killed process|memory cgroup|swap' | tail -30 || true
+          echo "=== DIRECTADMIN TERMINAL / ERROR LOG HINTS ==="
+          for log in /var/log/directadmin/error.log /var/log/directadmin/system.log /var/log/directadmin/errortaskq.log; do
+            if [ -f "$log" ]; then echo "LOG=$log"; tail -n 80 "$log" | grep -Ei 'terminal|server error|memory|swap|fork|resource temporarily unavailable|error|failed' | tail -25 || true; fi
+          done
           echo "=== DISK / MEMORY / SWAP / CONTAINERS ==="
           df -h /
           free -h
@@ -122,3 +132,5 @@ jobs:
 # Read-only rerun 2026-10-17: inspect server pressure and current VamCity routing after terminal error report.
 
 # Extend read-only diagnostic with domain-IP vhost checks and disk/memory snapshots.
+
+# Include read-only OOM, top-process, and DirectAdmin error-log hints for terminal-server diagnosis.
