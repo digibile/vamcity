@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: vamcity-roofixo-public-home-release
+  group: vamcity-roofixo-domain-release
   cancel-in-progress: false
 
 jobs:
