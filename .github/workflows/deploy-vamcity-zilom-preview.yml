@@ -1,0 +1,142 @@
+name: Preview VamCity on zilom.ir without moving app files
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/deploy-vamcity-zilom-preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vamcity-zilom-preview
+  cancel-in-progress: false
+
+jobs:
+  proxy-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/zilom_preview_key
+          chmod 600 ~/.ssh/zilom_preview_key
+          ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          echo "DEPLOY_PORT_EFFECTIVE=$PORT" >> "$GITHUB_ENV"
+          echo "DEPLOY_HOST_EFFECTIVE=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "DEPLOY_USER_EFFECTIVE=$DEPLOY_USER" >> "$GITHUB_ENV"
+
+      - name: Route zilom.ir to the existing VamCity app with rollback
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/zilom_preview_key -p "$DEPLOY_PORT_EFFECTIVE" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE" \
+            "bash -s -- '$SHA'" <<'REMOTE'
+          set -Eeuo pipefail
+          SHA="$1"
+          DOMAIN_CONF=/usr/local/directadmin/data/users/roofixo/domains/zilom.ir.conf
+          CUSTOM=/usr/local/directadmin/data/users/roofixo/domains/zilom.ir.cust_nginx
+          GENERATED=/usr/local/directadmin/data/users/roofixo/nginx.conf
+          APP_CONTAINER=vamcity-stage-app
+          BACKUP_DIR=/home/roofixo/domains/zilom.ir/private/vamcity-proxy-backups
+          BACKUP="$BACKUP_DIR/$SHA"
+          test -s "$DOMAIN_CONF"
+          test -s "$GENERATED"
+          docker inspect "$APP_CONTAINER" >/dev/null
+          docker inspect -f '{{.State.Running}}' "$APP_CONTAINER" | grep -qx true
+          DOMAIN_IP="$(awk -F= '$1=="ip" {print $2; exit}' "$DOMAIN_CONF")"
+          test -n "$DOMAIN_IP"
+          mkdir -p "$BACKUP"
+          chmod 700 "$BACKUP_DIR" "$BACKUP"
+          if [ -e "$CUSTOM" ]; then
+            cp -p "$CUSTOM" "$BACKUP/zilom.ir.cust_nginx.before"
+            echo existing > "$BACKUP/custom.state"
+          else
+            : > "$BACKUP/zilom.ir.cust_nginx.before"
+            echo absent > "$BACKUP/custom.state"
+          fi
+          cp -p "$GENERATED" "$BACKUP/nginx.conf.before"
+          chmod 600 "$BACKUP"/*
+
+          rollback() {
+            if [ "$(cat "$BACKUP/custom.state")" = existing ]; then
+              cp -p "$BACKUP/zilom.ir.cust_nginx.before" "$CUSTOM"
+            else
+              rm -f "$CUSTOM"
+            fi
+            printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
+            /usr/local/directadmin/dataskq d || true
+            nginx -t && systemctl reload nginx || true
+          }
+
+          python3 - "$CUSTOM" <<'PY'
+          import pathlib, re, sys
+          p = pathlib.Path(sys.argv[1])
+          old = p.read_text() if p.exists() else ""
+          begin = "# VAMCITY_ZILOM_PROXY_BEGIN"
+          end = "# VAMCITY_ZILOM_PROXY_END"
+          if begin in old and end in old:
+              a = old.index(begin)
+              b = old.index(end, a) + len(end)
+              old = old[:a] + old[b:]
+          # Do not risk creating duplicate nginx locations or overwriting an existing site.
+          if re.search(r'(?m)^\s*location\s+(?:=\s*)?/(?:\s|\{)', old):
+              raise SystemExit("STOP: zilom.ir custom nginx already defines a root location; preserved unchanged.")
+          block = '''
+          # VAMCITY_ZILOM_PROXY_BEGIN
+          location / {
+              proxy_pass http://127.0.0.1:5187;
+              proxy_http_version 1.1;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_connect_timeout 30s;
+              proxy_read_timeout 120s;
+          }
+          # VAMCITY_ZILOM_PROXY_END
+          '''
+          p.write_text(old.rstrip() + "\n" + block.lstrip())
+          PY
+          chown roofixo:roofixo "$CUSTOM"
+          chmod 644 "$CUSTOM"
+          printf 'action=rewrite&value=nginx&user=roofixo\n' >> /usr/local/directadmin/data/task.queue
+          /usr/local/directadmin/dataskq d
+          if ! nginx -t; then
+            echo "NGINX_VALIDATION_FAILED; restoring previous zilom config"
+            rollback
+            exit 1
+          fi
+          if ! grep -Fq 'proxy_pass http://127.0.0.1:5187;' "$GENERATED"; then
+            echo "GENERATED_CONFIG_MISSING_PROXY; restoring previous zilom config"
+            rollback
+            exit 1
+          fi
+          systemctl reload nginx
+          STATUS="$(curl -k -sS --max-time 20 --resolve "zilom.ir:443:$DOMAIN_IP" -o "/tmp/zilom-vamcity-check-$SHA.html" -w '%{http_code}' https://zilom.ir/)"
+          echo "ZILOM_HTTP=$STATUS"
+          echo "ZILOM_BYTES=$(wc -c < "/tmp/zilom-vamcity-check-$SHA.html")"
+          echo "ZILOM_TITLE=$(grep -oE '<title>[^<]*</title>' "/tmp/zilom-vamcity-check-$SHA.html" | head -1 || true)"
+          if [ "$STATUS" != 200 ]; then
+            echo "LIVE_CHECK_FAILED; restoring previous zilom config"
+            rollback
+            exit 1
+          fi
+          echo "ZILOM_VAMCITY_PREVIEW_OK"
+          REMOTE
