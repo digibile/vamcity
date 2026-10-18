@@ -1,0 +1,99 @@
+name: Import extracted zilom public_html into OM City
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/import-zilom-om-city.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-zilom-om-city
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch extracted public_html over the existing SSH connection
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/import_key
+          chmod 600 ~/.ssh/import_key
+          ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          chmod 600 ~/.ssh/known_hosts
+
+          mkdir -p "OM City"
+          ssh -i ~/.ssh/import_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE' > /tmp/remote-inventory.txt
+          set -euo pipefail
+          SRC=/home/roofixo/domains/zilom.ir/public_html
+          test -d "$SRC"
+          echo "Source directory exists: $SRC"
+          sudo find "$SRC" -type f -printf '%s\t%P\n' 2>/dev/null | sort -nr | head -80
+          REMOTE
+          cat /tmp/remote-inventory.txt
+
+          # Stream only repository-suitable files; do not import credentials, private keys,
+          # databases, archives, runtime caches, or the source control metadata.
+          ssh -i ~/.ssh/import_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "sudo tar -C /home/roofixo/domains/zilom.ir/public_html --exclude='./.git' --exclude='./.svn' --exclude='./node_modules' --exclude='./.next' --exclude='./bin' --exclude='./obj' --exclude='./App_Data' --exclude='./certs' --exclude='./backups' --exclude='./backup' --exclude='./logs' --exclude='./log' --exclude='./.env' --exclude='./.env.*' --exclude='*/.env' --exclude='*/.env.*' --exclude='*.pem' --exclude='*.key' --exclude='*.pfx' --exclude='*.p12' --exclude='*.sql' --exclude='*.bak' --exclude='*.mdf' --exclude='*.ldf' --exclude='*.zip' --exclude='*.rar' --exclude='*.7z' --exclude='*.tar' --exclude='*.tar.gz' --exclude='appsettings*.json' --exclude='web.config' --exclude='*.log' --exclude='*.dmp' --exclude='*.core' -czf - ." \
+            | tar -xzf - -C "OM City"
+
+          rm -f ~/.ssh/import_key
+          rm -f /tmp/remote-inventory.txt
+
+      - name: Remove oversized files and audit imported paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== FILE COUNT AND TOTAL SIZE ==="
+          find "OM City" -type f | wc -l
+          du -sh "OM City"
+          echo "=== EXCLUDED FILES ABOVE GITHUB 100 MB LIMIT ==="
+          find "OM City" -type f -size +90M -print
+          find "OM City" -type f -size +90M -delete
+          echo "=== SENSITIVE-NAME AUDIT ==="
+          if find "OM City" -type f | grep -Ei '(^|/)(\.env([^/]*)?|appsettings[^/]*\.json|.*secret.*|.*credential.*|.*password.*|.*\.pem|.*\.key|.*\.pfx|.*\.p12|.*\.sql|.*\.bak|.*\.mdf|.*\.ldf)$'; then
+            echo "Sensitive-looking files detected; removing them."
+            find "OM City" -type f | grep -Ei '(^|/)(\.env([^/]*)?|appsettings[^/]*\.json|.*secret.*|.*credential.*|.*password.*|.*\.pem|.*\.key|.*\.pfx|.*\.p12|.*\.sql|.*\.bak|.*\.mdf|.*\.ldf)$' | while IFS= read -r f; do rm -f -- "$f"; done
+          fi
+          find "OM City" -type d -empty -delete
+          echo "=== FINAL FILE COUNT ==="
+          find "OM City" -type f | wc -l
+          du -sh "OM City"
+          test -n "$(find "OM City" -type f -print -quit)"
+
+      - name: Commit imported files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f "OM City"
+          if git diff --cached --quiet; then
+            echo "No new files to import."
+            exit 0
+          fi
+          git commit -m "Import extracted zilom public_html into OM City"
+          git push origin HEAD:main
