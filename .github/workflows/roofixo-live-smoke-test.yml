@@ -1,6 +1,7 @@
 name: VamCity roofixo.ir live smoke test
 # Diagnostic refresh: compare public DNS routing with the local DirectAdmin vhost after homepage rollout.
 run-name: Verify VamCity HTML and assets on roofixo.ir
+# Post-vhost-repair smoke run 2026-10-18: confirm legacy loan pages and lazy-loaded assets remain reachable.
 
 on:
   push:
