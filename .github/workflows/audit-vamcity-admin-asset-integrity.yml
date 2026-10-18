@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/audit-vamcity-admin-asset-integrity.yml"
+      - "OM City/wwwroot/ui/js/app.e76ab352.js"
       - "OM City/wwwroot/ui/js/views-admin-Dashboard.7e68aa0e.js"
       - "OM City/wwwroot/ui/js/views-admin-Loans.89862ce7.js"
       - "OM City/wwwroot/ui/js/views-admin-UserLoanRequests.8e3264fe.js"
@@ -153,6 +154,25 @@ jobs:
             mv "$TMP/.$filename.tmp" "$target"
             echo "REPAIRED_ASSET=$kind/$filename SHA256=$expected"
           done < /tmp/repair-assets.txt
+          if grep -q '^js app.e76ab352.js ' /tmp/repair-assets.txt; then
+            INDEX="$APP_ROOT/wwwroot/index.html"
+            if [[ -s "$INDEX" ]] && grep -q 'app.e76ab352.js' "$INDEX"; then
+              cp -p "$INDEX" "$BACKUP/index.html"
+              python3 - "$INDEX" <<'PY'
+          import pathlib, sys
+          p = pathlib.Path(sys.argv[1])
+          text = p.read_text(encoding="utf-8")
+          old = "app.e76ab352.js"
+          new = "app.e76ab352.js?fix=20261018"
+          if new not in text:
+              text = text.replace(old, new)
+              p.write_text(text, encoding="utf-8")
+          print("APP_SCRIPT_CACHE_BUSTER=20261018")
+          PY
+            else
+              echo "APP_INDEX_CACHE_BUSTER_SKIPPED=1"
+            fi
+          fi
           echo "BACKUP_DIR=$BACKUP"
           echo "DATABASE_TOUCHED=0"
           echo "APP_CONTAINER_RESTARTED=0"
