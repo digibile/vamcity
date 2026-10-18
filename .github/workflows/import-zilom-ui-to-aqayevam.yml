@@ -1,6 +1,10 @@
 name: Import safe Zilom UI files into aqayevam
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/import-zilom-ui-to-aqayevam.yml"
   workflow_dispatch:
 
 permissions:
