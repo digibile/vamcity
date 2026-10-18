@@ -179,3 +179,5 @@ jobs:
             echo "LIVE_ROUTE_HTTP=$status PATH=$route"
           done
           REMOTE
+
+# Re-run after applying guarded admin list rendering fixes to the imported chunks.
