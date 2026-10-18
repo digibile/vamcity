@@ -1,0 +1,103 @@
+name: Publish VamCity admin asset refresh and verify live routes
+run-name: Force fresh VamCity admin bundle on roofixo.ir and smoke-test pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-vamcity-admin-refresh.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vamcity-admin-live-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Configure SSH
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/vamcity-refresh-key"
+          chmod 600 "$RUNNER_TEMP/vamcity-refresh-key"
+          ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          chmod 600 "$HOME/.ssh/known_hosts"
+          {
+            echo "DEPLOY_HOST=$DEPLOY_HOST"
+            echo "DEPLOY_USER=$DEPLOY_USER"
+            echo "DEPLOY_PORT=$PORT"
+          } >> "$GITHUB_ENV"
+
+      - name: Back up index and force a new browser cache key for repaired bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$RUNNER_TEMP/vamcity-refresh-key" -p "$DEPLOY_PORT" \\
+            -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
+          test -n "$APP_ROOT"
+          INDEX="$APP_ROOT/wwwroot/index.html"
+          APP_JS="$APP_ROOT/wwwroot/js/app.e76ab352.js"
+          test -s "$INDEX"
+          test -s "$APP_JS"
+          grep -q 'app.e76ab352.js' "$INDEX"
+          BACKUP="/home/roofixo/domains/roofixo.ir/vamcity-app/backups/admin-cache-refresh-$(date -u +%Y%m%dT%H%M%SZ)"
+          install -d -m 700 "$BACKUP"
+          cp -p "$INDEX" "$BACKUP/index.html.before"
+          cp -p "$APP_JS" "$BACKUP/app.e76ab352.js"
+          python3 - "$INDEX" <<'PY'
+          import pathlib, re, sys
+          p = pathlib.Path(sys.argv[1])
+          text = p.read_text(encoding="utf-8")
+          old = "app.e76ab352.js"
+          new = "app.e76ab352.js?fix=20261018-2"
+          text = re.sub(r'app\\.e76ab352\\.js(?:\\?[^"\\']*)?', new, text)
+          if new not in text:
+              raise SystemExit("APP_SCRIPT_REFERENCE_NOT_UPDATED")
+          p.write_text(text, encoding="utf-8")
+          print("APP_SCRIPT_CACHE_BUSTER=20261018-2")
+          PY
+          grep -Fq 'app.e76ab352.js?fix=20261018-2' "$INDEX"
+          node --check "$APP_JS"
+          echo "APP_BUNDLE_SHA256=$(sha256sum "$APP_JS" | awk '{print $1}')"
+          echo "INDEX_BACKUP=$BACKUP"
+          echo "DATABASE_TOUCHED=0"
+          echo "APP_CONTAINER_RESTARTED=0"
+          REMOTE
+
+      - name: Verify public HTML, bundle and admin routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in /login/ /admin/dashboard /admin/userLoanRequests/ /admin/loans/; do
+            headers="$RUNNER_TEMP/headers.txt"
+            body="$RUNNER_TEMP/body.html"
+            code="$(curl --retry 2 --retry-delay 1 -k -sS -L -D "$headers" -o "$body" --max-time 35 -w '%{http_code}' "https://roofixo.ir$path?release=$GITHUB_SHA")"
+            final="$(grep -i '^HTTP/' "$headers" | tail -1 | tr -d '\\r')"
+            title="$(grep -oE '<title>[^<]*</title>' "$body" | head -1 || true)"
+            printf 'LIVE_PAGE path=%s final=%s status=%s bytes=%s title=%s\\n' "$path" "${final:-none}" "$code" "$(wc -c < "$body")" "${title:-none}"
+            test "$code" = 200
+            test "$(wc -c < "$body")" -gt 500
+          done
+          bundle_code="$(curl -k -sS -o "$RUNNER_TEMP/app.js" --max-time 20 -w '%{http_code}' 'https://roofixo.ir/js/app.e76ab352.js?fix=20261018-2')"
+          echo "LIVE_REPAIRED_BUNDLE_HTTP=$bundle_code BYTES=$(wc -c < "$RUNNER_TEMP/app.js")"
+          test "$bundle_code" = 200
+          grep -q 'Response.data is undefined' "$RUNNER_TEMP/app.js"
+          echo "LIVE_BUNDLE_CACHE_REFRESH_VERIFIED=1"
