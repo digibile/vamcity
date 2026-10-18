@@ -13,7 +13,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: vamcity-source-cleanup
+  group: vamcity-source-cleanup-fast
   cancel-in-progress: false
 
 jobs:
@@ -21,11 +21,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - name: Checkout cleanup branch
+      - name: Checkout only source and required root dependencies
         uses: actions/checkout@v4
         with:
           ref: chore/vamcity-code-cleanup-2026-10-18
           fetch-depth: 0
+          sparse-checkout: |
+            recovered-source
+          sparse-checkout-cone-mode: true
 
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v4
@@ -51,17 +54,17 @@ jobs:
           git add -- recovered-source
           if git diff --cached --quiet; then
             echo "NO_FORMATTING_CHANGES_REQUIRED=1"
-            exit 0
+          else
+            echo "FORMATTED_FILE_COUNT=$(git diff --cached --name-only | wc -l | tr -d ' ')"
+            git commit -m "Format recovered VamCity C# source"
+            git push origin HEAD:chore/vamcity-code-cleanup-2026-10-18
           fi
-          echo "FORMATTED_FILE_COUNT=$(git diff --cached --name-only | wc -l | tr -d ' ')"
-          git commit -m "Format recovered VamCity C# source"
-          git push origin HEAD:chore/vamcity-code-cleanup-2026-10-18
 
       - name: Audit build health without deploying
         continue-on-error: true
         shell: bash
         run: |
-          set -u
+          set +e
           dotnet restore recovered-source/LoanSystemAvizhe.Site/LoanSystemAvizhe.Site.csproj
           restore_status=$?
           echo "RESTORE_EXIT_CODE=$restore_status"
