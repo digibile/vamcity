@@ -62,8 +62,8 @@ jobs:
                           print(f"{label}_{term.replace(' ','_')}_ABSENT=1")
                       else:
                           print(f"{label}_{term.replace(' ','_')}_COUNT={text.count(term)}")
-                          if name.startswith("views-admin-") and term == "mounted:function":
-                              print(f"{label}_MOUNTED_CONTEXT={text[idx:idx+260]}")
+                          if name.startswith("views-admin-") and term in ("mounted:function", "loadData:function"):
+                              print(f"{label}_{term.replace(':','_').upper()}_CONTEXT={text[idx:idx+850]}")
                           elif term in ("Response.data is undefined","getUserClaim","redirectToLogin","auth/logout"):
                               print(f"{label}_CONTEXT_{term.replace(' ','_')}={text[max(0,idx-100):idx+220]}")
           PY
