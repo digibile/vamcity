@@ -1,0 +1,126 @@
+﻿{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=.;Database=vamcityc_vamcity;User ID=vamcityc_vamcityuser;Password=_493oheV0;MultipleActiveResultSets=true"
+  },
+  "AppConfig": {
+    "JwtSecretKey": "0D5784E46036EF7136EF3D9A94156C28B3404FCE398B7D0BB33A522A1329E6DZ",
+    "BypassRecaptcha": true,
+    "Currency": "ریال",
+    "FrontUrl": "http://front.vamcity.com",
+    "BaseUrl": "https://vamcity.com",
+    "DefaultSmsPanel": "KaveNegar",
+    "BaseSmsPrice": 150,
+    "AdminPhone": "09127070757",
+    "IsCloud": false,
+    "PaymentBaseUrl": "https://vamcity.com/pop",
+	"WalletChargePaymentBaseUrl": "https://vamcity.com/walletcharge",
+    "PermanentPrice": 0,
+    "CloudPrice": 0,
+	"TitlePart1": "دیجی",
+    "TitlePart2": " بایل ",
+	"LongTitle": "دیجی بایل فروش اقساطی",
+	"FullTitle": "دیجی بایل",
+	"RouteToPlansAsDefault": true,
+	"ActiveParts": {
+	  "Agent": true,
+      "Contact": true,
+      "CustomerMarketer": true,
+      "OnlineMoneyTransfer": true,
+	  "SponsoreDueDate": true,
+	  "ThirdParty": true,
+      "ThirdParty_Digibile": true,
+      "ThirdParty_Landa": true,
+	  "BankGatewayRouter": true,
+	  "AgentRegisterExtraInfo": true,
+	  "Ticket": true,
+	  "Email": true,
+	  "LoginOtp": true,
+	  "RefahBeta": true,
+	  "CustomerOrders": true,
+	  "AgentFactor": true,
+	  "AgentFactorGateway": true,
+	  "AssuranceRequirement": true,
+	  "Inquiry": true,
+	  "DigitalSign": true
+    },
+	"VerifyMobileByNationalCodeInRegister": false
+  },
+  "GoogleReCaptcha": {
+    "key": "6Lfy4MAUAAAAAJhLqUYhAndykp304tWo2UE9RpZ4",
+    "secret": "6Lfy4MAUAAAAAFdiBaDEhrVBRrvOLHshJaDc3q56"
+  },
+  "OnlineMoneyTransferPanel": {
+    "Username": "vamcity",
+    "Password": "!@#123QWEqwe",
+    "BaseUrl": "https://transfer.vamcity.com"
+  },
+  "KaveNegar": {
+    "ApiKey": "3959314C7248747964794F66476A6D73786F46533242393241626B532F314465",
+    "Sender": "10009125905452",
+    "RegTemplate": "bazyabi",
+	"VerifyTemplate": "kodsabt"
+  },
+  "MelliPayamak": {
+    "Username": "09127070757",
+    "Password": "Bh5905452b*",
+    "From": "50004001070757",
+	"VerifyBaseNumber": 154013,
+	"RegBaseNumber": 157791,
+	"OnlineMoneyTransferOTP": 174735
+  },
+  "ZarinPal": {
+    "MerchantID": "",
+    "CallbackUrl": "https://vamcity.com/gateway/zarinPalCallback/",
+    "MemberCallbackUrl": "https://vamcity.com/gateway/zarinPalMemberCallback/",
+    "Mode": "1" //0:simulate(sandbox), 1:real
+  },
+  "Sep": {
+    "TerminalID": "",
+    "RedirectUrl": "https://vamcity.com/gateway/sepCallback/",
+    "MemberRedirectUrl": "https://vamcity.com/gateway/sepMemberCallback/"
+  },
+  "EFarda": {
+    "Username": "digibile",
+    "Password": "digibileD@823!",
+    "PrivateKey": ""
+  },
+  "Sepehr": {
+  	"TerminalId": "0",
+  	"CallBackUrl": "",
+  	"MemberCallBackUrl": "https://vamcity.com/MemberPurchase/SepehrCallBack/"
+  },
+  "IDPay": {
+    "ApiKey": "",
+    "Mode": "0" //0:simulate(sandbox), 1:real
+  },
+  "IPGParsianConfig": {
+  	"LoginAccount": "",
+  	"CallBackUrl": "",
+  	"MemberCallBackUrl": "https://vamcity.com/MemberPurchase/IPGCallBack/"
+  },
+  "FinnoTech": {
+    "ClientId": "Bh14012479881",
+  	"NId": "0071959637",
+  	"ClientSecret": "1dDYsznUsRfdjgWj5rdh"
+  },
+  "Sadad": {
+    "RedirectUrl": "https://vamcity.com/Purchase/sadadCallback/",
+    "MemberRedirectUrl": "https://vamcity.com/MemberPurchase/SadadCallBack/"
+  },
+  "Shahin": {
+  	"Ip": "94.184.140.112",
+  	"Port": "5443",
+  	"TokenPort": "5443",
+  	"Username": "nQ1RZLUi0T",
+  	"Password": "fjW9qKaItm",
+  	"UseSandBox": false
+  }
+}
