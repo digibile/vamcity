@@ -90,8 +90,10 @@ jobs:
             -o BatchMode=yes -o StrictHostKeyChecking=yes \
             "$DEPLOY_USER_EFFECTIVE@$DEPLOY_HOST_EFFECTIVE" \
             "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
-          set -euo pipefail
+          set -Eeuo pipefail
+          trap 'rc=$?; echo "REMOTE_DEPLOY_FAILED exit=$rc line=${LINENO} command=${BASH_COMMAND}"; exit "$rc"' ERR
           SHA="$1"
+          echo "REMOTE_DEPLOY_START sha=$SHA"
           DOMAIN_ROOT=/home/roofixo/domains/roofixo.ir
           BASE="$DOMAIN_ROOT/vamcity-app"
           PRIVATE="$BASE/private"
@@ -103,8 +105,10 @@ jobs:
           NETWORK=vamcity-stage-net
           DB_NAME=vamcity_stage
 
-          test -f "$APP_ZIP"
-          test -f "$DB_ZIP"
+          echo "PREFLIGHT app_zip=$([ -s "$APP_ZIP" ] && echo present || echo missing) db_zip=$([ -s "$DB_ZIP" ] && echo present || echo missing) publish_tar=$([ -s "/tmp/vamcity-publish-$SHA.tar.gz" ] && echo present || echo missing)"
+          if [ ! -s "$APP_ZIP" ]; then echo "REQUIRED_APP_ZIP_MISSING=$APP_ZIP"; exit 1; fi
+          if [ ! -s "$DB_ZIP" ]; then echo "REQUIRED_DATABASE_ZIP_MISSING=$DB_ZIP"; exit 1; fi
+          if [ ! -s "/tmp/vamcity-publish-$SHA.tar.gz" ]; then echo "REQUIRED_PUBLISH_ARTIFACT_MISSING=/tmp/vamcity-publish-$SHA.tar.gz"; exit 1; fi
           mkdir -p "$RELEASE" "$PRIVATE/backup" "$PRIVATE/sql-data" "$PRIVATE/uploads"
           chmod 700 "$BASE" "$PRIVATE" "$PRIVATE/backup" "$PRIVATE/sql-data" "$PRIVATE/uploads"
           tar -xzf "/tmp/vamcity-publish-$SHA.tar.gz" -C "$RELEASE"
@@ -113,6 +117,8 @@ jobs:
           chmod 700 "$RELEASE" "$RELEASE/logs" "$RELEASE/logs/nlog"
 
           echo "=== RESTORE ORIGINAL UPLOADS AND CERTIFICATE WHEN MISSING ==="
+          echo "APP_ZIP_CONTENT_CHECK:"
+          unzip -Z1 "$APP_ZIP" | grep -E '^(uploads/|App_Data/certs/)' | head -30 || true
           UPLOAD_FILES="$(find "$PRIVATE/uploads" -type f | wc -l)"
           if [ "$UPLOAD_FILES" -eq 0 ]; then
             unzip -n -q "$APP_ZIP" 'uploads/*' -d "$PRIVATE"
