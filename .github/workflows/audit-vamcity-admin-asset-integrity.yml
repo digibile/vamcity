@@ -88,7 +88,7 @@ jobs:
             filename="${item#*/}"
             [[ "$kind" == "js" || "$kind" == "css" ]]
             [[ "$filename" =~ ^[A-Za-z0-9._-]+\.$kind$ ]]
-            source_url="https://raw.githubusercontent.com/digibile/vamcity/main/OM%20City/wwwroot/ui/$kind/$filename"
+            source_url="https://raw.githubusercontent.com/digibile/vamcity/${GITHUB_SHA}/OM%20City/wwwroot/ui/$kind/$filename"
             source="$RUNNER_TEMP/source-assets/$kind/$filename"
             curl --fail --silent --show-error --location --retry 2 --max-time 60 "$source_url" -o "$source"
             if [[ "$kind" == "js" ]]; then
