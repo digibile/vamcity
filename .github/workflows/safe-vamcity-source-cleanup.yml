@@ -1,0 +1,90 @@
+name: Safe VamCity source cleanup
+run-name: Format recovered C# source and report build health
+
+on:
+  push:
+    branches:
+      - chore/vamcity-code-cleanup-2026-10-18
+    paths:
+      - ".github/workflows/safe-vamcity-source-cleanup.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vamcity-source-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout cleanup branch
+        uses: actions/checkout@v4
+        with:
+          ref: chore/vamcity-code-cleanup-2026-10-18
+          fetch-depth: 0
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Format recovered C# source without changing behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d recovered-source
+          count="$(find recovered-source -type f -name '*.cs' | wc -l | tr -d ' ')"
+          echo "C_SHARP_SOURCE_FILES=$count"
+          dotnet format whitespace recovered-source --folder --verbosity minimal
+          git diff --check
+
+      - name: Commit formatting on the cleanup branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- recovered-source
+          if git diff --cached --quiet; then
+            echo "NO_FORMATTING_CHANGES_REQUIRED=1"
+            exit 0
+          fi
+          echo "FORMATTED_FILE_COUNT=$(git diff --cached --name-only | wc -l | tr -d ' ')"
+          git commit -m "Format recovered VamCity C# source"
+          git push origin HEAD:chore/vamcity-code-cleanup-2026-10-18
+
+      - name: Audit build health without deploying
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -u
+          dotnet restore recovered-source/LoanSystemAvizhe.Site/LoanSystemAvizhe.Site.csproj
+          restore_status=$?
+          echo "RESTORE_EXIT_CODE=$restore_status"
+          if [ "$restore_status" -ne 0 ]; then
+            echo "BUILD_AUDIT=RESTORE_FAILED"
+            exit 0
+          fi
+          dotnet build recovered-source/LoanSystemAvizhe.Site/LoanSystemAvizhe.Site.csproj --configuration Release --no-restore --verbosity minimal
+          build_status=$?
+          echo "BUILD_EXIT_CODE=$build_status"
+          if [ "$build_status" -eq 0 ]; then
+            echo "BUILD_AUDIT=PASS"
+          else
+            echo "BUILD_AUDIT=FAIL_REVIEW_REQUIRED"
+          fi
+          exit 0
+
+      - name: Verify compiled frontend assets were not touched
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --name-only origin/main...HEAD | grep -E '^(OM City/|wwwroot/ui/(js|css)/app\.[0-9a-f]+\.(js|css)|wwwroot/ui/js/|wwwroot/ui/css/.*\.[0-9a-f]+\.(js|css))'; then
+            echo "Unexpected generated asset changes detected"
+            exit 1
+          fi
+          echo "GENERATED_FRONTEND_ASSETS_UNCHANGED=1"
