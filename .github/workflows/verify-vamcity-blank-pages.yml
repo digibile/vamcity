@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/verify-vamcity-blank-pages.yml"
+      - "OM City/wwwroot/ui/js/app.e76ab352.js"
       - "OM City/wwwroot/ui/js/views-admin-Dashboard.7e68aa0e.js"
       - "OM City/wwwroot/ui/js/views-admin-Loans.89862ce7.js"
       - "OM City/wwwroot/ui/js/views-admin-UserLoanRequests.8e3264fe.js"
