@@ -9,6 +9,7 @@ on:
       - ".github/workflows/verify-vamcity-landing.yml"
       - ".github/workflows/deploy-vamcity-staging.yml"
       - "recovered-source/**"
+      - "wwwroot/ui/**"
       - "docs/linux-migration.md"
   workflow_dispatch:
 
