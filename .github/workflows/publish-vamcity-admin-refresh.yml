@@ -34,7 +34,7 @@ jobs:
           test -n "$DEPLOY_SSH_KEY"
           PORT="${DEPLOY_PORT:-22}"
           install -m 700 -d "$HOME/.ssh"
-          printf '%s\\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/vamcity-refresh-key"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/vamcity-refresh-key"
           chmod 600 "$RUNNER_TEMP/vamcity-refresh-key"
           ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
           chmod 600 "$HOME/.ssh/known_hosts"
@@ -49,7 +49,6 @@ jobs:
         run: |
           set -euo pipefail
           ssh -i "$RUNNER_TEMP/vamcity-refresh-key" -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
-            -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
           APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
           test -n "$APP_ROOT"
@@ -92,7 +91,7 @@ jobs:
             code="$(curl --retry 2 --retry-delay 1 -k -sS -L -D "$headers" -o "$body" --max-time 35 -w '%{http_code}' "https://roofixo.ir$path?release=$GITHUB_SHA")"
             final="$(grep -i '^HTTP/' "$headers" | tail -1 | tr -d '\\r')"
             title="$(grep -oE '<title>[^<]*</title>' "$body" | head -1 || true)"
-            printf 'LIVE_PAGE path=%s final=%s status=%s bytes=%s title=%s\\n' "$path" "${final:-none}" "$code" "$(wc -c < "$body")" "${title:-none}"
+            printf 'LIVE_PAGE path=%s final=%s status=%s bytes=%s title=%s\n' "$path" "${final:-none}" "$code" "$(wc -c < "$body")" "${title:-none}"
             test "$code" = 200
             test "$(wc -c < "$body")" -gt 500
           done
