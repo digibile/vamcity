@@ -1,21 +1,21 @@
 name: Import safe Zilom UI files into aqayevam
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/import-zilom-ui-to-aqayevam.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: import-zilom-ui
+  cancel-in-progress: false
 
 jobs:
   import-safe-ui:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Prepare SSH
+      - name: Validate required secrets and prepare SSH
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -23,16 +23,16 @@ jobs:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           set -euo pipefail
-          test -n "$DEPLOY_HOST"
-          test -n "$DEPLOY_USER"
-          test -n "$DEPLOY_SSH_KEY"
+          : "${DEPLOY_HOST:?Missing DEPLOY_HOST secret}"
+          : "${DEPLOY_USER:?Missing DEPLOY_USER secret}"
+          : "${DEPLOY_SSH_KEY:?Missing DEPLOY_SSH_KEY secret}"
           install -m 700 -d ~/.ssh
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/import_key
           chmod 600 ~/.ssh/import_key
           ssh-keyscan -T 10 -p "${DEPLOY_PORT:-22}" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Fetch only safe UI assets from server
+      - name: Fetch allowlisted static UI assets
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -40,22 +40,28 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/import/ui
-          ssh -i ~/.ssh/import_key -p "${DEPLOY_PORT:-22}" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
-          set -euo pipefail
-          BASE=/home/roofixo/domains/zilom.ir/public_html
-          test -d "$BASE/wwwroot/ui"
-          echo "UI file count:"
-          sudo find "$BASE/wwwroot/ui" -type f ! -iname '*appsettings*' | grep -Eic '\\.(js|css|html|png|jpe?g|svg|webp|woff2?|ttf|eot|pdf|xlsx)
-          REMOTE
-          # Stream only allowlisted static asset extensions. No config, binaries, archives, DBs, or certificates.
-          ssh -i ~/.ssh/import_key -p "${DEPLOY_PORT:-22}" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
-            "sudo tar -C /home/roofixo/domains/zilom.ir/public_html -cf - --wildcards 'wwwroot/ui/*.html' 'wwwroot/ui/*.css' 'wwwroot/ui/*.js' 'wwwroot/ui/*.png' 'wwwroot/ui/*.jpg' 'wwwroot/ui/*.svg' 'wwwroot/ui/*.webp' 'wwwroot/ui/*.woff' 'wwwroot/ui/*.woff2' 'wwwroot/ui/*.ttf' 'wwwroot/ui/*.eot' 'wwwroot/ui/css/*' 'wwwroot/ui/js/*' 'wwwroot/ui/assets/*' 'wwwroot/ui/statics/*.pdf' 'wwwroot/ui/statics/*.xlsx' 2>/dev/null" \
+          ssh -i ~/.ssh/import_key -p "${DEPLOY_PORT:-22}" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            'test -d /home/roofixo/domains/zilom.ir/public_html/wwwroot/ui'
+          ssh -i ~/.ssh/import_key -p "${DEPLOY_PORT:-22}" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "sudo tar -C /home/roofixo/domains/zilom.ir/public_html -cf - \
+              --wildcards --exclude='*appsettings*' --exclude='*.env' \
+              --exclude='*.pfx' --exclude='*.p12' --exclude='*.pem' \
+              --exclude='*.key' --exclude='*.pdb' --exclude='*.dll' \
+              --exclude='*.exe' --exclude='*.zip' --exclude='*.rar' \
+              --exclude='*.bak' --exclude='*.sql' --exclude='*.mdf' \
+              --exclude='*.ldf' --exclude='*.config' --exclude='*.json' \
+              --exclude='*.xml' wwwroot/ui" \
             | tar -xf - -C /tmp/import/ui
           find /tmp/import/ui -type f -size +15M -delete
-          if find /tmp/import/ui -type f | grep -Ei '(appsettings|\.env|\.pfx$|\.p12$|\.pem$|\.key$|\.pdb$|\.dll$|\.exe$|\.zip$|\.rar$|\.bak$|\.sql$|\.mdf$|\.ldf$)'; then
-            echo "Blocked potentially sensitive or compiled files"
+          if find /tmp/import/ui -type f | grep -Ei '(appsettings|\.env($|\.)|\.pfx$|\.p12$|\.pem$|\.key$|\.pdb$|\.dll$|\.exe$|\.zip$|\.rar$|\.bak$|\.sql$|\.mdf$|\.ldf$|\.config$|\.json$|\.xml$)'; then
+            echo "Blocked potentially sensitive or non-static files"
             exit 1
           fi
+          find /tmp/import/ui -type f -print
           test "$(find /tmp/import/ui -type f | wc -l)" -gt 0
           echo "Prepared $(find /tmp/import/ui -type f | wc -l) static UI files"
 
@@ -64,66 +70,26 @@ jobs:
           AQAYEVAM_TOKEN: ${{ secrets.AQAYEVAM_TOKEN }}
         run: |
           set -euo pipefail
-          if [ -z "${AQAYEVAM_TOKEN:-}" ]; then
-            echo "Missing repository secret AQAYEVAM_TOKEN in digibile/vamcity. Add a fine-grained token with Contents: Read and write access to digibile/aqayevam, then rerun this workflow."
-            exit 2
-          fi
+          : "${AQAYEVAM_TOKEN:?Missing AQAYEVAM_TOKEN secret; grant Contents read/write access to digibile/aqayevam}"
           git clone "https://x-access-token:${AQAYEVAM_TOKEN}@github.com/digibile/aqayevam.git" /tmp/aqayevam
           mkdir -p /tmp/aqayevam/server-import/zilom-ui
           cp -a /tmp/import/ui/wwwroot/ui/. /tmp/aqayevam/server-import/zilom-ui/
           cat > /tmp/aqayevam/server-import/zilom-ui/IMPORT-NOTES.md <<'NOTES'
           # Zilom UI import
 
-          Static UI assets copied from `/home/roofixo/domains/zilom.ir/public_html/wwwroot/ui`.
+          Static UI assets copied from the deployed Zilom public UI directory.
 
-          This is the deployed/build output, not the original editable frontend source. Server application binaries, configuration files, certificates, database files, archives, and debug symbols are intentionally excluded.
+          This is deployed/build output, not the original editable frontend source. Application binaries, configuration, certificates, database files, archives, and debug symbols are excluded.
 
-          Dashboard data issue is not fixed by copying these files alone. The dashboard depends on authenticated API responses; the API calls and server logs must be checked separately.
+          Importing UI assets does not repair dashboard/API behavior. Authenticated API responses and server logs must be validated separately.
           NOTES
           cd /tmp/aqayevam
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add server-import/zilom-ui
-          git commit -m "Import safe Zilom UI assets from server"
-          git push origin HEAD:main
- || true
-          REMOTE
-          # Stream only allowlisted static asset extensions. No config, binaries, archives, DBs, or certificates.
-          ssh -i ~/.ssh/import_key -p "${DEPLOY_PORT:-22}" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
-            "sudo tar -C /home/roofixo/domains/zilom.ir/public_html -cf - --wildcards 'wwwroot/ui/*.html' 'wwwroot/ui/*.css' 'wwwroot/ui/*.js' 'wwwroot/ui/*.png' 'wwwroot/ui/*.jpg' 'wwwroot/ui/*.svg' 'wwwroot/ui/*.webp' 'wwwroot/ui/*.woff' 'wwwroot/ui/*.woff2' 'wwwroot/ui/*.ttf' 'wwwroot/ui/*.eot' 'wwwroot/ui/css/*' 'wwwroot/ui/js/*' 'wwwroot/ui/assets/*' 'wwwroot/ui/statics/*.pdf' 'wwwroot/ui/statics/*.xlsx' 2>/dev/null" \
-            | tar -xf - -C /tmp/import/ui
-          find /tmp/import/ui -type f -size +15M -delete
-          if find /tmp/import/ui -type f | grep -Ei '(appsettings|\.env|\.pfx$|\.p12$|\.pem$|\.key$|\.pdb$|\.dll$|\.exe$|\.zip$|\.rar$|\.bak$|\.sql$|\.mdf$|\.ldf$)'; then
-            echo "Blocked potentially sensitive or compiled files"
-            exit 1
+          if git diff --cached --quiet; then
+            echo "No changes to import; repository already has these assets."
+            exit 0
           fi
-          test "$(find /tmp/import/ui -type f | wc -l)" -gt 0
-          echo "Prepared $(find /tmp/import/ui -type f | wc -l) static UI files"
-
-      - name: Commit imported files to aqayevam
-        env:
-          AQAYEVAM_TOKEN: ${{ secrets.AQAYEVAM_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [ -z "${AQAYEVAM_TOKEN:-}" ]; then
-            echo "Missing repository secret AQAYEVAM_TOKEN in digibile/vamcity. Add a fine-grained token with Contents: Read and write access to digibile/aqayevam, then rerun this workflow."
-            exit 2
-          fi
-          git clone "https://x-access-token:${AQAYEVAM_TOKEN}@github.com/digibile/aqayevam.git" /tmp/aqayevam
-          mkdir -p /tmp/aqayevam/server-import/zilom-ui
-          cp -a /tmp/import/ui/wwwroot/ui/. /tmp/aqayevam/server-import/zilom-ui/
-          cat > /tmp/aqayevam/server-import/zilom-ui/IMPORT-NOTES.md <<'NOTES'
-          # Zilom UI import
-
-          Static UI assets copied from `/home/roofixo/domains/zilom.ir/public_html/wwwroot/ui`.
-
-          This is the deployed/build output, not the original editable frontend source. Server application binaries, configuration files, certificates, database files, archives, and debug symbols are intentionally excluded.
-
-          Dashboard data issue is not fixed by copying these files alone. The dashboard depends on authenticated API responses; the API calls and server logs must be checked separately.
-          NOTES
-          cd /tmp/aqayevam
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add server-import/zilom-ui
           git commit -m "Import safe Zilom UI assets from server"
           git push origin HEAD:main
