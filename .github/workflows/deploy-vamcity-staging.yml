@@ -26,10 +26,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install .NET SDK 9
+      - name: Install .NET SDK 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Prepare frontend and publish
         run: |
@@ -174,8 +174,8 @@ jobs:
             docker network create "$NETWORK" >/dev/null
           fi
           docker image inspect mcr.microsoft.com/mssql/server:2022-latest >/dev/null 2>&1 || docker pull mcr.microsoft.com/mssql/server:2022-latest
-          docker pull mcr.microsoft.com/dotnet/aspnet:9.0
-          docker run --rm --entrypoint dotnet mcr.microsoft.com/dotnet/aspnet:9.0 --list-runtimes | grep -E '^Microsoft\.NETCore\.App 9\.'
+          docker pull mcr.microsoft.com/dotnet/aspnet:10.0
+          docker run --rm --entrypoint dotnet mcr.microsoft.com/dotnet/aspnet:10.0 --list-runtimes | grep -E '^Microsoft\.NETCore\.App 10\.'
 
           if docker container inspect "$SQL_CONTAINER" >/dev/null 2>&1; then
             STATUS="$(docker inspect -f '{{.State.Status}}' "$SQL_CONTAINER" 2>/dev/null || echo missing)"
@@ -294,7 +294,7 @@ jobs:
             --publish=127.0.0.1:5187:8080 \
             -v "$RELEASE:/app" -v "$PRIVATE/uploads:/app/uploads" \
             -w /app --entrypoint dotnet \
-            mcr.microsoft.com/dotnet/aspnet:9.0 LoanSystemAvizhe.Site.dll >/dev/null
+            mcr.microsoft.com/dotnet/aspnet:10.0 LoanSystemAvizhe.Site.dll >/dev/null
 
           echo "=== VERIFY EXPLICIT HOST PORT PUBLISHING ==="
           docker port "$APP_CONTAINER" 8080/tcp || true
@@ -308,7 +308,7 @@ jobs:
               --publish=127.0.0.1:5187:8080 \
               -v "$RELEASE:/app" -v "$PRIVATE/uploads:/app/uploads" \
               -w /app --entrypoint dotnet \
-              mcr.microsoft.com/dotnet/aspnet:9.0 LoanSystemAvizhe.Site.dll >/dev/null
+              mcr.microsoft.com/dotnet/aspnet:10.0 LoanSystemAvizhe.Site.dll >/dev/null
           fi
           docker port "$APP_CONTAINER" 8080/tcp
           HEALTH=000
