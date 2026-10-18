@@ -119,3 +119,5 @@ jobs:
           path: artifacts/
           if-no-files-found: warn
           retention-days: 7
+
+# Trigger live browser verification after importing the recovered zilom files.
