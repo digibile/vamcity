@@ -91,6 +91,35 @@ jobs:
             ASSET_STATUS="$(curl -k -sS -o /dev/null --max-time 15 -w '%{http_code}' https://roofixo.ir/js/app.js)"
             echo "FALLBACK_APP_JS_HTTP=$ASSET_STATUS"
           fi
+          echo "=== ADMIN SPA ROUTES AND REQUIRED LAZY CHUNKS ==="
+          for ROUTE in /admin/loans/ /admin/userLoanRequests/ /login/; do
+            BODY="$TMP/route-$(echo "$ROUTE" | tr '/ ' '__').html"
+            CODE="$(curl -k -sS --max-time 15 -o "$BODY" -w '%{http_code}' "https://roofixo.ir$ROUTE" || true)"
+            echo "ADMIN_ROUTE_HTTP=$CODE PATH=$ROUTE BYTES=$(wc -c < "$BODY" 2>/dev/null || echo 0)"
+          done
+          for ASSET in /js/app.e76ab352.js?fix=20261018-3 /js/views-admin-Dashboard.7e68aa0f.js /js/views-admin-Loans.89862ce8.js /js/views-admin-UserLoanRequests.8e3264fe.js /js/views-admin-Users.e167c344.js /js/views-admin-ManageLoan.0ac19cc6.js; do
+            CODE="$(curl -k -sS --max-time 15 -o /dev/null -w '%{http_code}' "https://roofixo.ir$ASSET" || true)"
+            echo "ADMIN_ASSET_HTTP=$CODE PATH=$ASSET"
+            test "$CODE" = 200
+          done
+          echo "=== LIVE PUBLIC LOAN DATA API ==="
+          API_FILE="$TMP/public-loans.json"
+          API_CODE="$(curl -k -sS --max-time 20 -o "$API_FILE" -w '%{http_code}' https://roofixo.ir/Loan/List/100 || true)"
+          echo "PUBLIC_LOAN_API_HTTP=$API_CODE"
+          if [ "$API_CODE" = 200 ]; then
+            python3 - "$API_FILE" <<'PY'
+          import json, sys
+          payload=json.load(open(sys.argv[1], encoding="utf-8"))
+          data=payload.get("data", payload.get("Data"))
+          ok=payload.get("success", payload.get("Success"))
+          count=len(data) if isinstance(data,list) else -1
+          print(f"PUBLIC_LOAN_API_SUCCESS={ok} LOAN_DEFINITION_COUNT={count}")
+          if ok is not True or count < 1: raise SystemExit("Public loan API returned no loan definitions")
+          PY
+          else
+            echo "PUBLIC_LOAN_API_FAILED=$API_CODE"
+            exit 1
+          fi
           echo "=== TLS CERTIFICATE SUMMARY ==="
           echo | openssl s_client -connect roofixo.ir:443 -servername roofixo.ir 2>/dev/null | openssl x509 -noout -subject -issuer -dates
           echo "=== CONTAINER HEALTH ==="
