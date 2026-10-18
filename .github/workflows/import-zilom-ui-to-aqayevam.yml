@@ -1,95 +1,95 @@
-name: Import safe Zilom UI files into aqayevam
+name: Import full VamCity baseline into AqayeVam
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/import-zilom-ui-to-aqayevam.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
-  group: import-zilom-ui
+  group: import-vamcity-baseline-to-aqayevam
   cancel-in-progress: false
 
 jobs:
-  import-safe-ui:
+  import:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
-      - name: Validate required secrets and prepare SSH
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-        run: |
-          set -euo pipefail
-          : "${DEPLOY_HOST:?Missing DEPLOY_HOST secret}"
-          : "${DEPLOY_USER:?Missing DEPLOY_USER secret}"
-          : "${DEPLOY_SSH_KEY:?Missing DEPLOY_SSH_KEY secret}"
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/import_key
-          chmod 600 ~/.ssh/import_key
-          ssh-keyscan -T 10 -p "${DEPLOY_PORT:-22}" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          chmod 600 ~/.ssh/known_hosts
+      - name: Checkout VamCity recovery source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
 
-      - name: Fetch allowlisted static UI assets
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/import/ui
-          ssh -i ~/.ssh/import_key -p "${DEPLOY_PORT:-22}" \
-            -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            "$DEPLOY_USER@$DEPLOY_HOST" \
-            'test -d /home/roofixo/domains/zilom.ir/public_html/wwwroot/ui'
-          ssh -i ~/.ssh/import_key -p "${DEPLOY_PORT:-22}" \
-            -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            "$DEPLOY_USER@$DEPLOY_HOST" \
-            "sudo tar -C /home/roofixo/domains/zilom.ir/public_html -cf - \
-              --wildcards --exclude='*appsettings*' --exclude='*.env' \
-              --exclude='*.pfx' --exclude='*.p12' --exclude='*.pem' \
-              --exclude='*.key' --exclude='*.pdb' --exclude='*.dll' \
-              --exclude='*.exe' --exclude='*.zip' --exclude='*.rar' \
-              --exclude='*.bak' --exclude='*.sql' --exclude='*.mdf' \
-              --exclude='*.ldf' --exclude='*.config' --exclude='*.json' \
-              --exclude='*.xml' wwwroot/ui" \
-            | tar -xf - -C /tmp/import/ui
-          find /tmp/import/ui -type f -size +15M -delete
-          if find /tmp/import/ui -type f | grep -Ei '(appsettings|\.env($|\.)|\.pfx$|\.p12$|\.pem$|\.key$|\.pdb$|\.dll$|\.exe$|\.zip$|\.rar$|\.bak$|\.sql$|\.mdf$|\.ldf$|\.config$|\.json$|\.xml$)'; then
-            echo "Blocked potentially sensitive or non-static files"
-            exit 1
-          fi
-          find /tmp/import/ui -type f -print
-          test "$(find /tmp/import/ui -type f | wc -l)" -gt 0
-          echo "Prepared $(find /tmp/import/ui -type f | wc -l) static UI files"
-
-      - name: Commit imported files to aqayevam
+      - name: Import source and existing Zilom UI into AqayeVam
         env:
           AQAYEVAM_TOKEN: ${{ secrets.AQAYEVAM_TOKEN }}
+        shell: bash
         run: |
           set -euo pipefail
-          : "${AQAYEVAM_TOKEN:?Missing AQAYEVAM_TOKEN secret; grant Contents read/write access to digibile/aqayevam}"
-          git clone "https://x-access-token:${AQAYEVAM_TOKEN}@github.com/digibile/aqayevam.git" /tmp/aqayevam
-          mkdir -p /tmp/aqayevam/server-import/zilom-ui
-          cp -a /tmp/import/ui/wwwroot/ui/. /tmp/aqayevam/server-import/zilom-ui/
-          cat > /tmp/aqayevam/server-import/zilom-ui/IMPORT-NOTES.md <<'NOTES'
-          # Zilom UI import
+          : "$AQAYEVAM_TOKEN"
+          git clone "https://x-access-token:$AQAYEVAM_TOKEN@github.com/digibile/aqayevam.git" "$RUNNER_TEMP/aqayevam"
+          TARGET="$RUNNER_TEMP/aqayevam"
+          test -d recovered-source
+          test -s wwwroot/ui/index.html
+          rm -rf "$TARGET/recovered-source"
+          cp -a recovered-source "$TARGET/recovered-source"
+          find . -maxdepth 1 -type f -name '*.dll' -exec cp -f {} "$TARGET/recovered-source/" \;
+          mkdir -p "$TARGET/recovered-source/LoanSystemAvizhe.Site/LoanSystem.Site"
+          cp nlog.config "$TARGET/recovered-source/LoanSystemAvizhe.Site/LoanSystem.Site/nlog.config"
+          mkdir -p "$TARGET/wwwroot"
+          rm -rf "$TARGET/wwwroot/ui"
+          cp -a wwwroot/ui "$TARGET/wwwroot/ui"
+          mkdir -p "$TARGET/recovered-source/LoanSystemAvizhe.Site/wwwroot"
+          rm -rf "$TARGET/recovered-source/LoanSystemAvizhe.Site/wwwroot/ui"
+          cp -a wwwroot/ui "$TARGET/recovered-source/LoanSystemAvizhe.Site/wwwroot/ui"
+          cat > "$TARGET/.gitignore" <<'EOF'
+          **/appsettings*.json
+          **/.env
+          **/.env.*
+          **/*.pfx
+          **/*.p12
+          **/*.pem
+          **/*.key
+          **/*.bak
+          **/*.mdf
+          **/*.ldf
+          **/*.sql
+          **/logs/
+          **/uploads/
+          **/private/
+          **/secrets/
+          EOF
+          cat > "$TARGET/README.md" <<'EOF'
+          # AqayeVam / Zilom
 
-          Static UI assets copied from the deployed Zilom public UI directory.
+          Recovery baseline for the existing VamCity application. The existing login and frontend assets are retained.
 
-          This is deployed/build output, not the original editable frontend source. Application binaries, configuration, certificates, database files, archives, and debug symbols are excluded.
-
-          Importing UI assets does not repair dashboard/API behavior. Authenticated API responses and server logs must be validated separately.
-          NOTES
-          cd /tmp/aqayevam
+          - Runtime target: .NET 10.
+          - Database: a separate SQL Server database is provisioned on the server. Backups and credentials are never stored in this repository.
+          - Never commit appsettings, credentials, private certificates, uploads, logs, or database files.
+          - The recovered C# code was decompiled from published assemblies and must pass build/runtime checks before being treated as fully validated.
+          EOF
+          cd "$TARGET"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add server-import/zilom-ui
-          if git diff --cached --quiet; then
-            echo "No changes to import; repository already has these assets."
-            exit 0
+          git add .gitignore README.md recovered-source wwwroot/ui
+          if ! git diff --cached --quiet; then
+            git commit -m "Import VamCity source and existing Zilom UI baseline"
+            git push origin HEAD:main
+          else
+            echo "AQAYEVAM_BASELINE_ALREADY_CURRENT"
           fi
-          git commit -m "Import safe Zilom UI assets from server"
-          git push origin HEAD:main
+
+      - name: Dispatch deployment from the verified AqayeVam main branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run deploy-aqayevam-zilom.yml --repo digibile/vamcity --ref main
+          echo "AQAYEVAM_DEPLOYMENT_DISPATCHED"
