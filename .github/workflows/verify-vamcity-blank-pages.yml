@@ -84,7 +84,7 @@ jobs:
 
                 const protectedRoute = ['loan-requests', 'admin-loans'].includes(target.name);
                 const authRedirect = protectedRoute &&
-                  new URL(finalUrl).pathname.replace(/\\/+$/, '') === '/login' &&
+                  new URL(finalUrl).pathname.replace(/\/+$/, '') === '/login' &&
                   bodyText.length >= 60;
                 console.log('EXPECTED_AUTH_REDIRECT=' + authRedirect);
                 if (!authRedirect && (status !== 200 || bodyText.length < target.minText || appHtml.length < 100)) {
