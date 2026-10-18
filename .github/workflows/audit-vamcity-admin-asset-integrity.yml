@@ -6,6 +6,9 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/audit-vamcity-admin-asset-integrity.yml"
+      - "OM City/wwwroot/ui/js/views-admin-Dashboard.7e68aa0e.js"
+      - "OM City/wwwroot/ui/js/views-admin-Loans.89862ce7.js"
+      - "OM City/wwwroot/ui/js/views-admin-UserLoanRequests.8e3264fe.js"
   workflow_dispatch:
 
 permissions:
