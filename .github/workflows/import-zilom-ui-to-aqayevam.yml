@@ -1,4 +1,4 @@
-name: Import full VamCity baseline into AqayeVam # refreshed 2026-10-18 for Zilom login rollout
+name: Import full VamCity baseline into AqayeVam # refreshed 2026-10-18 for Zilom login rollout; deploy restored DB to zilom.ir
 
 on:
   push:
