@@ -1,0 +1,181 @@
+name: Audit VamCity admin asset integrity
+run-name: Compare live dashboard assets with imported OM City files
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/audit-vamcity-admin-asset-integrity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vamcity-admin-asset-integrity
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Configure SSH
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/vamcity-integrity-key"
+          chmod 600 "$RUNNER_TEMP/vamcity-integrity-key"
+          ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          chmod 600 "$HOME/.ssh/known_hosts"
+          {
+            echo "DEPLOY_HOST=$DEPLOY_HOST"
+            echo "DEPLOY_USER=$DEPLOY_USER"
+            echo "DEPLOY_PORT=$PORT"
+          } >> "$GITHUB_ENV"
+
+      - name: Read live hashes for dashboard assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$RUNNER_TEMP/vamcity-integrity-key" -p "$DEPLOY_PORT" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE' | tee "$RUNNER_TEMP/live-hashes.txt"
+          set -euo pipefail
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
+          test -n "$APP_ROOT"
+          for item in \
+            js/app.e76ab352.js \
+            js/chunk-vendors.0d0536ea.js \
+            js/views-admin-Dashboard.7e68aa0e.js \
+            js/views-admin-Loans.89862ce7.js \
+            js/views-admin-UserLoanRequests.8e3264fe.js \
+            css/app.65501a28.css \
+            css/chunk-vendors.c0d350b3.css \
+            css/views-admin-Dashboard.960aa463.css \
+            css/views-admin-Loans.a055ab4e.css \
+            css/views-admin-UserLoanRequests.d8d5a3c9.css; do
+            target="$APP_ROOT/wwwroot/$item"
+            if [[ -s "$target" ]]; then
+              printf 'LIVE_ASSET=%s %s\n' "$item" "$(sha256sum "$target" | awk '{print $1}')"
+            else
+              printf 'LIVE_ASSET=%s MISSING\n' "$item"
+            fi
+          done
+          REMOTE
+
+      - name: Compare against imported OM City and stage mismatches only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/source-assets/js" "$RUNNER_TEMP/source-assets/css"
+          : > "$RUNNER_TEMP/repair-assets.txt"
+          while IFS= read -r line; do
+            [[ "$line" == LIVE_ASSET=* ]] || continue
+            rest="${line#LIVE_ASSET=}"
+            item="${rest%% *}"
+            live_hash="${rest#* }"
+            kind="${item%%/*}"
+            filename="${item#*/}"
+            [[ "$kind" == "js" || "$kind" == "css" ]]
+            [[ "$filename" =~ ^[A-Za-z0-9._-]+\.$kind$ ]]
+            source_url="https://raw.githubusercontent.com/digibile/vamcity/main/OM%20City/wwwroot/ui/$kind/$filename"
+            source="$RUNNER_TEMP/source-assets/$kind/$filename"
+            curl --fail --silent --show-error --location --retry 2 --max-time 60 "$source_url" -o "$source"
+            source_hash="$(sha256sum "$source" | awk '{print $1}')"
+            if [[ "$live_hash" == "$source_hash" ]]; then
+              echo "ASSET_HASH_MATCH=$item"
+            else
+              echo "ASSET_HASH_MISMATCH=$item LIVE=$live_hash SOURCE=$source_hash"
+              printf '%s %s %s\n' "$kind" "$filename" "$source_hash" >> "$RUNNER_TEMP/repair-assets.txt"
+            fi
+          done < "$RUNNER_TEMP/live-hashes.txt"
+          if [[ ! -s "$RUNNER_TEMP/repair-assets.txt" ]]; then
+            echo "ALL_TARGET_ASSET_HASHES_MATCH=1"
+            exit 0
+          fi
+          tar -czf "$RUNNER_TEMP/vamcity-asset-repair.tar.gz" -C "$RUNNER_TEMP/source-assets" .
+          echo "ASSET_REPAIR_COUNT=$(wc -l < "$RUNNER_TEMP/repair-assets.txt" | tr -d ' ')"
+
+      - name: Backup and replace only mismatched assets
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -s "$RUNNER_TEMP/repair-assets.txt" ]]; then
+            echo "NO_REPAIR_NEEDED=1"
+            exit 0
+          fi
+          scp -i "$RUNNER_TEMP/vamcity-integrity-key" -P "$DEPLOY_PORT" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$RUNNER_TEMP/vamcity-asset-repair.tar.gz" "$RUNNER_TEMP/repair-assets.txt" \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+          ssh -i "$RUNNER_TEMP/vamcity-integrity-key" -p "$DEPLOY_PORT" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
+          BASE=/home/roofixo/domains/roofixo.ir/vamcity-app
+          BACKUP="$BASE/backups/om-city-asset-integrity-$(date -u +%Y%m%dT%H%M%SZ)"
+          TMP="$(mktemp -d)"
+          mkdir -p "$BACKUP"
+          trap 'rm -rf "$TMP" /tmp/vamcity-asset-repair.tar.gz /tmp/repair-assets.txt' EXIT
+          tar -xzf /tmp/vamcity-asset-repair.tar.gz -C "$TMP"
+          cp /tmp/repair-assets.txt "$BACKUP/manifest.txt"
+          while read -r kind filename expected; do
+            [[ "$kind" == "js" || "$kind" == "css" ]]
+            [[ "$filename" =~ ^[A-Za-z0-9._-]+\.$kind$ ]]
+            source="$TMP/$kind/$filename"
+            target="$APP_ROOT/wwwroot/$kind/$filename"
+            test -s "$source"
+            actual="$(sha256sum "$source" | awk '{print $1}')"
+            test "$actual" = "$expected"
+            if [[ -e "$target" ]]; then
+              mkdir -p "$BACKUP/$kind"
+              cp -p "$target" "$BACKUP/$kind/$filename"
+            fi
+            install -m 0644 "$source" "$TMP/.$filename.tmp"
+            mv "$TMP/.$filename.tmp" "$target"
+            echo "REPAIRED_ASSET=$kind/$filename SHA256=$expected"
+          done < /tmp/repair-assets.txt
+          echo "BACKUP_DIR=$BACKUP"
+          echo "DATABASE_TOUCHED=0"
+          echo "APP_CONTAINER_RESTARTED=0"
+          REMOTE
+
+      - name: Verify hashes and live routes
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$RUNNER_TEMP/vamcity-integrity-key" -p "$DEPLOY_PORT" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
+          for item in \
+            js/app.e76ab352.js \
+            js/chunk-vendors.0d0536ea.js \
+            js/views-admin-Dashboard.7e68aa0e.js \
+            js/views-admin-Loans.89862ce7.js \
+            js/views-admin-UserLoanRequests.8e3264fe.js \
+            css/app.65501a28.css \
+            css/chunk-vendors.c0d350b3.css \
+            css/views-admin-Dashboard.960aa463.css \
+            css/views-admin-Loans.a055ab4e.css \
+            css/views-admin-UserLoanRequests.d8d5a3c9.css; do
+            test -s "$APP_ROOT/wwwroot/$item"
+            printf 'VERIFIED_ASSET=%s SHA256=%s\n' "$item" "$(sha256sum "$APP_ROOT/wwwroot/$item" | awk '{print $1}')"
+          done
+          for route in /admin/userLoanRequests/ /admin/loans/; do
+            status="$(curl -k -sS -o /dev/null --max-time 15 -w '%{http_code}' "https://roofixo.ir$route" || true)"
+            echo "LIVE_ROUTE_HTTP=$status PATH=$route"
+          done
+          REMOTE
