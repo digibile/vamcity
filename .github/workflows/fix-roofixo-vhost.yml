@@ -1,6 +1,7 @@
 name: Repair Roofixo VamCity vhost and SSL
 run-name: Install persistent Roofixo VamCity routing and valid HTTPS
 # Production route re-assertion 2026-10-13: reapply exact lower/upper-case admin dashboard aliases after the user reported the old UI still appearing.
+# Production route repair 2026-10-18: re-assert public landing routes and proxy legacy loan/customer/admin modules after the DirectAdmin generated-vhost insertion mismatch.
 # The Vue login redirects to /admin/dashboard; /admin/Dashboard must resolve to the identical standalone management shell.
 
 on:
