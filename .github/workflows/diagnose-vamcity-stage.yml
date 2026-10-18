@@ -85,6 +85,20 @@ jobs:
           CUSTOMER_CODE="$(printf '%s' "$SITE_CONFIG" | python3 -c 'import json,sys; d=json.load(sys.stdin); x=d.get("data") or {}; print(x.get("customerCode",x.get("CustomerCode",0)) or 0)' 2>/dev/null || echo 0)"
           PLANS_RESPONSE="$(curl -sS --max-time 15 -H 'Accept: application/json' "https://roofixo.ir/Loan/List/$CUSTOMER_CODE" 2>/dev/null || true)"
           printf '%s' "$PLANS_RESPONSE" | python3 -c 'import json,sys; d=json.load(sys.stdin); data=d.get("data",d.get("Data")); print("PUBLIC_PLANS_SUCCESS=",d.get("success",d.get("Success"))); print("PUBLIC_PLANS_COUNT=",len(data) if isinstance(data,list) else "NOT_LIST"); print("PUBLIC_PLANS_ERROR=",d.get("message",d.get("Message","")) if d.get("success",d.get("Success")) is False else "")' 2>&1 || echo "PUBLIC_PLANS_PARSE_FAILED"
+          echo "=== SAFE TENANT AND ROLE CONFIG CHECK ==="
+          docker inspect vamcity-stage-app --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | python3 -c 'import sys; rows=[x.strip() for x in sys.stdin if x.startswith(("AppConfig__IsCloud=","ASPNETCORE_ENVIRONMENT="))]; print("\\n".join("CONFIG_"+x for x in rows) if rows else "CONFIG_KEYS_NOT_EXPOSED_AS_ENV")'
+          SQL_PASSWORD_CHECK="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' /home/roofixo/domains/roofixo.ir/vamcity-app/private/sql.env | head -1)"
+          SQLCMD_CHECK="$(docker exec vamcity-stage-sql bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' 2>/dev/null | tail -1)"
+          if [ -n "$SQLCMD_CHECK" ] && [ -n "$SQL_PASSWORD_CHECK" ]; then
+            docker exec vamcity-stage-sql "$SQLCMD_CHECK" -S localhost -U sa -P "$SQL_PASSWORD_CHECK" -C -b -Q "SET NOCOUNT ON;
+              SELECT 'TENANT_COUNT' AS metric, COUNT_BIG(*) AS value FROM [vamcity_stage].dbo.Customers;
+              SELECT 'ACTIVE_SUPERADMIN' AS metric, u.Id, u.IsActive, CASE WHEN u.CustomerId IS NULL THEN 'NO_CUSTOMER' ELSE 'HAS_CUSTOMER' END AS customer_binding, STRING_AGG(r.Name, ',') AS roles
+              FROM [vamcity_stage].dbo.AspNetUsers u
+              JOIN [vamcity_stage].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
+              JOIN [vamcity_stage].dbo.AspNetRoles r ON r.Id=ur.RoleId
+              WHERE r.NormalizedName=N'SUPERADMIN' AND u.IsActive=1
+              GROUP BY u.Id,u.IsActive,u.CustomerId;"
+          fi
           echo "=== DATABASE HEALTH SUMMARY ==="
           SQL_PASSWORD="$(sed -n 's/^MSSQL_SA_PASSWORD=//p' /home/roofixo/domains/roofixo.ir/vamcity-app/private/sql.env | head -1)"
           SQLCMD="$(docker exec vamcity-stage-sql bash -lc 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi' 2>/dev/null | tail -1)"
