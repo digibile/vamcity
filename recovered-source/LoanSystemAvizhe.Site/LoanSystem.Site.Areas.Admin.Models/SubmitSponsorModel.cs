@@ -4,7 +4,7 @@ namespace LoanSystem.Site.Areas.Admin.Models;
 
 public class SubmitSponsorModel
 {
-	public Guid UserLoanRequestId { get; set; }
+    public Guid UserLoanRequestId { get; set; }
 
-	public long? SponsorId { get; set; }
+    public long? SponsorId { get; set; }
 }

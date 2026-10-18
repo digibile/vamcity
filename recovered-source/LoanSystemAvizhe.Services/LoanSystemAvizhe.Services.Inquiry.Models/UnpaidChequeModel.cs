@@ -4,5 +4,5 @@ namespace LoanSystemAvizhe.Services.Inquiry.Models;
 
 public class UnpaidChequeModel
 {
-	public MemberModel Member { get; set; }
+    public MemberModel Member { get; set; }
 }

@@ -5,11 +5,11 @@ namespace LoanSystem.Services.Models;
 
 public class UpdateDigitalSignDescriptionModel : BaseModel
 {
-	public Guid ThirdPersonAssuranceAuthorizationItemId { get; set; }
+    public Guid ThirdPersonAssuranceAuthorizationItemId { get; set; }
 
-	public Guid UserLoanRequestAuthorizationItemId { get; set; }
+    public Guid UserLoanRequestAuthorizationItemId { get; set; }
 
-	public Guid EmzameContractAuthorizationItemId { get; set; }
+    public Guid EmzameContractAuthorizationItemId { get; set; }
 
-	public Dictionary<string, string> ManualFields { get; set; } = new Dictionary<string, string>();
+    public Dictionary<string, string> ManualFields { get; set; } = new Dictionary<string, string>();
 }

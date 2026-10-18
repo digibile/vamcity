@@ -5,9 +5,9 @@ namespace LoanSystem.Site.Areas.Admin.Models;
 
 public class MemberListResultModel
 {
-	public List<Member3Model> Members { get; set; }
+    public List<Member3Model> Members { get; set; }
 
-	public int CountAll { get; set; }
+    public int CountAll { get; set; }
 
-	public int CountActives { get; set; }
+    public int CountActives { get; set; }
 }

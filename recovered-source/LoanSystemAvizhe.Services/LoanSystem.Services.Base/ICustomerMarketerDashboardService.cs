@@ -5,5 +5,5 @@ namespace LoanSystem.Services.Base;
 
 public interface ICustomerMarketerDashboardService
 {
-	Task<CustomerMarketerDashboardModel> GetData(long agentId);
+    Task<CustomerMarketerDashboardModel> GetData(long agentId);
 }

@@ -17,24 +17,24 @@ namespace LoanSystemAvizhe.Site.Areas.SuperAdmin.Controllers;
 [Authorize(Roles = "SuperAdmin")]
 public class AppSmsController : BaseSuperAdminController
 {
-	private readonly IAppSmsService _appSmsService;
+    private readonly IAppSmsService _appSmsService;
 
-	public AppSmsController(ILogger<AppSmsController> logger, IAppSmsService appSmsService)
-		: base(logger)
-	{
-		_appSmsService = appSmsService;
-	}
+    public AppSmsController(ILogger<AppSmsController> logger, IAppSmsService appSmsService)
+        : base(logger)
+    {
+        _appSmsService = appSmsService;
+    }
 
-	[HttpGet("[action]")]
-	public Task<ResponseState<List<AppSmsModel>>> List(DateTime? start, DateTime? end, string mobile)
-	{
-		return TryCatch(async () =>
-		{
-			List<AppSmsModel> data = (from x in await _appSmsService.GetByCondition((AppSms x) => (((DateTime?)start).HasValue ? (x.Date.Date >= ((DateTime?)start).Value.Date) : true) && (((DateTime?)end).HasValue ? (x.Date.Date <= ((DateTime?)end).Value.Date) : true) && ((!string.IsNullOrEmpty(mobile)) ? (x.To == mobile) : true), true, "Customer")
-				select new AppSmsModel(x) into x
-				orderby x.Date descending
-				select x).ToList();
-			return Success(data);
-		});
-	}
+    [HttpGet("[action]")]
+    public Task<ResponseState<List<AppSmsModel>>> List(DateTime? start, DateTime? end, string mobile)
+    {
+        return TryCatch(async () =>
+        {
+            List<AppSmsModel> data = (from x in await _appSmsService.GetByCondition((AppSms x) => (((DateTime?)start).HasValue ? (x.Date.Date >= ((DateTime?)start).Value.Date) : true) && (((DateTime?)end).HasValue ? (x.Date.Date <= ((DateTime?)end).Value.Date) : true) && ((!string.IsNullOrEmpty(mobile)) ? (x.To == mobile) : true), true, "Customer")
+                                      select new AppSmsModel(x) into x
+                                      orderby x.Date descending
+                                      select x).ToList();
+            return Success(data);
+        });
+    }
 }

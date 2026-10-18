@@ -11,15 +11,15 @@ namespace IPGParsianService;
 [DataContract(Namespace = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService")]
 public class SalePaymentWithDiscountRequestBody
 {
-	[DataMember(EmitDefaultValue = false, Order = 0)]
-	public ClientSaleDiscountRequestData requestData;
+    [DataMember(EmitDefaultValue = false, Order = 0)]
+    public ClientSaleDiscountRequestData requestData;
 
-	public SalePaymentWithDiscountRequestBody()
-	{
-	}
+    public SalePaymentWithDiscountRequestBody()
+    {
+    }
 
-	public SalePaymentWithDiscountRequestBody(ClientSaleDiscountRequestData requestData)
-	{
-		this.requestData = requestData;
-	}
+    public SalePaymentWithDiscountRequestBody(ClientSaleDiscountRequestData requestData)
+    {
+        this.requestData = requestData;
+    }
 }

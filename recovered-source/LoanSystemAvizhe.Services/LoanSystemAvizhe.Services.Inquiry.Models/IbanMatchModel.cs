@@ -4,7 +4,7 @@ namespace LoanSystemAvizhe.Services.Inquiry.Models;
 
 public class IbanMatchModel
 {
-	public MemberModel Member { get; set; }
+    public MemberModel Member { get; set; }
 
-	public string Iban { get; set; }
+    public string Iban { get; set; }
 }

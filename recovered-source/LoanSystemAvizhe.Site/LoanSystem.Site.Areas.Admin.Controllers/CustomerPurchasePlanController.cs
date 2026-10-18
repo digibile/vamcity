@@ -15,31 +15,31 @@ namespace LoanSystem.Site.Areas.Admin.Controllers;
 [Authorize(Roles = "Admin,SuperAdmin")]
 public class CustomerPurchasePlanController : BaseAdminController
 {
-	private readonly ICustomerPurchasePlanService _customerPurchasePlanService;
+    private readonly ICustomerPurchasePlanService _customerPurchasePlanService;
 
-	public CustomerPurchasePlanController(ILogger<LoanController> logger, ICustomerPurchasePlanService customerPurchasePlanService)
-		: base(logger)
-	{
-		_customerPurchasePlanService = customerPurchasePlanService;
-	}
+    public CustomerPurchasePlanController(ILogger<LoanController> logger, ICustomerPurchasePlanService customerPurchasePlanService)
+        : base(logger)
+    {
+        _customerPurchasePlanService = customerPurchasePlanService;
+    }
 
-	[HttpGet("[action]")]
-	public Task<ResponseState<List<CustomerPurchasePlanModel>>> List()
-	{
-		return TryCatch(async () =>
-		{
-			bool isSuperAdmin = User.IsInRole("SuperAdmin");
-			List<CustomerPurchasePlanModel> data = (await _customerPurchasePlanService.GetAll(!isSuperAdmin, "Purchase")).Select((CustomerPurchasePlan x) => new CustomerPurchasePlanModel
-			{
-				Id = x.Id,
-				PlanType = ((x.Purchase != null && x.Purchase.ProductType == ProductTypes.Permanent) ? "دائمی" : "ابری"),
-				EndDate = x.EndDate,
-				StartDate = x.StartDate,
-				MaxLoanCount = x.MaxLoanCount,
-				RemainLoanCount = x.RemainLoanCount,
-				Amount = (x.Purchase?.Amount ?? 0m)
-			}).ToList();
-			return Success(data);
-		});
-	}
+    [HttpGet("[action]")]
+    public Task<ResponseState<List<CustomerPurchasePlanModel>>> List()
+    {
+        return TryCatch(async () =>
+        {
+            bool isSuperAdmin = User.IsInRole("SuperAdmin");
+            List<CustomerPurchasePlanModel> data = (await _customerPurchasePlanService.GetAll(!isSuperAdmin, "Purchase")).Select((CustomerPurchasePlan x) => new CustomerPurchasePlanModel
+            {
+                Id = x.Id,
+                PlanType = ((x.Purchase != null && x.Purchase.ProductType == ProductTypes.Permanent) ? "دائمی" : "ابری"),
+                EndDate = x.EndDate,
+                StartDate = x.StartDate,
+                MaxLoanCount = x.MaxLoanCount,
+                RemainLoanCount = x.RemainLoanCount,
+                Amount = (x.Purchase?.Amount ?? 0m)
+            }).ToList();
+            return Success(data);
+        });
+    }
 }

@@ -6,8 +6,8 @@ namespace LoanSystem.Site.Areas.Admin.Models;
 
 public class ChangeTicketStatusModel
 {
-	public TicketStatus Status { get; set; }
+    public TicketStatus Status { get; set; }
 
-	[Required(ErrorMessage = "شناسه تیکت الزامی است.")]
-	public Guid TicketId { get; set; }
+    [Required(ErrorMessage = "شناسه تیکت الزامی است.")]
+    public Guid TicketId { get; set; }
 }

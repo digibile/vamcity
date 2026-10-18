@@ -6,15 +6,15 @@ namespace LoanSystemAvizhe.Services.Models.Shahin;
 
 public class ShahinBankCardInfoRequestModel : BaseSendInquiry
 {
-	public string bank { get; set; }
+    public string bank { get; set; }
 
-	public string nationalCode { get; set; }
+    public string nationalCode { get; set; }
 
-	[Required(ErrorMessage = "شماره حساب مبدا الزامی است.")]
-	public string sourceAccount { get; set; }
+    [Required(ErrorMessage = "شماره حساب مبدا الزامی است.")]
+    public string sourceAccount { get; set; }
 
-	public override string ToString()
-	{
-		return JsonSerializer.Serialize(this);
-	}
+    public override string ToString()
+    {
+        return JsonSerializer.Serialize(this);
+    }
 }

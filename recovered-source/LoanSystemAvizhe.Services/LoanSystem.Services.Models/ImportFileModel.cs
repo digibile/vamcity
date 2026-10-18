@@ -5,6 +5,6 @@ namespace LoanSystem.Services.Models;
 
 public class ImportFileModel : BaseModel
 {
-	[Required(ErrorMessage = "فایل را انتخاب کنید")]
-	public IFormFile File { get; set; }
+    [Required(ErrorMessage = "فایل را انتخاب کنید")]
+    public IFormFile File { get; set; }
 }

@@ -8,13 +8,13 @@ namespace LoanSystem.Services.Base;
 
 public interface ILoanAssuranceRequirementService
 {
-	Task<List<LoanAssuranceRequirement>> GetByCondition(Expression<Func<LoanAssuranceRequirement, bool>> condition, params string[] includs);
+    Task<List<LoanAssuranceRequirement>> GetByCondition(Expression<Func<LoanAssuranceRequirement, bool>> condition, params string[] includs);
 
-	Task Insert(LoanAssuranceRequirement entity);
+    Task Insert(LoanAssuranceRequirement entity);
 
-	Task Update(LoanAssuranceRequirement entity);
+    Task Update(LoanAssuranceRequirement entity);
 
-	Task Delete(LoanAssuranceRequirement entity);
+    Task Delete(LoanAssuranceRequirement entity);
 
-	Task<List<Guid>> GetMatchLoanIdsByAssuranceRequirement(Dictionary<Guid, Guid?> dic);
+    Task<List<Guid>> GetMatchLoanIdsByAssuranceRequirement(Dictionary<Guid, Guid?> dic);
 }

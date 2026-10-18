@@ -15,27 +15,27 @@ namespace LoanSystem.Site.Areas.Sponsor.Controllers;
 [Authorize(Roles = "Sponsor")]
 public class AppSettingsController : BaseSponsorController
 {
-	private readonly IAppSettingsService _appSettingsService;
+    private readonly IAppSettingsService _appSettingsService;
 
-	public AppSettingsController(ILogger<AppSettingsController> logger, IAppSettingsService appSettingsService)
-		: base(logger)
-	{
-		_appSettingsService = appSettingsService;
-	}
+    public AppSettingsController(ILogger<AppSettingsController> logger, IAppSettingsService appSettingsService)
+        : base(logger)
+    {
+        _appSettingsService = appSettingsService;
+    }
 
-	[HttpGet("[action]")]
-	public Task<ResponseState<AppSettingsForSponsorPanelModel>> Get()
-	{
-		return TryCatch(async () =>
-		{
-			AppSettings appSettings = await _appSettingsService.GetAppSettings();
-			AppSettingsForSponsorPanelModel appSettingsForSponsorPanelModel = new AppSettingsForSponsorPanelModel();
-			if (appSettings != null)
-			{
-				appSettingsForSponsorPanelModel.IranValidityPrice = ((!string.IsNullOrEmpty(appSettings.IranValidityConfigJson)) ? (JsonSerializer.Deserialize<IranValidityConfig>(appSettings.IranValidityConfigJson)?.Price ?? 0) : 0);
-				appSettingsForSponsorPanelModel.CalculatorType = appSettings.CalculatorType;
-			}
-			return Success(appSettingsForSponsorPanelModel);
-		});
-	}
+    [HttpGet("[action]")]
+    public Task<ResponseState<AppSettingsForSponsorPanelModel>> Get()
+    {
+        return TryCatch(async () =>
+        {
+            AppSettings appSettings = await _appSettingsService.GetAppSettings();
+            AppSettingsForSponsorPanelModel appSettingsForSponsorPanelModel = new AppSettingsForSponsorPanelModel();
+            if (appSettings != null)
+            {
+                appSettingsForSponsorPanelModel.IranValidityPrice = ((!string.IsNullOrEmpty(appSettings.IranValidityConfigJson)) ? (JsonSerializer.Deserialize<IranValidityConfig>(appSettings.IranValidityConfigJson)?.Price ?? 0) : 0);
+                appSettingsForSponsorPanelModel.CalculatorType = appSettings.CalculatorType;
+            }
+            return Success(appSettingsForSponsorPanelModel);
+        });
+    }
 }

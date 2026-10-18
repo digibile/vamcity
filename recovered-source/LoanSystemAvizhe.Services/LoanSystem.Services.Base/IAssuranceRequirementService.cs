@@ -8,11 +8,11 @@ namespace LoanSystem.Services.Base;
 
 public interface IAssuranceRequirementService
 {
-	Task<List<AssuranceRequirement>> GetByCondition(Expression<Func<AssuranceRequirement, bool>> condition, params string[] includs);
+    Task<List<AssuranceRequirement>> GetByCondition(Expression<Func<AssuranceRequirement, bool>> condition, params string[] includs);
 
-	Task Insert(AssuranceRequirement entity);
+    Task Insert(AssuranceRequirement entity);
 
-	Task Update(AssuranceRequirement entity);
+    Task Update(AssuranceRequirement entity);
 
-	Task Delete(AssuranceRequirement entity);
+    Task Delete(AssuranceRequirement entity);
 }

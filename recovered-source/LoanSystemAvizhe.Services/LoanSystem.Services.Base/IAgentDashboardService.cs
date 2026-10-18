@@ -5,5 +5,5 @@ namespace LoanSystem.Services.Base;
 
 public interface IAgentDashboardService
 {
-	Task<AgentDashboardModel> GetData(long agentId);
+    Task<AgentDashboardModel> GetData(long agentId);
 }

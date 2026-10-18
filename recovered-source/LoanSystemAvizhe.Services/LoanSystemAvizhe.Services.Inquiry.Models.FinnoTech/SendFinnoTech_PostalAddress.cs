@@ -4,5 +4,5 @@ namespace LoanSystemAvizhe.Services.Inquiry.Models.FinnoTech;
 
 public class SendFinnoTech_PostalAddress : BaseSendInquiry
 {
-	public string PostalCode { get; set; } = "";
+    public string PostalCode { get; set; } = "";
 }

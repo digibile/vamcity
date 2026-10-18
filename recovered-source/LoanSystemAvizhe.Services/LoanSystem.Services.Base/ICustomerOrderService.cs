@@ -7,15 +7,15 @@ namespace LoanSystem.Services.Base;
 
 public interface ICustomerOrderService
 {
-	Task<List<CustomerOrder>> GetAll(bool? isSeen);
+    Task<List<CustomerOrder>> GetAll(bool? isSeen);
 
-	Task<int> GetCount(bool? isSeen);
+    Task<int> GetCount(bool? isSeen);
 
-	Task<CustomerOrder> GetById(Guid entityId);
+    Task<CustomerOrder> GetById(Guid entityId);
 
-	Task Insert(CustomerOrder entity);
+    Task Insert(CustomerOrder entity);
 
-	Task Update(CustomerOrder entity);
+    Task Update(CustomerOrder entity);
 
-	Task Delete(CustomerOrder entity);
+    Task Delete(CustomerOrder entity);
 }

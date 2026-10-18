@@ -6,13 +6,13 @@ namespace LoanSystemAvizhe.Site.Helpers;
 
 public class LoanRequestStatusComparer : IEqualityComparer<LoanRequestStatus>
 {
-	public bool Equals(LoanRequestStatus x, LoanRequestStatus y)
-	{
-		return x.Id == y.Id;
-	}
+    public bool Equals(LoanRequestStatus x, LoanRequestStatus y)
+    {
+        return x.Id == y.Id;
+    }
 
-	public int GetHashCode([DisallowNull] LoanRequestStatus obj)
-	{
-		return obj.Id.GetHashCode();
-	}
+    public int GetHashCode([DisallowNull] LoanRequestStatus obj)
+    {
+        return obj.Id.GetHashCode();
+    }
 }

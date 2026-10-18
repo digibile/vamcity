@@ -4,5 +4,5 @@ namespace LoanSystemAvizhe.Services.Inquiry.Models;
 
 public class ActiveLoansModel
 {
-	public MemberModel Member { get; set; }
+    public MemberModel Member { get; set; }
 }

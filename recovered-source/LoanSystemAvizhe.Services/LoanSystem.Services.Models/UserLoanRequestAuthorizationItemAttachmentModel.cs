@@ -9,53 +9,53 @@ namespace LoanSystem.Services.Models;
 
 public class UserLoanRequestAuthorizationItemAttachmentModel : BaseModel
 {
-	public string RowState { get; set; } = "unchanged";
+    public string RowState { get; set; } = "unchanged";
 
-	public UserLoanRequestAuthorizationItem UserLoanRequestAuthorizationItem { get; set; }
+    public UserLoanRequestAuthorizationItem UserLoanRequestAuthorizationItem { get; set; }
 
-	public string Attachment { get; set; }
+    public string Attachment { get; set; }
 
-	public string MemberDescription { get; set; } = "";
+    public string MemberDescription { get; set; } = "";
 
-	public bool AttachmentByAdmin { get; set; }
+    public bool AttachmentByAdmin { get; set; }
 
-	public Guid CustomerId { get; set; }
+    public Guid CustomerId { get; set; }
 
-	public IFormFile File { get; set; }
+    public IFormFile File { get; set; }
 
-	public string Base64 { get; set; }
+    public string Base64 { get; set; }
 
-	public string FileUrl { get; set; }
+    public string FileUrl { get; set; }
 
-	public UserLoanRequestAuthorizationItemAttachmentModel()
-	{
-	}
+    public UserLoanRequestAuthorizationItemAttachmentModel()
+    {
+    }
 
-	public UserLoanRequestAuthorizationItemAttachmentModel(UserLoanRequestAuthorizationItemAttachment item)
-	{
-		Id = item.Id;
-		Attachment = item.Attachment;
-		MemberDescription = item.MemberDescription;
-		AttachmentByAdmin = item.AttachmentByAdmin;
-		CustomerId = item.CustomerId;
-	}
+    public UserLoanRequestAuthorizationItemAttachmentModel(UserLoanRequestAuthorizationItemAttachment item)
+    {
+        Id = item.Id;
+        Attachment = item.Attachment;
+        MemberDescription = item.MemberDescription;
+        AttachmentByAdmin = item.AttachmentByAdmin;
+        CustomerId = item.CustomerId;
+    }
 
-	public void FillFileProps(IFileHelper fileHelper, Guid customerId)
-	{
-		if (string.IsNullOrEmpty(Attachment) || customerId == Guid.Empty)
-		{
-			return;
-		}
-		if (!fileHelper.CheckFileNameIsImage(Attachment))
-		{
-			FileUrl = fileHelper.GetUrl(FileUploadDirectory.AuthorizeItem, Attachment, customerId.ToString());
-			return;
-		}
-		string relativePath = Path.Combine(Directories.AuthorizeItem(customerId.ToString()), Attachment);
-		string text = fileHelper.ReadFileAsBase64(relativePath);
-		if (!string.IsNullOrEmpty(text))
-		{
-			Base64 = "data:image/jpeg;base64," + text;
-		}
-	}
+    public void FillFileProps(IFileHelper fileHelper, Guid customerId)
+    {
+        if (string.IsNullOrEmpty(Attachment) || customerId == Guid.Empty)
+        {
+            return;
+        }
+        if (!fileHelper.CheckFileNameIsImage(Attachment))
+        {
+            FileUrl = fileHelper.GetUrl(FileUploadDirectory.AuthorizeItem, Attachment, customerId.ToString());
+            return;
+        }
+        string relativePath = Path.Combine(Directories.AuthorizeItem(customerId.ToString()), Attachment);
+        string text = fileHelper.ReadFileAsBase64(relativePath);
+        if (!string.IsNullOrEmpty(text))
+        {
+            Base64 = "data:image/jpeg;base64," + text;
+        }
+    }
 }

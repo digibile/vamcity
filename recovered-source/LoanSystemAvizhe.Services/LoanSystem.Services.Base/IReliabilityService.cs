@@ -8,21 +8,21 @@ namespace LoanSystem.Services.Base;
 
 public interface IReliabilityService
 {
-	Task<List<Reliability>> GetAll(Guid? customerId);
+    Task<List<Reliability>> GetAll(Guid? customerId);
 
-	Task<Reliability> GetById(Guid entityId, params string[] includs);
+    Task<Reliability> GetById(Guid entityId, params string[] includs);
 
-	Task Insert(Reliability entity);
+    Task Insert(Reliability entity);
 
-	Task Update(Reliability entity);
+    Task Update(Reliability entity);
 
-	Task Delete(Reliability entity);
+    Task Delete(Reliability entity);
 
-	Task SetMembersReliability(List<long> memberIds, Dictionary<long, List<UserLoanPayment>> member_payments_dic);
+    Task SetMembersReliability(List<long> memberIds, Dictionary<long, List<UserLoanPayment>> member_payments_dic);
 
-	Task SetMemberReliability(long memberId, Guid reliabilityId);
+    Task SetMemberReliability(long memberId, Guid reliabilityId);
 
-	Task<List<Reliability>> GetByCondition(Expression<Func<Reliability, bool>> condition);
+    Task<List<Reliability>> GetByCondition(Expression<Func<Reliability, bool>> condition);
 
-	void SetUserPaymentServie(IUserPaymentService userPaymentService);
+    void SetUserPaymentServie(IUserPaymentService userPaymentService);
 }

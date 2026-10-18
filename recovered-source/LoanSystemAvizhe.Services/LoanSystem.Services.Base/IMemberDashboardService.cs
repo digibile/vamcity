@@ -5,5 +5,5 @@ namespace LoanSystem.Services.Base;
 
 public interface IMemberDashboardService
 {
-	Task<MemberDashboardModel> GetData(long memberId);
+    Task<MemberDashboardModel> GetData(long memberId);
 }

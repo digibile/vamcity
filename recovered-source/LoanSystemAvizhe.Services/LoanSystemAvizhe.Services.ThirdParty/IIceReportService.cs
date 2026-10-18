@@ -9,17 +9,17 @@ namespace LoanSystemAvizhe.Services.ThirdParty;
 
 public interface IIceReportService
 {
-	IQueryable<IceReport> AsQueryable();
+    IQueryable<IceReport> AsQueryable();
 
-	Task<List<IceReport>> GetAll(Guid? customerId);
+    Task<List<IceReport>> GetAll(Guid? customerId);
 
-	Task<IceReport> GetById(Guid entityId, params string[] includs);
+    Task<IceReport> GetById(Guid entityId, params string[] includs);
 
-	Task Insert(IceReport entity);
+    Task Insert(IceReport entity);
 
-	Task Update(IceReport entity);
+    Task Update(IceReport entity);
 
-	Task Delete(IceReport entity);
+    Task Delete(IceReport entity);
 
-	Task<List<IceReport>> GetByCondition(Expression<Func<IceReport, bool>> condition);
+    Task<List<IceReport>> GetByCondition(Expression<Func<IceReport, bool>> condition);
 }

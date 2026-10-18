@@ -4,5 +4,5 @@ namespace LoanSystem.Services.Models;
 
 public class SavedMoneyImportSubmitModel : BaseModel
 {
-	public List<SavedMoneyImportPreviewModel> ImportPreviewModels { get; set; }
+    public List<SavedMoneyImportPreviewModel> ImportPreviewModels { get; set; }
 }

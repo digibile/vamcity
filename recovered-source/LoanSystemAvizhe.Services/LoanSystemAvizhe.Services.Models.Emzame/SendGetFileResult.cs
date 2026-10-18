@@ -2,5 +2,5 @@ namespace LoanSystemAvizhe.Services.Models.Emzame;
 
 public class SendGetFileResult : SendEmzameErrorResult
 {
-	public string File { get; set; }
+    public string File { get; set; }
 }

@@ -18,38 +18,38 @@ namespace LoanSystemAvizhe.Site.Areas.SuperAdmin.Controllers;
 [Authorize(Roles = "SuperAdmin")]
 public class PurchaseController : BaseSuperAdminController
 {
-	private readonly IPurchaseService _purchaseService;
+    private readonly IPurchaseService _purchaseService;
 
-	public PurchaseController(ILogger<PurchaseController> logger, IPurchaseService purchaseService)
-		: base(logger)
-	{
-		_purchaseService = purchaseService;
-	}
+    public PurchaseController(ILogger<PurchaseController> logger, IPurchaseService purchaseService)
+        : base(logger)
+    {
+        _purchaseService = purchaseService;
+    }
 
-	[HttpGet("[action]")]
-	public Task<ResponseState<List<PurchaseModel>>> List(DateTime? start, DateTime? end, Guid? customerId)
-	{
-		return TryCatch(async () =>
-		{
-			IQueryable<Purchase> allAsQueryable = _purchaseService.GetAllAsQueryable();
-			allAsQueryable = allAsQueryable.Include((Purchase x) => x.Customer);
-			if (start.HasValue)
-			{
-				allAsQueryable = allAsQueryable.Where((Purchase x) => x.StartDate.Date >= ((DateTime?)start).Value.Date);
-			}
-			if (end.HasValue)
-			{
-				allAsQueryable = allAsQueryable.Where((Purchase x) => x.StartDate.Date <= ((DateTime?)end).Value.Date);
-			}
-			if (customerId.HasValue)
-			{
-				allAsQueryable = allAsQueryable.Where((Purchase x) => x.CustomerId == customerId);
-			}
-			List<PurchaseModel> data = (from x in await allAsQueryable.ToListAsync()
-				select new PurchaseModel(x) into x
-				orderby x.StartDate descending
-				select x).ToList();
-			return Success(data);
-		});
-	}
+    [HttpGet("[action]")]
+    public Task<ResponseState<List<PurchaseModel>>> List(DateTime? start, DateTime? end, Guid? customerId)
+    {
+        return TryCatch(async () =>
+        {
+            IQueryable<Purchase> allAsQueryable = _purchaseService.GetAllAsQueryable();
+            allAsQueryable = allAsQueryable.Include((Purchase x) => x.Customer);
+            if (start.HasValue)
+            {
+                allAsQueryable = allAsQueryable.Where((Purchase x) => x.StartDate.Date >= ((DateTime?)start).Value.Date);
+            }
+            if (end.HasValue)
+            {
+                allAsQueryable = allAsQueryable.Where((Purchase x) => x.StartDate.Date <= ((DateTime?)end).Value.Date);
+            }
+            if (customerId.HasValue)
+            {
+                allAsQueryable = allAsQueryable.Where((Purchase x) => x.CustomerId == customerId);
+            }
+            List<PurchaseModel> data = (from x in await allAsQueryable.ToListAsync()
+                                        select new PurchaseModel(x) into x
+                                        orderby x.StartDate descending
+                                        select x).ToList();
+            return Success(data);
+        });
+    }
 }

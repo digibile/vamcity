@@ -4,7 +4,7 @@ namespace LoanSystemAvizhe.Services.Models.Email;
 
 public class EmailAttachment
 {
-	public string Name { get; set; }
+    public string Name { get; set; }
 
-	public Stream Stream { get; set; }
+    public Stream Stream { get; set; }
 }

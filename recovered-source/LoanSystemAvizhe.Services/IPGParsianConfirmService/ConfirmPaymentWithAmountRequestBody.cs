@@ -11,15 +11,15 @@ namespace IPGParsianConfirmService;
 [DataContract(Namespace = "https://pec.Shaparak.ir/NewIPGServices/Confirm/ConfirmService")]
 public class ConfirmPaymentWithAmountRequestBody
 {
-	[DataMember(EmitDefaultValue = false, Order = 0)]
-	public ClientConfirmWithAmountRequestData requestData;
+    [DataMember(EmitDefaultValue = false, Order = 0)]
+    public ClientConfirmWithAmountRequestData requestData;
 
-	public ConfirmPaymentWithAmountRequestBody()
-	{
-	}
+    public ConfirmPaymentWithAmountRequestBody()
+    {
+    }
 
-	public ConfirmPaymentWithAmountRequestBody(ClientConfirmWithAmountRequestData requestData)
-	{
-		this.requestData = requestData;
-	}
+    public ConfirmPaymentWithAmountRequestBody(ClientConfirmWithAmountRequestData requestData)
+    {
+        this.requestData = requestData;
+    }
 }

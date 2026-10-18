@@ -15,45 +15,45 @@ namespace LoanSystem.Services.Base;
 
 public class ThirdPartySettingsService : BaseService, IThirdPartySettingsService
 {
-	private readonly AppConfig _appConfig;
+    private readonly AppConfig _appConfig;
 
-	public ThirdPartySettingsService(AppDbContext context, ICurrentUserService currentUserService, IOptions<AppConfig> appConfig)
-		: base(context, currentUserService)
-	{
-		_appConfig = appConfig.Value;
-	}
+    public ThirdPartySettingsService(AppDbContext context, ICurrentUserService currentUserService, IOptions<AppConfig> appConfig)
+        : base(context, currentUserService)
+    {
+        _appConfig = appConfig.Value;
+    }
 
-	public Task<List<ThirdPartySettings>> GetByCondition(Expression<Func<ThirdPartySettings, bool>> condition, bool ignoreGlobalFilter, params string[] includs)
-	{
-		IQueryable<ThirdPartySettings> source = Table<ThirdPartySettings>();
-		if (ignoreGlobalFilter)
-		{
-			source = source.IgnoreQueryFilters();
-		}
-		foreach (string navigationPropertyPath in includs)
-		{
-			source = source.Include(navigationPropertyPath);
-		}
-		source = source.Where(condition);
-		return source.ToListAsync();
-	}
+    public Task<List<ThirdPartySettings>> GetByCondition(Expression<Func<ThirdPartySettings, bool>> condition, bool ignoreGlobalFilter, params string[] includs)
+    {
+        IQueryable<ThirdPartySettings> source = Table<ThirdPartySettings>();
+        if (ignoreGlobalFilter)
+        {
+            source = source.IgnoreQueryFilters();
+        }
+        foreach (string navigationPropertyPath in includs)
+        {
+            source = source.Include(navigationPropertyPath);
+        }
+        source = source.Where(condition);
+        return source.ToListAsync();
+    }
 
-	public Task<ThirdPartySettings> GetThirdPartySettings()
-	{
-		return Table<ThirdPartySettings>().FirstOrDefaultAsync((ThirdPartySettings x) => x.CustomerId == (Guid)_currentUserService.CustomerId);
-	}
+    public Task<ThirdPartySettings> GetThirdPartySettings()
+    {
+        return Table<ThirdPartySettings>().FirstOrDefaultAsync((ThirdPartySettings x) => x.CustomerId == (Guid)_currentUserService.CustomerId);
+    }
 
-	public Task Update(ThirdPartySettings entity)
-	{
-		entity.CustomerId = _currentUserService.CustomerId.Value;
-		if (entity.Id == Guid.Empty)
-		{
-			Insert(entity);
-		}
-		else
-		{
-			Update(entity, true);
-		}
-		return Save();
-	}
+    public Task Update(ThirdPartySettings entity)
+    {
+        entity.CustomerId = _currentUserService.CustomerId.Value;
+        if (entity.Id == Guid.Empty)
+        {
+            Insert(entity);
+        }
+        else
+        {
+            Update(entity, true);
+        }
+        return Save();
+    }
 }

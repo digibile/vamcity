@@ -8,56 +8,56 @@ namespace LoanSystem.Site.Helpers.Security;
 
 public class CustomJwtDataFormat : ISecureDataFormat<AuthenticationTicket>
 {
-	private readonly string algorithm;
+    private readonly string algorithm;
 
-	private readonly TokenValidationParameters validationParameters;
+    private readonly TokenValidationParameters validationParameters;
 
-	public CustomJwtDataFormat(string algorithm, TokenValidationParameters validationParameters)
-	{
-		this.algorithm = algorithm;
-		this.validationParameters = validationParameters;
-	}
+    public CustomJwtDataFormat(string algorithm, TokenValidationParameters validationParameters)
+    {
+        this.algorithm = algorithm;
+        this.validationParameters = validationParameters;
+    }
 
-	public AuthenticationTicket Unprotect(string protectedText)
-	{
-		return Unprotect(protectedText, null);
-	}
+    public AuthenticationTicket Unprotect(string protectedText)
+    {
+        return Unprotect(protectedText, null);
+    }
 
-	public AuthenticationTicket Unprotect(string protectedText, string purpose)
-	{
-		JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-		ClaimsPrincipal claimsPrincipal = null;
-		SecurityToken validatedToken = null;
-		try
-		{
-			claimsPrincipal = jwtSecurityTokenHandler.ValidateToken(protectedText, validationParameters, out validatedToken);
-			if (!(validatedToken is JwtSecurityToken jwtSecurityToken))
-			{
-				throw new ArgumentException("Invalid JWT");
-			}
-			if (!jwtSecurityToken.Header.Alg.Equals(algorithm, StringComparison.Ordinal))
-			{
-				throw new ArgumentException("Algorithm must be '" + algorithm + "'");
-			}
-		}
-		catch (SecurityTokenValidationException)
-		{
-			return null;
-		}
-		catch (ArgumentException)
-		{
-			return null;
-		}
-		return new AuthenticationTicket(claimsPrincipal, new AuthenticationProperties(), "Cookie");
-	}
+    public AuthenticationTicket Unprotect(string protectedText, string purpose)
+    {
+        JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+        ClaimsPrincipal claimsPrincipal = null;
+        SecurityToken validatedToken = null;
+        try
+        {
+            claimsPrincipal = jwtSecurityTokenHandler.ValidateToken(protectedText, validationParameters, out validatedToken);
+            if (!(validatedToken is JwtSecurityToken jwtSecurityToken))
+            {
+                throw new ArgumentException("Invalid JWT");
+            }
+            if (!jwtSecurityToken.Header.Alg.Equals(algorithm, StringComparison.Ordinal))
+            {
+                throw new ArgumentException("Algorithm must be '" + algorithm + "'");
+            }
+        }
+        catch (SecurityTokenValidationException)
+        {
+            return null;
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
+        return new AuthenticationTicket(claimsPrincipal, new AuthenticationProperties(), "Cookie");
+    }
 
-	public string Protect(AuthenticationTicket data)
-	{
-		throw new NotImplementedException();
-	}
+    public string Protect(AuthenticationTicket data)
+    {
+        throw new NotImplementedException();
+    }
 
-	public string Protect(AuthenticationTicket data, string purpose)
-	{
-		throw new NotImplementedException();
-	}
+    public string Protect(AuthenticationTicket data, string purpose)
+    {
+        throw new NotImplementedException();
+    }
 }

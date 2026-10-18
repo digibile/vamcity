@@ -4,5 +4,5 @@ namespace LoanSystemAvizhe.Services.Inquiry.Models.ApiIR;
 
 public class SendApiIR_PostalAddress : BaseSendInquiry
 {
-	public string PostalCode { get; set; } = "";
+    public string PostalCode { get; set; } = "";
 }

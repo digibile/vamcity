@@ -8,11 +8,11 @@ namespace LoanSystem.Services.Base;
 
 public interface ILoanContactService
 {
-	Task<List<LoanContact>> GetByCondition(Expression<Func<LoanContact, bool>> condition, params string[] includs);
+    Task<List<LoanContact>> GetByCondition(Expression<Func<LoanContact, bool>> condition, params string[] includs);
 
-	Task Insert(LoanContact entity);
+    Task Insert(LoanContact entity);
 
-	Task Update(LoanContact entity);
+    Task Update(LoanContact entity);
 
-	Task Delete(LoanContact entity);
+    Task Delete(LoanContact entity);
 }

@@ -9,18 +9,18 @@ namespace IPGParsianService;
 [DataContract(Name = "ClientSaleDiscountRequestData", Namespace = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService")]
 public class ClientSaleDiscountRequestData : ClientSaleRequestData
 {
-	private Product[] DiscountProductField;
+    private Product[] DiscountProductField;
 
-	[DataMember(EmitDefaultValue = false)]
-	public Product[] DiscountProduct
-	{
-		get
-		{
-			return DiscountProductField;
-		}
-		set
-		{
-			DiscountProductField = value;
-		}
-	}
+    [DataMember(EmitDefaultValue = false)]
+    public Product[] DiscountProduct
+    {
+        get
+        {
+            return DiscountProductField;
+        }
+        set
+        {
+            DiscountProductField = value;
+        }
+    }
 }

@@ -10,63 +10,63 @@ namespace IPGParsianConfirmService;
 [KnownType(typeof(ClientConfirmResponseDataAddData))]
 public class ClientConfirmResponseData
 {
-	private short StatusField;
+    private short StatusField;
 
-	private string CardNumberMaskedField;
+    private string CardNumberMaskedField;
 
-	private long RRNField;
+    private long RRNField;
 
-	private long TokenField;
+    private long TokenField;
 
-	[DataMember(IsRequired = true)]
-	public short Status
-	{
-		get
-		{
-			return StatusField;
-		}
-		set
-		{
-			StatusField = value;
-		}
-	}
+    [DataMember(IsRequired = true)]
+    public short Status
+    {
+        get
+        {
+            return StatusField;
+        }
+        set
+        {
+            StatusField = value;
+        }
+    }
 
-	[DataMember(EmitDefaultValue = false, Order = 1)]
-	public string CardNumberMasked
-	{
-		get
-		{
-			return CardNumberMaskedField;
-		}
-		set
-		{
-			CardNumberMaskedField = value;
-		}
-	}
+    [DataMember(EmitDefaultValue = false, Order = 1)]
+    public string CardNumberMasked
+    {
+        get
+        {
+            return CardNumberMaskedField;
+        }
+        set
+        {
+            CardNumberMaskedField = value;
+        }
+    }
 
-	[DataMember(IsRequired = true, Order = 2)]
-	public long RRN
-	{
-		get
-		{
-			return RRNField;
-		}
-		set
-		{
-			RRNField = value;
-		}
-	}
+    [DataMember(IsRequired = true, Order = 2)]
+    public long RRN
+    {
+        get
+        {
+            return RRNField;
+        }
+        set
+        {
+            RRNField = value;
+        }
+    }
 
-	[DataMember(IsRequired = true, Order = 3)]
-	public long Token
-	{
-		get
-		{
-			return TokenField;
-		}
-		set
-		{
-			TokenField = value;
-		}
-	}
+    [DataMember(IsRequired = true, Order = 3)]
+    public long Token
+    {
+        get
+        {
+            return TokenField;
+        }
+        set
+        {
+            TokenField = value;
+        }
+    }
 }

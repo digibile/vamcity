@@ -21,229 +21,229 @@ namespace LoanSystemAvizhe.Services.Sms.KaveNegar;
 
 public class ShahinInquiryService : IInquiryService
 {
-	private ShahinConfig _shahinConfig;
+    private ShahinConfig _shahinConfig;
 
-	private string _baseUrl;
+    private string _baseUrl;
 
-	private string _contentRootPath;
+    private string _contentRootPath;
 
-	private readonly ILogger<ShahinInquiryService> _logger;
+    private readonly ILogger<ShahinInquiryService> _logger;
 
-	public ShahinInquiryService(ILogger<ShahinInquiryService> logger, ShahinConfig shahinConfig)
-	{
-		_shahinConfig = shahinConfig;
-		_baseUrl = "https://" + _shahinConfig.Ip + ":" + _shahinConfig.Port;
-		_logger = logger;
-	}
+    public ShahinInquiryService(ILogger<ShahinInquiryService> logger, ShahinConfig shahinConfig)
+    {
+        _shahinConfig = shahinConfig;
+        _baseUrl = "https://" + _shahinConfig.Ip + ":" + _shahinConfig.Port;
+        _logger = logger;
+    }
 
-	public ResponseInquiry<CreditResult> GetCredit()
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<CreditResult> GetCredit()
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<IbanInfoResult> IbanInfo(BaseSendInquiry sendInquiry)
-	{
-		ShahinTokenResultData result = Token().Result;
-		try
-		{
-			string text = Guid.NewGuid().ToString();
-			string text2 = (DateTime.Now.ToUniversalTime() - new DateTime(1970, 1, 1)).Ticks.ToString().Substring(0, 13);
-			HttpClientHandler handler = CreateHttpClientHandler();
-			ShahinIbanInfoRequestModel obj = sendInquiry as ShahinIbanInfoRequestModel;
-			obj.bank = "BSI";
-			obj.nationalCode = result.User_Name;
-			string text3 = JsonConvert.SerializeObject(obj);
-			string text4 = "v0.3/obh/api/aisp/get-iban-info";
-			string value = PrepareObhSignature(text4, text2, text, text3);
-			HttpClient httpClient = new HttpClient(handler);
-			httpClient.BaseAddress = new Uri(_baseUrl);
-			httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-			httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.Access_Token);
-			httpClient.DefaultRequestHeaders.Add("X-Obh-timestamp", text2);
-			httpClient.DefaultRequestHeaders.Add("X-Obh-uuid", text);
-			httpClient.DefaultRequestHeaders.Add("X-Obh-signature", value);
-			StringContent content = new StringContent(text3, Encoding.UTF8, "application/json");
-			Task<HttpResponseMessage> task = httpClient.PostAsync(text4, content);
-			string result2 = task.Result.Content.ReadAsStringAsync().Result;
-			_logger.LogInformation("ShahinIbanInfo PostResponse Content:" + result2);
-			if (task.Result.IsSuccessStatusCode || task.Result.StatusCode == HttpStatusCode.BadRequest)
-			{
-				JsonSerializerOptions options = new JsonSerializerOptions
-				{
-					PropertyNameCaseInsensitive = true
-				};
-				ShahinIbanInfoResult shahinIbanInfoResult = System.Text.Json.JsonSerializer.Deserialize<ShahinIbanInfoResult>(result2, options);
-				if (shahinIbanInfoResult.transactionState?.ToLower() == "success")
-				{
-					return new ResponseInquiry<IbanInfoResult>
-					{
-						Success = true,
-						Key = "",
-						Message = shahinIbanInfoResult.message,
-						Response = new IbanInfoResult
-						{
-							Name = shahinIbanInfoResult.respObject.firstName + " " + shahinIbanInfoResult.respObject.lastName,
-							BankName = shahinIbanInfoResult.respObject.lastName,
-							Active = (shahinIbanInfoResult.respObject.accountStatus == "Active")
-						}
-					};
-				}
-				throw new CustomException("خطای صادر شده از سامانه استعلام: " + shahinIbanInfoResult.message);
-			}
-			throw new CustomException("خطا در ارسال اطلاعات به سامانه استعلام");
-		}
-		catch (CustomException)
-		{
-			throw;
-		}
-		catch (Exception)
-		{
-			throw new CustomException("خطا در ارسال اطلاعات به سامانه استعلام");
-		}
-	}
+    public ResponseInquiry<IbanInfoResult> IbanInfo(BaseSendInquiry sendInquiry)
+    {
+        ShahinTokenResultData result = Token().Result;
+        try
+        {
+            string text = Guid.NewGuid().ToString();
+            string text2 = (DateTime.Now.ToUniversalTime() - new DateTime(1970, 1, 1)).Ticks.ToString().Substring(0, 13);
+            HttpClientHandler handler = CreateHttpClientHandler();
+            ShahinIbanInfoRequestModel obj = sendInquiry as ShahinIbanInfoRequestModel;
+            obj.bank = "BSI";
+            obj.nationalCode = result.User_Name;
+            string text3 = JsonConvert.SerializeObject(obj);
+            string text4 = "v0.3/obh/api/aisp/get-iban-info";
+            string value = PrepareObhSignature(text4, text2, text, text3);
+            HttpClient httpClient = new HttpClient(handler);
+            httpClient.BaseAddress = new Uri(_baseUrl);
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.Access_Token);
+            httpClient.DefaultRequestHeaders.Add("X-Obh-timestamp", text2);
+            httpClient.DefaultRequestHeaders.Add("X-Obh-uuid", text);
+            httpClient.DefaultRequestHeaders.Add("X-Obh-signature", value);
+            StringContent content = new StringContent(text3, Encoding.UTF8, "application/json");
+            Task<HttpResponseMessage> task = httpClient.PostAsync(text4, content);
+            string result2 = task.Result.Content.ReadAsStringAsync().Result;
+            _logger.LogInformation("ShahinIbanInfo PostResponse Content:" + result2);
+            if (task.Result.IsSuccessStatusCode || task.Result.StatusCode == HttpStatusCode.BadRequest)
+            {
+                JsonSerializerOptions options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                ShahinIbanInfoResult shahinIbanInfoResult = System.Text.Json.JsonSerializer.Deserialize<ShahinIbanInfoResult>(result2, options);
+                if (shahinIbanInfoResult.transactionState?.ToLower() == "success")
+                {
+                    return new ResponseInquiry<IbanInfoResult>
+                    {
+                        Success = true,
+                        Key = "",
+                        Message = shahinIbanInfoResult.message,
+                        Response = new IbanInfoResult
+                        {
+                            Name = shahinIbanInfoResult.respObject.firstName + " " + shahinIbanInfoResult.respObject.lastName,
+                            BankName = shahinIbanInfoResult.respObject.lastName,
+                            Active = (shahinIbanInfoResult.respObject.accountStatus == "Active")
+                        }
+                    };
+                }
+                throw new CustomException("خطای صادر شده از سامانه استعلام: " + shahinIbanInfoResult.message);
+            }
+            throw new CustomException("خطا در ارسال اطلاعات به سامانه استعلام");
+        }
+        catch (CustomException)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            throw new CustomException("خطا در ارسال اطلاعات به سامانه استعلام");
+        }
+    }
 
-	public ResponseInquiry<ShahkarResult> Shahkar(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<ShahkarResult> Shahkar(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<ShahkarResult> Shahkar3(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<ShahkarResult> Shahkar3(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<SanaResult> Sana(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<SanaResult> Sana(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<UnpaidChequeResult> UnpaidCheque(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<UnpaidChequeResult> UnpaidCheque(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<PersonInfoResult> PersonInfo(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<PersonInfoResult> PersonInfo(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<PostalAddressResult> PostalAddress(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<PostalAddressResult> PostalAddress(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<List<ActivePlatesResult>> ActivePlates(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<List<ActivePlatesResult>> ActivePlates(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<CardMatchResult> CardMatch(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<CardMatchResult> CardMatch(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<IbanMatchResult> IbanMatch(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<IbanMatchResult> IbanMatch(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<ChequeColorResult> ChequeColor(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<ChequeColorResult> ChequeColor(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<ActiveLoansResult> ActiveLoans(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<ActiveLoansResult> ActiveLoans(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<MilitaryStatusResult> MilitaryStatus(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<MilitaryStatusResult> MilitaryStatus(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	public ResponseInquiry<ChequeInfoResult> ChequeInfo(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<ChequeInfoResult> ChequeInfo(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 
-	private async Task<ShahinTokenResultData> Token()
-	{
-		string username = _shahinConfig.Username;
-		string password = _shahinConfig.Password;
-		try
-		{
-			ServicePointManager.ServerCertificateValidationCallback = (RemoteCertificateValidationCallback)Delegate.Combine(ServicePointManager.ServerCertificateValidationCallback, (RemoteCertificateValidationCallback)((object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors) => true));
-			ServicePointManager.Expect100Continue = true;
-			ServicePointManager.DefaultConnectionLimit = 9999;
-			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-			string fileName = Path.Combine(_contentRootPath, "App_Data", "certs", "orgCertificate.pfx");
-			HttpClientHandler httpClientHandler = new HttpClientHandler
-			{
-				SslProtocols = SslProtocols.Tls12
-			};
-			httpClientHandler.ClientCertificateOptions = ClientCertificateOption.Manual;
-			X509Certificate2 value = new X509Certificate2(fileName, "123!@#qweQWE", X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
-			httpClientHandler.ClientCertificates.Add(value);
-			httpClientHandler.ServerCertificateCustomValidationCallback = (HttpRequestMessage sender, X509Certificate2? cert, X509Chain? chain, SslPolicyErrors sslPolicyErrors) => true;
-			string text = "https://" + _shahinConfig.Ip + ":" + _shahinConfig.TokenPort + "/v0.3/obh/oauth/token";
-			HttpClient httpClient = new HttpClient(httpClientHandler);
-			httpClient.BaseAddress = new Uri(text);
-			string s = username + ":" + password;
-			string parameter = Convert.ToBase64String(Encoding.UTF8.GetBytes(s));
-			httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", parameter);
-			httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-			string content = "grant_type=client_credentials&bank=BSI";
-			HttpResponseMessage httpResponseMessage = await httpClient.PostAsync(text, new StringContent(content, Encoding.UTF8, "application/x-www-form-urlencoded"));
-			if (httpResponseMessage.StatusCode == HttpStatusCode.OK)
-			{
-				string json = await httpResponseMessage.Content.ReadAsStringAsync();
-				JsonSerializerOptions options = new JsonSerializerOptions
-				{
-					PropertyNameCaseInsensitive = true
-				};
-				ShahinTokenResultData shahinTokenResultData = System.Text.Json.JsonSerializer.Deserialize<ShahinTokenResultData>(json, options);
-				if (!string.IsNullOrWhiteSpace(shahinTokenResultData.Access_Token))
-				{
-					return shahinTokenResultData;
-				}
-			}
-		}
-		catch (Exception)
-		{
-			throw;
-		}
-		throw new CustomException("خطا در دریافت توکن");
-	}
+    private async Task<ShahinTokenResultData> Token()
+    {
+        string username = _shahinConfig.Username;
+        string password = _shahinConfig.Password;
+        try
+        {
+            ServicePointManager.ServerCertificateValidationCallback = (RemoteCertificateValidationCallback)Delegate.Combine(ServicePointManager.ServerCertificateValidationCallback, (RemoteCertificateValidationCallback)((object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors) => true));
+            ServicePointManager.Expect100Continue = true;
+            ServicePointManager.DefaultConnectionLimit = 9999;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            string fileName = Path.Combine(_contentRootPath, "App_Data", "certs", "orgCertificate.pfx");
+            HttpClientHandler httpClientHandler = new HttpClientHandler
+            {
+                SslProtocols = SslProtocols.Tls12
+            };
+            httpClientHandler.ClientCertificateOptions = ClientCertificateOption.Manual;
+            X509Certificate2 value = new X509Certificate2(fileName, "123!@#qweQWE", X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
+            httpClientHandler.ClientCertificates.Add(value);
+            httpClientHandler.ServerCertificateCustomValidationCallback = (HttpRequestMessage sender, X509Certificate2? cert, X509Chain? chain, SslPolicyErrors sslPolicyErrors) => true;
+            string text = "https://" + _shahinConfig.Ip + ":" + _shahinConfig.TokenPort + "/v0.3/obh/oauth/token";
+            HttpClient httpClient = new HttpClient(httpClientHandler);
+            httpClient.BaseAddress = new Uri(text);
+            string s = username + ":" + password;
+            string parameter = Convert.ToBase64String(Encoding.UTF8.GetBytes(s));
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", parameter);
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            string content = "grant_type=client_credentials&bank=BSI";
+            HttpResponseMessage httpResponseMessage = await httpClient.PostAsync(text, new StringContent(content, Encoding.UTF8, "application/x-www-form-urlencoded"));
+            if (httpResponseMessage.StatusCode == HttpStatusCode.OK)
+            {
+                string json = await httpResponseMessage.Content.ReadAsStringAsync();
+                JsonSerializerOptions options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                ShahinTokenResultData shahinTokenResultData = System.Text.Json.JsonSerializer.Deserialize<ShahinTokenResultData>(json, options);
+                if (!string.IsNullOrWhiteSpace(shahinTokenResultData.Access_Token))
+                {
+                    return shahinTokenResultData;
+                }
+            }
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+        throw new CustomException("خطا در دریافت توکن");
+    }
 
-	private HttpClientHandler CreateHttpClientHandler()
-	{
-		ServicePointManager.ServerCertificateValidationCallback = (RemoteCertificateValidationCallback)Delegate.Combine(ServicePointManager.ServerCertificateValidationCallback, (RemoteCertificateValidationCallback)((object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors) => true));
-		ServicePointManager.Expect100Continue = true;
-		ServicePointManager.DefaultConnectionLimit = 9999;
-		ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-		string fileName = Path.Combine(_contentRootPath, "App_Data", "certs", "orgCertificate.pfx");
-		HttpClientHandler httpClientHandler = new HttpClientHandler();
-		httpClientHandler.ClientCertificateOptions = ClientCertificateOption.Manual;
-		httpClientHandler.SslProtocols = SslProtocols.Tls12;
-		httpClientHandler.ClientCertificates.Add(new X509Certificate2(fileName, "123!@#qweQWE"));
-		httpClientHandler.ServerCertificateCustomValidationCallback = (HttpRequestMessage sender, X509Certificate2? cert, X509Chain? chain, SslPolicyErrors sslPolicyErrors) => true;
-		return httpClientHandler;
-	}
+    private HttpClientHandler CreateHttpClientHandler()
+    {
+        ServicePointManager.ServerCertificateValidationCallback = (RemoteCertificateValidationCallback)Delegate.Combine(ServicePointManager.ServerCertificateValidationCallback, (RemoteCertificateValidationCallback)((object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors) => true));
+        ServicePointManager.Expect100Continue = true;
+        ServicePointManager.DefaultConnectionLimit = 9999;
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+        string fileName = Path.Combine(_contentRootPath, "App_Data", "certs", "orgCertificate.pfx");
+        HttpClientHandler httpClientHandler = new HttpClientHandler();
+        httpClientHandler.ClientCertificateOptions = ClientCertificateOption.Manual;
+        httpClientHandler.SslProtocols = SslProtocols.Tls12;
+        httpClientHandler.ClientCertificates.Add(new X509Certificate2(fileName, "123!@#qweQWE"));
+        httpClientHandler.ServerCertificateCustomValidationCallback = (HttpRequestMessage sender, X509Certificate2? cert, X509Chain? chain, SslPolicyErrors sslPolicyErrors) => true;
+        return httpClientHandler;
+    }
 
-	public string PrepareObhSignature(string uri, string timestamp, string uuid, string jsonBody)
-	{
-		string text = new HelperShahin().Sign("POST", uri, jsonBody, _shahinConfig.Username, _shahinConfig.Password, timestamp, uuid);
-		return "OBH1-HMAC-SHA256;SignedHeaders=X-Obh-uuid,X-Obh-timestamp;signature=" + text;
-	}
+    public string PrepareObhSignature(string uri, string timestamp, string uuid, string jsonBody)
+    {
+        string text = new HelperShahin().Sign("POST", uri, jsonBody, _shahinConfig.Username, _shahinConfig.Password, timestamp, uuid);
+        return "OBH1-HMAC-SHA256;SignedHeaders=X-Obh-uuid,X-Obh-timestamp;signature=" + text;
+    }
 
-	public void SetWebHostRoot(string contentRootPath)
-	{
-		_contentRootPath = contentRootPath;
-	}
+    public void SetWebHostRoot(string contentRootPath)
+    {
+        _contentRootPath = contentRootPath;
+    }
 
-	public ResponseInquiry<BankCardInfoResult> BankCardInfo(BaseSendInquiry sendInquiry)
-	{
-		throw new NotImplementedException();
-	}
+    public ResponseInquiry<BankCardInfoResult> BankCardInfo(BaseSendInquiry sendInquiry)
+    {
+        throw new NotImplementedException();
+    }
 }

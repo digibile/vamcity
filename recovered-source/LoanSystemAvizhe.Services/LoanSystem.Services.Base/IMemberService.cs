@@ -9,31 +9,31 @@ namespace LoanSystem.Services.Base;
 
 public interface IMemberService
 {
-	Task<IQueryable<User>> AsQueryable();
+    Task<IQueryable<User>> AsQueryable();
 
-	Task<List<User>> GetByCondition(Expression<Func<User, bool>> condition, params string[] includs);
+    Task<List<User>> GetByCondition(Expression<Func<User, bool>> condition, params string[] includs);
 
-	Task<List<User>> GetAllMembers();
+    Task<List<User>> GetAllMembers();
 
-	Task<List<User>> SearchMembers(string search);
+    Task<List<User>> SearchMembers(string search);
 
-	Task<User> GetById(long entityId, params string[] includs);
+    Task<User> GetById(long entityId, params string[] includs);
 
-	Task<User> GetByNationalCode(string nationalCode);
+    Task<User> GetByNationalCode(string nationalCode);
 
-	Task<User> GetByUserCode(string code);
+    Task<User> GetByUserCode(string code);
 
-	Task<User> GetByMobile(string mobile);
+    Task<User> GetByMobile(string mobile);
 
-	Task<List<User>> GetByAgentId(long agentId);
+    Task<List<User>> GetByAgentId(long agentId);
 
-	Task<List<User>> GetByCustomerMarketerId(long agentId);
+    Task<List<User>> GetByCustomerMarketerId(long agentId);
 
-	Task Insert(User entity);
+    Task Insert(User entity);
 
-	Task Update(User entity);
+    Task Update(User entity);
 
-	Task Update(List<User> entities, params Expression<Func<User, object>>[] updatedProperties);
+    Task Update(List<User> entities, params Expression<Func<User, object>>[] updatedProperties);
 
-	Task Delete(User entity);
+    Task Delete(User entity);
 }

@@ -5,5 +5,5 @@ namespace LoanSystem.Services.Base;
 
 public interface ISuperAdminDashboardService
 {
-	Task<SuperAdminDashboardModel> GetData();
+    Task<SuperAdminDashboardModel> GetData();
 }

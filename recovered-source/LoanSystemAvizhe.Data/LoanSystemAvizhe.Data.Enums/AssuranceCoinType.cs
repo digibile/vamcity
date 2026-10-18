@@ -2,9 +2,9 @@ namespace LoanSystemAvizhe.Data.Enums;
 
 public enum AssuranceCoinType
 {
-	نامشخص,
-	ربعـسکه,
-	نیمـسکه,
-	تمامـبهار,
-	پارسیان
+    نامشخص,
+    ربعـسکه,
+    نیمـسکه,
+    تمامـبهار,
+    پارسیان
 }

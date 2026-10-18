@@ -4,5 +4,5 @@ namespace LoanSystemAvizhe.Services.Inquiry.Models.ApiIR;
 
 public class SendApiIR_BankCardInfo : BaseSendInquiry
 {
-	public string CardNumber { get; set; } = "";
+    public string CardNumber { get; set; } = "";
 }

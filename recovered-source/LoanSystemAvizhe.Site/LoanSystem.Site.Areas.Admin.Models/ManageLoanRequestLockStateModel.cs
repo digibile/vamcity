@@ -4,7 +4,7 @@ namespace LoanSystem.Site.Areas.Admin.Models;
 
 public class ManageLoanRequestLockStateModel
 {
-	public Guid UserLoanRequestId { get; set; }
+    public Guid UserLoanRequestId { get; set; }
 
-	public bool Lock { get; set; }
+    public bool Lock { get; set; }
 }

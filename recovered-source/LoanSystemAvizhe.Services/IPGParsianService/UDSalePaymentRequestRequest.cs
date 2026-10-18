@@ -11,15 +11,15 @@ namespace IPGParsianService;
 [MessageContract(IsWrapped = false)]
 public class UDSalePaymentRequestRequest
 {
-	[MessageBodyMember(Name = "UDSalePaymentRequest", Namespace = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService", Order = 0)]
-	public UDSalePaymentRequestRequestBody Body;
+    [MessageBodyMember(Name = "UDSalePaymentRequest", Namespace = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService", Order = 0)]
+    public UDSalePaymentRequestRequestBody Body;
 
-	public UDSalePaymentRequestRequest()
-	{
-	}
+    public UDSalePaymentRequestRequest()
+    {
+    }
 
-	public UDSalePaymentRequestRequest(UDSalePaymentRequestRequestBody Body)
-	{
-		this.Body = Body;
-	}
+    public UDSalePaymentRequestRequest(UDSalePaymentRequestRequestBody Body)
+    {
+        this.Body = Body;
+    }
 }

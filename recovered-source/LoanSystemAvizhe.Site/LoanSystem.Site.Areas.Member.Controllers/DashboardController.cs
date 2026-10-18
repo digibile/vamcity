@@ -12,20 +12,20 @@ namespace LoanSystem.Site.Areas.Member.Controllers;
 [Authorize(Roles = "Member")]
 public class DashboardController : BaseMemberController
 {
-	private readonly IMemberDashboardService _memberDashboardService;
+    private readonly IMemberDashboardService _memberDashboardService;
 
-	private readonly IAppContext _appContext;
+    private readonly IAppContext _appContext;
 
-	public DashboardController(ILogger<DashboardController> logger, IMemberDashboardService memberDashboardService, IAppContext appContext)
-		: base(logger)
-	{
-		_memberDashboardService = memberDashboardService;
-		_appContext = appContext;
-	}
+    public DashboardController(ILogger<DashboardController> logger, IMemberDashboardService memberDashboardService, IAppContext appContext)
+        : base(logger)
+    {
+        _memberDashboardService = memberDashboardService;
+        _appContext = appContext;
+    }
 
-	[HttpGet("[action]")]
-	public Task<ResponseState<MemberDashboardModel>> Get()
-	{
-		return TryCatch(async () => (_appContext.User == null) ? Error<MemberDashboardModel>(null, "کاربر یافت نشد") : Success(await _memberDashboardService.GetData(_appContext.User.Id)));
-	}
+    [HttpGet("[action]")]
+    public Task<ResponseState<MemberDashboardModel>> Get()
+    {
+        return TryCatch(async () => (_appContext.User == null) ? Error<MemberDashboardModel>(null, "کاربر یافت نشد") : Success(await _memberDashboardService.GetData(_appContext.User.Id)));
+    }
 }

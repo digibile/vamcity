@@ -4,15 +4,15 @@ namespace LoanSystem.Data.Entities;
 
 public class AgentLoanAuthorizationItem : BaseEntity
 {
-	public Guid AuthorizationItemId { get; set; }
+    public Guid AuthorizationItemId { get; set; }
 
-	public virtual AuthorizationItem AuthorizationItem { get; set; }
+    public virtual AuthorizationItem AuthorizationItem { get; set; }
 
-	public Guid LoanId { get; set; }
+    public Guid LoanId { get; set; }
 
-	public virtual Loan Loan { get; set; }
+    public virtual Loan Loan { get; set; }
 
-	public Guid CustomerId { get; set; }
+    public Guid CustomerId { get; set; }
 
-	public virtual Customer Customer { get; set; }
+    public virtual Customer Customer { get; set; }
 }

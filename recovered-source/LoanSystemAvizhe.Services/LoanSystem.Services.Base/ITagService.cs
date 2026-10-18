@@ -9,15 +9,15 @@ namespace LoanSystem.Services.Base;
 
 public interface ITagService
 {
-	Task<List<Tag>> GetAll(Guid? customerId, TagCategory? category);
+    Task<List<Tag>> GetAll(Guid? customerId, TagCategory? category);
 
-	Task<Tag> GetById(Guid entityId, params string[] includs);
+    Task<Tag> GetById(Guid entityId, params string[] includs);
 
-	Task Insert(Tag entity);
+    Task Insert(Tag entity);
 
-	Task Update(Tag entity);
+    Task Update(Tag entity);
 
-	Task Delete(Tag entity);
+    Task Delete(Tag entity);
 
-	Task<List<Tag>> GetByCondition(Expression<Func<Tag, bool>> condition);
+    Task<List<Tag>> GetByCondition(Expression<Func<Tag, bool>> condition);
 }

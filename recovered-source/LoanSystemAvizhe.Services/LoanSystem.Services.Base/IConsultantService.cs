@@ -7,15 +7,15 @@ namespace LoanSystem.Services.Base;
 
 public interface IConsultantService
 {
-	Task<List<Consultant>> GetAll(bool? isSeen);
+    Task<List<Consultant>> GetAll(bool? isSeen);
 
-	Task<int> GetCount(bool? isSeen);
+    Task<int> GetCount(bool? isSeen);
 
-	Task<Consultant> GetById(Guid entityId);
+    Task<Consultant> GetById(Guid entityId);
 
-	Task Insert(Consultant entity);
+    Task Insert(Consultant entity);
 
-	Task Update(Consultant entity);
+    Task Update(Consultant entity);
 
-	Task Delete(Consultant entity);
+    Task Delete(Consultant entity);
 }

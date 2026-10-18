@@ -9,33 +9,33 @@ namespace IPGParsianConfirmService;
 [DataContract(Name = "ClientConfirmWithAmountRequestData", Namespace = "https://pec.Shaparak.ir/NewIPGServices/Confirm/ConfirmService")]
 public class ClientConfirmWithAmountRequestData : ClientConfirmRequestData
 {
-	private long OrderIdField;
+    private long OrderIdField;
 
-	private long AmountField;
+    private long AmountField;
 
-	[DataMember(IsRequired = true)]
-	public long OrderId
-	{
-		get
-		{
-			return OrderIdField;
-		}
-		set
-		{
-			OrderIdField = value;
-		}
-	}
+    [DataMember(IsRequired = true)]
+    public long OrderId
+    {
+        get
+        {
+            return OrderIdField;
+        }
+        set
+        {
+            OrderIdField = value;
+        }
+    }
 
-	[DataMember(IsRequired = true, Order = 1)]
-	public long Amount
-	{
-		get
-		{
-			return AmountField;
-		}
-		set
-		{
-			AmountField = value;
-		}
-	}
+    [DataMember(IsRequired = true, Order = 1)]
+    public long Amount
+    {
+        get
+        {
+            return AmountField;
+        }
+        set
+        {
+            AmountField = value;
+        }
+    }
 }

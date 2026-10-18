@@ -15,27 +15,27 @@ namespace LoanSystem.Site.Areas.Agent.Controllers;
 [Authorize(Roles = "Agent")]
 public class AppInquiryController : BaseAgentController
 {
-	private readonly IAppInquiryService _appInquiryService;
+    private readonly IAppInquiryService _appInquiryService;
 
-	private readonly IntegratedInquiryService _integratedInquiryService;
+    private readonly IntegratedInquiryService _integratedInquiryService;
 
-	public AppInquiryController(ILogger<AppInquiryController> logger, IAppInquiryService appInquiryService, IntegratedInquiryService integratedInquiryService)
-		: base(logger)
-	{
-		_appInquiryService = appInquiryService;
-		_integratedInquiryService = integratedInquiryService;
-	}
+    public AppInquiryController(ILogger<AppInquiryController> logger, IAppInquiryService appInquiryService, IntegratedInquiryService integratedInquiryService)
+        : base(logger)
+    {
+        _appInquiryService = appInquiryService;
+        _integratedInquiryService = integratedInquiryService;
+    }
 
-	[HttpGet("[action]/{id}")]
-	public Task<ResponseState<List<AppInquiryModel>>> ListByMemberId(long id)
-	{
-		return TryCatch(async () =>
-		{
-			List<AppInquiryModel> data = (from x in await _appInquiryService.GetByCondition((AppInquiry x) => x.MemberId == (long?)id, false)
-				select new AppInquiryModel(x) into x
-				orderby x.Date descending
-				select x).ToList();
-			return Success(data);
-		});
-	}
+    [HttpGet("[action]/{id}")]
+    public Task<ResponseState<List<AppInquiryModel>>> ListByMemberId(long id)
+    {
+        return TryCatch(async () =>
+        {
+            List<AppInquiryModel> data = (from x in await _appInquiryService.GetByCondition((AppInquiry x) => x.MemberId == (long?)id, false)
+                                          select new AppInquiryModel(x) into x
+                                          orderby x.Date descending
+                                          select x).ToList();
+            return Success(data);
+        });
+    }
 }

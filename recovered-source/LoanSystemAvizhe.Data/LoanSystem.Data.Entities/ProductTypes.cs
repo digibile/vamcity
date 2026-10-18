@@ -2,8 +2,8 @@ namespace LoanSystem.Data.Entities;
 
 public enum ProductTypes
 {
-	Permanent,
-	Cloud,
-	SMS,
-	Inquiry
+    Permanent,
+    Cloud,
+    SMS,
+    Inquiry
 }

@@ -10,48 +10,48 @@ namespace IPGParsianService;
 [KnownType(typeof(ClientSaleResponseData))]
 public class ClientPaymentResponseDataBase
 {
-	private long TokenField;
+    private long TokenField;
 
-	private string MessageField;
+    private string MessageField;
 
-	private short StatusField;
+    private short StatusField;
 
-	[DataMember(IsRequired = true)]
-	public long Token
-	{
-		get
-		{
-			return TokenField;
-		}
-		set
-		{
-			TokenField = value;
-		}
-	}
+    [DataMember(IsRequired = true)]
+    public long Token
+    {
+        get
+        {
+            return TokenField;
+        }
+        set
+        {
+            TokenField = value;
+        }
+    }
 
-	[DataMember(EmitDefaultValue = false, Order = 1)]
-	public string Message
-	{
-		get
-		{
-			return MessageField;
-		}
-		set
-		{
-			MessageField = value;
-		}
-	}
+    [DataMember(EmitDefaultValue = false, Order = 1)]
+    public string Message
+    {
+        get
+        {
+            return MessageField;
+        }
+        set
+        {
+            MessageField = value;
+        }
+    }
 
-	[DataMember(IsRequired = true, Order = 2)]
-	public short Status
-	{
-		get
-		{
-			return StatusField;
-		}
-		set
-		{
-			StatusField = value;
-		}
-	}
+    [DataMember(IsRequired = true, Order = 2)]
+    public short Status
+    {
+        get
+        {
+            return StatusField;
+        }
+        set
+        {
+            StatusField = value;
+        }
+    }
 }

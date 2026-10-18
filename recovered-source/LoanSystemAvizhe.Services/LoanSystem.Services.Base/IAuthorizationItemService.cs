@@ -8,11 +8,11 @@ namespace LoanSystem.Services.Base;
 
 public interface IAuthorizationItemService
 {
-	Task<List<AuthorizationItem>> GetByCondition(Expression<Func<AuthorizationItem, bool>> condition, params string[] includs);
+    Task<List<AuthorizationItem>> GetByCondition(Expression<Func<AuthorizationItem, bool>> condition, params string[] includs);
 
-	Task Insert(AuthorizationItem entity);
+    Task Insert(AuthorizationItem entity);
 
-	Task Update(AuthorizationItem entity);
+    Task Update(AuthorizationItem entity);
 
-	Task Delete(AuthorizationItem entity);
+    Task Delete(AuthorizationItem entity);
 }

@@ -8,9 +8,9 @@ namespace LoanSystem.Services.Base;
 
 public interface IThirdPartySettingsService
 {
-	Task<List<ThirdPartySettings>> GetByCondition(Expression<Func<ThirdPartySettings, bool>> condition, bool ignoreGlobalFilter, params string[] includs);
+    Task<List<ThirdPartySettings>> GetByCondition(Expression<Func<ThirdPartySettings, bool>> condition, bool ignoreGlobalFilter, params string[] includs);
 
-	Task<ThirdPartySettings> GetThirdPartySettings();
+    Task<ThirdPartySettings> GetThirdPartySettings();
 
-	Task Update(ThirdPartySettings thirdPartySettings);
+    Task Update(ThirdPartySettings thirdPartySettings);
 }

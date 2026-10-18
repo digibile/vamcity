@@ -10,33 +10,33 @@ namespace IPGParsianConfirmService;
 [KnownType(typeof(ClientConfirmWithAmountRequestData))]
 public class ClientConfirmRequestData
 {
-	private string LoginAccountField;
+    private string LoginAccountField;
 
-	private long TokenField;
+    private long TokenField;
 
-	[DataMember(EmitDefaultValue = false)]
-	public string LoginAccount
-	{
-		get
-		{
-			return LoginAccountField;
-		}
-		set
-		{
-			LoginAccountField = value;
-		}
-	}
+    [DataMember(EmitDefaultValue = false)]
+    public string LoginAccount
+    {
+        get
+        {
+            return LoginAccountField;
+        }
+        set
+        {
+            LoginAccountField = value;
+        }
+    }
 
-	[DataMember(IsRequired = true)]
-	public long Token
-	{
-		get
-		{
-			return TokenField;
-		}
-		set
-		{
-			TokenField = value;
-		}
-	}
+    [DataMember(IsRequired = true)]
+    public long Token
+    {
+        get
+        {
+            return TokenField;
+        }
+        set
+        {
+            TokenField = value;
+        }
+    }
 }

@@ -13,39 +13,39 @@ namespace LoanSystem.Services.Base;
 
 public class BusinessAuthorizationItemService : BaseService, IBusinessAuthorizationItemService
 {
-	public BusinessAuthorizationItemService(AppDbContext context, ICurrentUserService currentUserService)
-		: base(context, currentUserService)
-	{
-	}
+    public BusinessAuthorizationItemService(AppDbContext context, ICurrentUserService currentUserService)
+        : base(context, currentUserService)
+    {
+    }
 
-	public Task<List<BusinessAuthorizationItem>> GetByCondition(Expression<Func<BusinessAuthorizationItem, bool>> condition, params string[] includs)
-	{
-		IQueryable<BusinessAuthorizationItem> source = Table<BusinessAuthorizationItem>();
-		foreach (string navigationPropertyPath in includs)
-		{
-			source = source.Include(navigationPropertyPath);
-		}
-		source = source.Where(condition);
-		return source.ToListAsync();
-	}
+    public Task<List<BusinessAuthorizationItem>> GetByCondition(Expression<Func<BusinessAuthorizationItem, bool>> condition, params string[] includs)
+    {
+        IQueryable<BusinessAuthorizationItem> source = Table<BusinessAuthorizationItem>();
+        foreach (string navigationPropertyPath in includs)
+        {
+            source = source.Include(navigationPropertyPath);
+        }
+        source = source.Where(condition);
+        return source.ToListAsync();
+    }
 
-	public async Task Insert(BusinessAuthorizationItem entity)
-	{
-		entity.CustomerId = _currentUserService.CustomerId.Value;
-		Insert<BusinessAuthorizationItem>(entity);
-		await Save();
-	}
+    public async Task Insert(BusinessAuthorizationItem entity)
+    {
+        entity.CustomerId = _currentUserService.CustomerId.Value;
+        Insert<BusinessAuthorizationItem>(entity);
+        await Save();
+    }
 
-	public Task Update(BusinessAuthorizationItem entity)
-	{
-		entity.CustomerId = _currentUserService.CustomerId.Value;
-		Update(entity, true);
-		return Save();
-	}
+    public Task Update(BusinessAuthorizationItem entity)
+    {
+        entity.CustomerId = _currentUserService.CustomerId.Value;
+        Update(entity, true);
+        return Save();
+    }
 
-	public Task Delete(BusinessAuthorizationItem entity)
-	{
-		Delete<BusinessAuthorizationItem>(entity);
-		return Save();
-	}
+    public Task Delete(BusinessAuthorizationItem entity)
+    {
+        Delete<BusinessAuthorizationItem>(entity);
+        return Save();
+    }
 }

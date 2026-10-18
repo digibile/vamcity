@@ -7,9 +7,9 @@ namespace LoanSystem.Services.Base;
 
 public interface IUserSavedMoneyService
 {
-	Task<List<UserSavedMoney>> GetAll(bool includeDetails = false);
+    Task<List<UserSavedMoney>> GetAll(bool includeDetails = false);
 
-	Task<UserSavedMoney> GetById(Guid entityId, params string[] includs);
+    Task<UserSavedMoney> GetById(Guid entityId, params string[] includs);
 
-	Task<List<UserSavedMoney>> GetSavedMoneiesByUserId(Guid userId);
+    Task<List<UserSavedMoney>> GetSavedMoneiesByUserId(Guid userId);
 }

@@ -4,13 +4,13 @@ namespace LoanSystem.Services.Base;
 
 public interface IAppContext
 {
-	User User { get; }
+    User User { get; }
 
-	bool TryGetGuestUserId(out long guestId);
+    bool TryGetGuestUserId(out long guestId);
 
-	void EnsureGuestCookieRemoved();
+    void EnsureGuestCookieRemoved();
 
-	void ClearCache();
+    void ClearCache();
 
-	string GetSystemCurrency();
+    string GetSystemCurrency();
 }

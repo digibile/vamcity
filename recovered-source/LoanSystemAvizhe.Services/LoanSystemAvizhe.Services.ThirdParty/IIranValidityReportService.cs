@@ -9,17 +9,17 @@ namespace LoanSystemAvizhe.Services.ThirdParty;
 
 public interface IIranValidityReportService
 {
-	IQueryable<IranValidityReport> AsQueryable();
+    IQueryable<IranValidityReport> AsQueryable();
 
-	Task<List<IranValidityReport>> GetAll(Guid? customerId);
+    Task<List<IranValidityReport>> GetAll(Guid? customerId);
 
-	Task<IranValidityReport> GetById(Guid entityId, params string[] includs);
+    Task<IranValidityReport> GetById(Guid entityId, params string[] includs);
 
-	Task Insert(IranValidityReport entity);
+    Task Insert(IranValidityReport entity);
 
-	Task Update(IranValidityReport entity);
+    Task Update(IranValidityReport entity);
 
-	Task Delete(IranValidityReport entity);
+    Task Delete(IranValidityReport entity);
 
-	Task<List<IranValidityReport>> GetByCondition(Expression<Func<IranValidityReport, bool>> condition, params string[] includs);
+    Task<List<IranValidityReport>> GetByCondition(Expression<Func<IranValidityReport, bool>> condition, params string[] includs);
 }

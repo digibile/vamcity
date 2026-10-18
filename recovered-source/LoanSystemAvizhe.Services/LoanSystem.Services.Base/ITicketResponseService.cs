@@ -7,15 +7,15 @@ namespace LoanSystem.Services.Base;
 
 public interface ITicketResponseService
 {
-	Task<List<TicketResponse>> GetAllTicketResponses();
+    Task<List<TicketResponse>> GetAllTicketResponses();
 
-	Task<List<TicketResponse>> GetByTicketId(Guid ticketId, params string[] includs);
+    Task<List<TicketResponse>> GetByTicketId(Guid ticketId, params string[] includs);
 
-	Task<TicketResponse> GetById(Guid entityId, params string[] includs);
+    Task<TicketResponse> GetById(Guid entityId, params string[] includs);
 
-	Task Insert(TicketResponse entity);
+    Task Insert(TicketResponse entity);
 
-	Task Update(TicketResponse entity);
+    Task Update(TicketResponse entity);
 
-	Task Delete(TicketResponse entity);
+    Task Delete(TicketResponse entity);
 }

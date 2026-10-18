@@ -5,11 +5,11 @@ namespace LoanSystem.Services.Models;
 
 public class LockedByModel
 {
-	public long UserId { get; set; }
+    public long UserId { get; set; }
 
-	public string User_FullName { get; set; }
+    public string User_FullName { get; set; }
 
-	public DateTime Date { get; set; }
+    public DateTime Date { get; set; }
 
-	public PersianDate PersianDate => Date.ToPersianDateObject();
+    public PersianDate PersianDate => Date.ToPersianDateObject();
 }

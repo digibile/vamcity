@@ -9,17 +9,17 @@ namespace LoanSystem.Services.Base;
 
 public interface ILoanPaymentOtherService
 {
-	IQueryable<UserLoanPaymentOther> GetAllUserLoanPaymentOthersAsQueryable();
+    IQueryable<UserLoanPaymentOther> GetAllUserLoanPaymentOthersAsQueryable();
 
-	Task<List<UserLoanPaymentOther>> GetByCondition(Expression<Func<UserLoanPaymentOther, bool>> condition, params string[] includs);
+    Task<List<UserLoanPaymentOther>> GetByCondition(Expression<Func<UserLoanPaymentOther, bool>> condition, params string[] includs);
 
-	Task<List<UserLoanPaymentOther>> GetAllUserLoanPaymentOthers();
+    Task<List<UserLoanPaymentOther>> GetAllUserLoanPaymentOthers();
 
-	Task<UserLoanPaymentOther> GetById(Guid entityId, params string[] includs);
+    Task<UserLoanPaymentOther> GetById(Guid entityId, params string[] includs);
 
-	Task Insert(UserLoanPaymentOther entity);
+    Task Insert(UserLoanPaymentOther entity);
 
-	Task Update(UserLoanPaymentOther entity);
+    Task Update(UserLoanPaymentOther entity);
 
-	Task Delete(UserLoanPaymentOther entity);
+    Task Delete(UserLoanPaymentOther entity);
 }

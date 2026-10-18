@@ -5,13 +5,13 @@ namespace LoanSystem.Services.Models;
 
 public class DigitalSignContractLinkModel
 {
-	public string MemberMobile { get; set; }
+    public string MemberMobile { get; set; }
 
-	public int LoanRequestCode { get; set; }
+    public int LoanRequestCode { get; set; }
 
-	public int LoanRequestAutorizationItemCode { get; set; }
+    public int LoanRequestAutorizationItemCode { get; set; }
 
-	public DateTime Date { get; set; }
+    public DateTime Date { get; set; }
 
-	public PersianDate PersianDate => Date.ToPersianDateObject();
+    public PersianDate PersianDate => Date.ToPersianDateObject();
 }

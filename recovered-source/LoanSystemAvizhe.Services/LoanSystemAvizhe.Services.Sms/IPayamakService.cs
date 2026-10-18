@@ -7,19 +7,19 @@ namespace LoanSystemAvizhe.Services.Sms;
 
 public interface IPayamakService
 {
-	ResponsePayamak SendByPatternWebOne(SendWebOnePattern sendPayamak, string patternName);
+    ResponsePayamak SendByPatternWebOne(SendWebOnePattern sendPayamak, string patternName);
 
-	ResponsePayamak SendByPatternIPPanel(SendIPPanelPattern sendPayamak, string patternName);
+    ResponsePayamak SendByPatternIPPanel(SendIPPanelPattern sendPayamak, string patternName);
 
-	ResponsePayamak SendByLookupKaveNegar(SendKaveNegar sendPayamak, string templateName);
+    ResponsePayamak SendByLookupKaveNegar(SendKaveNegar sendPayamak, string templateName);
 
-	ResponsePayamak SendByBaseNumber(BaseSendPayamak sendPayamak, int bodyId);
+    ResponsePayamak SendByBaseNumber(BaseSendPayamak sendPayamak, int bodyId);
 
-	ResponsePayamak Send(BaseSendPayamak sendPayamak);
+    ResponsePayamak Send(BaseSendPayamak sendPayamak);
 
-	ResponsePayamak CheckDelivery(string recId);
+    ResponsePayamak CheckDelivery(string recId);
 
-	ResponsePayamak GetBasePrice(BaseSendPayamak sendMelliPayamak);
+    ResponsePayamak GetBasePrice(BaseSendPayamak sendMelliPayamak);
 
-	ResponsePayamak GetCredit();
+    ResponsePayamak GetCredit();
 }

@@ -13,44 +13,44 @@ namespace LoanSystem.Services.Base;
 
 public class SiteContentService : BaseService, ISiteContentService
 {
-	public SiteContentService(AppDbContext context, ICurrentUserService currentUserService)
-		: base(context, currentUserService)
-	{
-	}
+    public SiteContentService(AppDbContext context, ICurrentUserService currentUserService)
+        : base(context, currentUserService)
+    {
+    }
 
-	public Task<SiteContent> GetById(Guid entityId, params string[] includs)
-	{
-		return GetById<SiteContent>(entityId, includs);
-	}
+    public Task<SiteContent> GetById(Guid entityId, params string[] includs)
+    {
+        return GetById<SiteContent>(entityId, includs);
+    }
 
-	public Task<List<SiteContent>> GetByCondition(Expression<Func<SiteContent, bool>> condition, params string[] includs)
-	{
-		IQueryable<SiteContent> source = Table<SiteContent>();
-		foreach (string navigationPropertyPath in includs)
-		{
-			source = source.Include(navigationPropertyPath);
-		}
-		source = source.Where(condition);
-		return source.ToListAsync();
-	}
+    public Task<List<SiteContent>> GetByCondition(Expression<Func<SiteContent, bool>> condition, params string[] includs)
+    {
+        IQueryable<SiteContent> source = Table<SiteContent>();
+        foreach (string navigationPropertyPath in includs)
+        {
+            source = source.Include(navigationPropertyPath);
+        }
+        source = source.Where(condition);
+        return source.ToListAsync();
+    }
 
-	public async Task Insert(SiteContent entity)
-	{
-		entity.CustomerId = _currentUserService.CustomerId.Value;
-		Insert<SiteContent>(entity);
-		await Save();
-	}
+    public async Task Insert(SiteContent entity)
+    {
+        entity.CustomerId = _currentUserService.CustomerId.Value;
+        Insert<SiteContent>(entity);
+        await Save();
+    }
 
-	public Task Update(SiteContent entity)
-	{
-		entity.CustomerId = _currentUserService.CustomerId.Value;
-		Update(entity, true);
-		return Save();
-	}
+    public Task Update(SiteContent entity)
+    {
+        entity.CustomerId = _currentUserService.CustomerId.Value;
+        Update(entity, true);
+        return Save();
+    }
 
-	public Task Delete(SiteContent entity)
-	{
-		Delete<SiteContent>(entity);
-		return Save();
-	}
+    public Task Delete(SiteContent entity)
+    {
+        Delete<SiteContent>(entity);
+        return Save();
+    }
 }

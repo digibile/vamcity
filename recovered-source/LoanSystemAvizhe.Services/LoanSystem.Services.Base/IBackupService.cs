@@ -6,11 +6,11 @@ namespace LoanSystem.Services.Base;
 
 public interface IBackupService
 {
-	Task<string> Create();
+    Task<string> Create();
 
-	Task<List<dynamic>> GetBackupList();
+    Task<List<dynamic>> GetBackupList();
 
-	byte[] Download(string fileName);
+    byte[] Download(string fileName);
 
-	Task Restore(RestoreBackupModel model);
+    Task Restore(RestoreBackupModel model);
 }

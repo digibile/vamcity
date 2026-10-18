@@ -4,7 +4,7 @@ namespace LoanSystemAvizhe.Services.Inquiry.Models;
 
 public class CardMatchModel
 {
-	public MemberModel Member { get; set; }
+    public MemberModel Member { get; set; }
 
-	public string CardNumber { get; set; }
+    public string CardNumber { get; set; }
 }

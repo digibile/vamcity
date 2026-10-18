@@ -4,5 +4,5 @@ namespace LoanSystemAvizhe.Services.Inquiry.Models.ApiIR;
 
 public class SendApiIR_UnpaidCheque : BaseSendInquiry
 {
-	public string NationalCode { get; set; } = "";
+    public string NationalCode { get; set; } = "";
 }

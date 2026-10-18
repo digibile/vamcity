@@ -7,21 +7,21 @@ namespace LoanSystem.Services.Base;
 
 public interface ICustomerService
 {
-	Task<List<Customer>> GetAllCustomers();
+    Task<List<Customer>> GetAllCustomers();
 
-	Task<Customer> GetById(Guid entityId, params string[] includs);
+    Task<Customer> GetById(Guid entityId, params string[] includs);
 
-	Task<Customer> GetByCode(int code, params string[] includs);
+    Task<Customer> GetByCode(int code, params string[] includs);
 
-	Task<Customer> GetByDomain(string domain, params string[] includs);
+    Task<Customer> GetByDomain(string domain, params string[] includs);
 
-	Task<Customer> GetByMobile(string mobile);
+    Task<Customer> GetByMobile(string mobile);
 
-	Task SetFirstLoginAsDone(Guid id);
+    Task SetFirstLoginAsDone(Guid id);
 
-	Task Insert(Customer entity);
+    Task Insert(Customer entity);
 
-	Task Update(Customer entity);
+    Task Update(Customer entity);
 
-	Task Delete(Customer entity);
+    Task Delete(Customer entity);
 }

@@ -4,5 +4,5 @@ namespace LoanSystem.Site.Areas.Admin.Models;
 
 public class LongIdList
 {
-	public List<long> Ids { get; set; }
+    public List<long> Ids { get; set; }
 }

@@ -8,21 +8,21 @@ namespace LoanSystem.Services.Base;
 
 public interface ILoanService
 {
-	IQueryable<Loan> GetAllLoansAsQueryable();
+    IQueryable<Loan> GetAllLoansAsQueryable();
 
-	Task<List<Loan>> GetAllLoans(params string[] includs);
+    Task<List<Loan>> GetAllLoans(params string[] includs);
 
-	Task<List<Loan>> GetByCustomerId(Guid customerId, params string[] includs);
+    Task<List<Loan>> GetByCustomerId(Guid customerId, params string[] includs);
 
-	Task<Loan> GetById(Guid entityId, params string[] includs);
+    Task<Loan> GetById(Guid entityId, params string[] includs);
 
-	Task<Loan> GetByTitle(string title);
+    Task<Loan> GetByTitle(string title);
 
-	Task<Loan> GetByCode(int code);
+    Task<Loan> GetByCode(int code);
 
-	Task Insert(Loan entity);
+    Task Insert(Loan entity);
 
-	Task Update(Loan entity);
+    Task Update(Loan entity);
 
-	Task Delete(Loan entity);
+    Task Delete(Loan entity);
 }

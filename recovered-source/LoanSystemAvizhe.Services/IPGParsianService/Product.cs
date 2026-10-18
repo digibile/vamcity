@@ -9,33 +9,33 @@ namespace IPGParsianService;
 [DataContract(Name = "Product", Namespace = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService")]
 public class Product
 {
-	private int PGroupIdField;
+    private int PGroupIdField;
 
-	private long AmountField;
+    private long AmountField;
 
-	[DataMember(IsRequired = true)]
-	public int PGroupId
-	{
-		get
-		{
-			return PGroupIdField;
-		}
-		set
-		{
-			PGroupIdField = value;
-		}
-	}
+    [DataMember(IsRequired = true)]
+    public int PGroupId
+    {
+        get
+        {
+            return PGroupIdField;
+        }
+        set
+        {
+            PGroupIdField = value;
+        }
+    }
 
-	[DataMember(IsRequired = true, Order = 1)]
-	public long Amount
-	{
-		get
-		{
-			return AmountField;
-		}
-		set
-		{
-			AmountField = value;
-		}
-	}
+    [DataMember(IsRequired = true, Order = 1)]
+    public long Amount
+    {
+        get
+        {
+            return AmountField;
+        }
+        set
+        {
+            AmountField = value;
+        }
+    }
 }

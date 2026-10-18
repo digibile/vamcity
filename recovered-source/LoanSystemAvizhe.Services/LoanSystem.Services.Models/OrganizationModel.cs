@@ -6,19 +6,19 @@ namespace LoanSystem.Services.Models;
 
 public class OrganizationModel : BaseModel
 {
-	[Required(ErrorMessage = "نام سازمان الزامی است")]
-	public string Name { get; set; }
+    [Required(ErrorMessage = "نام سازمان الزامی است")]
+    public string Name { get; set; }
 
-	public Guid CustomerId { get; set; }
+    public Guid CustomerId { get; set; }
 
-	public OrganizationModel()
-	{
-	}
+    public OrganizationModel()
+    {
+    }
 
-	public OrganizationModel(Organization organization)
-	{
-		Id = organization.Id;
-		Name = organization.Name;
-		CustomerId = organization.CustomerId;
-	}
+    public OrganizationModel(Organization organization)
+    {
+        Id = organization.Id;
+        Name = organization.Name;
+        CustomerId = organization.CustomerId;
+    }
 }

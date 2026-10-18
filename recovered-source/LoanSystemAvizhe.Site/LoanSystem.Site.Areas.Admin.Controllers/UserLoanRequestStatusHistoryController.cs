@@ -16,41 +16,41 @@ namespace LoanSystem.Site.Areas.Admin.Controllers;
 [Authorize(Roles = "Admin")]
 public class UserLoanRequestStatusHistoryController : BaseAdminController
 {
-	private readonly IUserLoanRequestStatusHistoryService _userLoanRequestStatusHistoryService;
+    private readonly IUserLoanRequestStatusHistoryService _userLoanRequestStatusHistoryService;
 
-	public UserLoanRequestStatusHistoryController(ILogger<UserLoanRequestStatusHistoryController> logger, IUserLoanRequestStatusHistoryService userLoanRequestStatusHistoryService)
-		: base(logger)
-	{
-		_userLoanRequestStatusHistoryService = userLoanRequestStatusHistoryService;
-	}
+    public UserLoanRequestStatusHistoryController(ILogger<UserLoanRequestStatusHistoryController> logger, IUserLoanRequestStatusHistoryService userLoanRequestStatusHistoryService)
+        : base(logger)
+    {
+        _userLoanRequestStatusHistoryService = userLoanRequestStatusHistoryService;
+    }
 
-	[HttpGet("[action]/{loanRequestId}/{start?}/{end?}")]
-	public Task<ResponseState<List<UserLoanRequestStatusHistoryModel>>> ListByLoanRequestId(Guid loanRequestId, DateTime? start, DateTime? end)
-	{
-		return TryCatch(async () =>
-		{
-			List<UserLoanRequestStatusHistoryModel> data = (from x in await _userLoanRequestStatusHistoryService.GetByUserLoanRequestId(loanRequestId)
-				select new UserLoanRequestStatusHistoryModel(x) into x
-				orderby x.DateTime
-				select x).ToList();
-			return Success(data);
-		});
-	}
+    [HttpGet("[action]/{loanRequestId}/{start?}/{end?}")]
+    public Task<ResponseState<List<UserLoanRequestStatusHistoryModel>>> ListByLoanRequestId(Guid loanRequestId, DateTime? start, DateTime? end)
+    {
+        return TryCatch(async () =>
+        {
+            List<UserLoanRequestStatusHistoryModel> data = (from x in await _userLoanRequestStatusHistoryService.GetByUserLoanRequestId(loanRequestId)
+                                                            select new UserLoanRequestStatusHistoryModel(x) into x
+                                                            orderby x.DateTime
+                                                            select x).ToList();
+            return Success(data);
+        });
+    }
 
-	[HttpGet("[action]/{loanRequestId}")]
-	public Task<ResponseState<int>> CountByLoanRequestId(Guid loanRequestId)
-	{
-		return TryCatch(async () =>
-		{
-			try
-			{
-				int data = await _userLoanRequestStatusHistoryService.GetCountByCondition((UserLoanRequestStatusHistory x) => x.UserLoanRequestId == loanRequestId);
-				return Success(data);
-			}
-			catch (Exception)
-			{
-				throw;
-			}
-		});
-	}
+    [HttpGet("[action]/{loanRequestId}")]
+    public Task<ResponseState<int>> CountByLoanRequestId(Guid loanRequestId)
+    {
+        return TryCatch(async () =>
+        {
+            try
+            {
+                int data = await _userLoanRequestStatusHistoryService.GetCountByCondition((UserLoanRequestStatusHistory x) => x.UserLoanRequestId == loanRequestId);
+                return Success(data);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        });
+    }
 }

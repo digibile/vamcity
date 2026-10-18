@@ -8,17 +8,17 @@ namespace LoanSystem.Services.Base;
 
 public interface IAppEmailService
 {
-	Task<List<AppEmail>> GetAll(Guid? customerId);
+    Task<List<AppEmail>> GetAll(Guid? customerId);
 
-	Task<AppEmail> GetById(Guid entityId, params string[] includs);
+    Task<AppEmail> GetById(Guid entityId, params string[] includs);
 
-	Task Insert(AppEmail entity);
+    Task Insert(AppEmail entity);
 
-	Task Update(AppEmail entity);
+    Task Update(AppEmail entity);
 
-	Task Delete(AppEmail entity);
+    Task Delete(AppEmail entity);
 
-	Task<int> GetCountByCondition(Expression<Func<AppEmail, bool>> condition, bool ignoreQueryFilter = false, params string[] includs);
+    Task<int> GetCountByCondition(Expression<Func<AppEmail, bool>> condition, bool ignoreQueryFilter = false, params string[] includs);
 
-	Task<List<AppEmail>> GetByCondition(Expression<Func<AppEmail, bool>> condition, bool ignoreQueryFilter = false, params string[] includs);
+    Task<List<AppEmail>> GetByCondition(Expression<Func<AppEmail, bool>> condition, bool ignoreQueryFilter = false, params string[] includs);
 }

@@ -7,13 +7,13 @@ namespace LoanSystem.Services.Base;
 
 public interface IExpenseService
 {
-	Task<List<Expense>> GetAllExpenses();
+    Task<List<Expense>> GetAllExpenses();
 
-	Task<Expense> GetById(Guid entityId, params string[] includs);
+    Task<Expense> GetById(Guid entityId, params string[] includs);
 
-	Task Insert(Expense entity);
+    Task Insert(Expense entity);
 
-	Task Update(Expense entity);
+    Task Update(Expense entity);
 
-	Task Delete(Expense entity);
+    Task Delete(Expense entity);
 }

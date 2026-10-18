@@ -5,7 +5,7 @@ namespace LoanSystemAvizhe.Site.Areas.SuperAdmin.Models;
 
 public class SuperAdminConsultant
 {
-	public List<ConsultantModel> Consultants { get; set; }
+    public List<ConsultantModel> Consultants { get; set; }
 
-	public int CountAll { get; set; }
+    public int CountAll { get; set; }
 }

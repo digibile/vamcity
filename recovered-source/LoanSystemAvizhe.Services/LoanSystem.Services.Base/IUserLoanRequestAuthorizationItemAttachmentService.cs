@@ -8,15 +8,15 @@ namespace LoanSystem.Services.Base;
 
 public interface IUserLoanRequestAuthorizationItemAttachmentService
 {
-	Task<UserLoanRequestAuthorizationItemAttachment> GetById(Guid id, params string[] includs);
+    Task<UserLoanRequestAuthorizationItemAttachment> GetById(Guid id, params string[] includs);
 
-	Task<List<UserLoanRequestAuthorizationItemAttachment>> GetByCondition(Expression<Func<UserLoanRequestAuthorizationItemAttachment, bool>> condition, params string[] includs);
+    Task<List<UserLoanRequestAuthorizationItemAttachment>> GetByCondition(Expression<Func<UserLoanRequestAuthorizationItemAttachment, bool>> condition, params string[] includs);
 
-	Task Insert(UserLoanRequestAuthorizationItemAttachment entity);
+    Task Insert(UserLoanRequestAuthorizationItemAttachment entity);
 
-	Task InsertBatch(List<UserLoanRequestAuthorizationItemAttachment> entities);
+    Task InsertBatch(List<UserLoanRequestAuthorizationItemAttachment> entities);
 
-	Task Update(UserLoanRequestAuthorizationItemAttachment entity);
+    Task Update(UserLoanRequestAuthorizationItemAttachment entity);
 
-	Task Delete(UserLoanRequestAuthorizationItemAttachment entity);
+    Task Delete(UserLoanRequestAuthorizationItemAttachment entity);
 }

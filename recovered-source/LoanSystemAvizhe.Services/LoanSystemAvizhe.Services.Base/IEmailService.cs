@@ -6,9 +6,9 @@ namespace LoanSystemAvizhe.Services.Base;
 
 public interface IEmailService
 {
-	void SetEmailConfig(EmailConfig emailConfig);
+    void SetEmailConfig(EmailConfig emailConfig);
 
-	string Send(EmailMessage emailMessage);
+    string Send(EmailMessage emailMessage);
 
-	List<EmailMessage> ReceiveEmail(int maxCount = 100);
+    List<EmailMessage> ReceiveEmail(int maxCount = 100);
 }

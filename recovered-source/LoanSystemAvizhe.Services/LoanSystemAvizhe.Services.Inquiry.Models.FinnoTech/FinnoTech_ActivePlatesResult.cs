@@ -2,13 +2,13 @@ namespace LoanSystemAvizhe.Services.Inquiry.Models.FinnoTech;
 
 public class FinnoTech_ActivePlatesResult
 {
-	public string Plate { get; set; }
+    public string Plate { get; set; }
 
-	public string Code { get; set; }
+    public string Code { get; set; }
 
-	public string Serial { get; set; }
+    public string Serial { get; set; }
 
-	public string Description { get; set; }
+    public string Description { get; set; }
 
-	public bool IsFAK { get; set; }
+    public bool IsFAK { get; set; }
 }

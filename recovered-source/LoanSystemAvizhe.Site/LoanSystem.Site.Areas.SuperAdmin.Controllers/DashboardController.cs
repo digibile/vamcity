@@ -13,17 +13,17 @@ namespace LoanSystem.Site.Areas.SuperAdmin.Controllers;
 [Authorize(Roles = "SuperAdmin")]
 public class DashboardController : BaseSuperAdminController
 {
-	private readonly ISuperAdminDashboardService _superAdminDashboardService;
+    private readonly ISuperAdminDashboardService _superAdminDashboardService;
 
-	public DashboardController(ILogger<DashboardController> logger, ISuperAdminDashboardService superAdminDashboardService)
-		: base(logger)
-	{
-		_superAdminDashboardService = superAdminDashboardService;
-	}
+    public DashboardController(ILogger<DashboardController> logger, ISuperAdminDashboardService superAdminDashboardService)
+        : base(logger)
+    {
+        _superAdminDashboardService = superAdminDashboardService;
+    }
 
-	[HttpGet("get")]
-	public Task<ResponseState<SuperAdminDashboardModel>> Get()
-	{
-		return TryCatch(async () => Success(await _superAdminDashboardService.GetData()));
-	}
+    [HttpGet("get")]
+    public Task<ResponseState<SuperAdminDashboardModel>> Get()
+    {
+        return TryCatch(async () => Success(await _superAdminDashboardService.GetData()));
+    }
 }

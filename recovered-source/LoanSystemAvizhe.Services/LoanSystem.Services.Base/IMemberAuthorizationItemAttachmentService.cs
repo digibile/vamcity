@@ -8,15 +8,15 @@ namespace LoanSystem.Services.Base;
 
 public interface IMemberAuthorizationItemAttachmentService
 {
-	Task<MemberAuthorizationItemAttachment> GetById(Guid id, params string[] includs);
+    Task<MemberAuthorizationItemAttachment> GetById(Guid id, params string[] includs);
 
-	Task<List<MemberAuthorizationItemAttachment>> GetByCondition(Expression<Func<MemberAuthorizationItemAttachment, bool>> condition, params string[] includs);
+    Task<List<MemberAuthorizationItemAttachment>> GetByCondition(Expression<Func<MemberAuthorizationItemAttachment, bool>> condition, params string[] includs);
 
-	Task Insert(MemberAuthorizationItemAttachment entity);
+    Task Insert(MemberAuthorizationItemAttachment entity);
 
-	Task InsertBatch(List<MemberAuthorizationItemAttachment> entities);
+    Task InsertBatch(List<MemberAuthorizationItemAttachment> entities);
 
-	Task Update(MemberAuthorizationItemAttachment entity);
+    Task Update(MemberAuthorizationItemAttachment entity);
 
-	Task Delete(MemberAuthorizationItemAttachment entity);
+    Task Delete(MemberAuthorizationItemAttachment entity);
 }

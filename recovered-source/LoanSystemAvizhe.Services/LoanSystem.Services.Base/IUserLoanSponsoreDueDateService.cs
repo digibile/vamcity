@@ -8,11 +8,11 @@ namespace LoanSystem.Services.Base;
 
 public interface IUserLoanSponsoreDueDateService
 {
-	Task<List<UserLoanSponsoreDueDate>> GetByCondition(Expression<Func<UserLoanSponsoreDueDate, bool>> condition, params string[] includs);
+    Task<List<UserLoanSponsoreDueDate>> GetByCondition(Expression<Func<UserLoanSponsoreDueDate, bool>> condition, params string[] includs);
 
-	Task Insert(UserLoanSponsoreDueDate entity);
+    Task Insert(UserLoanSponsoreDueDate entity);
 
-	Task Update(UserLoanSponsoreDueDate entity);
+    Task Update(UserLoanSponsoreDueDate entity);
 
-	Task Delete(UserLoanSponsoreDueDate entity);
+    Task Delete(UserLoanSponsoreDueDate entity);
 }

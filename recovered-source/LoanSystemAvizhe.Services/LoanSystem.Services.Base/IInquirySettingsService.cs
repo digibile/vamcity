@@ -8,17 +8,17 @@ namespace LoanSystem.Services.Base;
 
 public interface IInquirySettingsService
 {
-	Task<List<InquirySettings>> GetAll();
+    Task<List<InquirySettings>> GetAll();
 
-	Task<InquirySettings> GetById(Guid entityId, params string[] includs);
+    Task<InquirySettings> GetById(Guid entityId, params string[] includs);
 
-	Task Insert(InquirySettings entity);
+    Task Insert(InquirySettings entity);
 
-	Task Update(InquirySettings entity);
+    Task Update(InquirySettings entity);
 
-	Task Delete(InquirySettings entity);
+    Task Delete(InquirySettings entity);
 
-	Task<int> GetCountByCondition(Expression<Func<InquirySettings, bool>> condition);
+    Task<int> GetCountByCondition(Expression<Func<InquirySettings, bool>> condition);
 
-	Task<List<InquirySettings>> GetByCondition(Expression<Func<InquirySettings, bool>> condition);
+    Task<List<InquirySettings>> GetByCondition(Expression<Func<InquirySettings, bool>> condition);
 }

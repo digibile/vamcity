@@ -8,15 +8,15 @@ namespace IPGParsianService;
 [ServiceContract(Namespace = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService", ConfigurationName = "IPGParsianService.SaleServiceSoap")]
 public interface SaleServiceSoap
 {
-	[OperationContract(Action = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService/SalePaymentRequest", ReplyAction = "*")]
-	Task<SalePaymentRequestResponse> SalePaymentRequestAsync(SalePaymentRequestRequest request);
+    [OperationContract(Action = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService/SalePaymentRequest", ReplyAction = "*")]
+    Task<SalePaymentRequestResponse> SalePaymentRequestAsync(SalePaymentRequestRequest request);
 
-	[OperationContract(Action = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService/SalePaymentWithId", ReplyAction = "*")]
-	Task<SalePaymentWithIdResponse> SalePaymentWithIdAsync(SalePaymentWithIdRequest request);
+    [OperationContract(Action = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService/SalePaymentWithId", ReplyAction = "*")]
+    Task<SalePaymentWithIdResponse> SalePaymentWithIdAsync(SalePaymentWithIdRequest request);
 
-	[OperationContract(Action = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService/UDSalePaymentRequest", ReplyAction = "*")]
-	Task<UDSalePaymentRequestResponse> UDSalePaymentRequestAsync(UDSalePaymentRequestRequest request);
+    [OperationContract(Action = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService/UDSalePaymentRequest", ReplyAction = "*")]
+    Task<UDSalePaymentRequestResponse> UDSalePaymentRequestAsync(UDSalePaymentRequestRequest request);
 
-	[OperationContract(Action = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService/SalePaymentWithDiscount", ReplyAction = "*")]
-	Task<SalePaymentWithDiscountResponse> SalePaymentWithDiscountAsync(SalePaymentWithDiscountRequest request);
+    [OperationContract(Action = "https://pec.Shaparak.ir/NewIPGServices/Sale/SaleService/SalePaymentWithDiscount", ReplyAction = "*")]
+    Task<SalePaymentWithDiscountResponse> SalePaymentWithDiscountAsync(SalePaymentWithDiscountRequest request);
 }

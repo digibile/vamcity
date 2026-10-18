@@ -6,15 +6,15 @@ namespace LoanSystem.Services.Base;
 
 public interface IAdminDashboardService
 {
-	Task<AdminDashboardModel> GetData();
+    Task<AdminDashboardModel> GetData();
 
-	Task<List<dynamic>> GetLastLoginMembers();
+    Task<List<dynamic>> GetLastLoginMembers();
 
-	Task<int> GetPendingTicketsCount();
+    Task<int> GetPendingTicketsCount();
 
-	Task<dynamic> GetAgentFactorGatewayCount();
+    Task<dynamic> GetAgentFactorGatewayCount();
 
-	Task<dynamic> GetMemberAuthorizationCount();
+    Task<dynamic> GetMemberAuthorizationCount();
 
-	Task<int> GetPendingCustomerOrdersCount();
+    Task<int> GetPendingCustomerOrdersCount();
 }

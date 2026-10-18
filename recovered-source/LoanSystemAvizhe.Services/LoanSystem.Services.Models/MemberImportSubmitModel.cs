@@ -4,5 +4,5 @@ namespace LoanSystem.Services.Models;
 
 public class MemberImportSubmitModel : BaseModel
 {
-	public List<MemberImportPreviewModel> ImportPreviewModels { get; set; }
+    public List<MemberImportPreviewModel> ImportPreviewModels { get; set; }
 }

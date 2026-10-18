@@ -4,5 +4,5 @@ namespace LoanSystemAvizhe.Services.Sms.Models.IPPanel;
 
 public class DeliveryIPPanelResultData
 {
-	public List<DeliveryIPPanelResultDataDelivery> Deliveries { get; set; }
+    public List<DeliveryIPPanelResultDataDelivery> Deliveries { get; set; }
 }

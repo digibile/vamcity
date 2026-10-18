@@ -11,15 +11,15 @@ namespace IPGParsianConfirmService;
 [MessageContract(IsWrapped = false)]
 public class ConfirmPaymentResponse
 {
-	[MessageBodyMember(Name = "ConfirmPaymentResponse", Namespace = "https://pec.Shaparak.ir/NewIPGServices/Confirm/ConfirmService", Order = 0)]
-	public ConfirmPaymentResponseBody Body;
+    [MessageBodyMember(Name = "ConfirmPaymentResponse", Namespace = "https://pec.Shaparak.ir/NewIPGServices/Confirm/ConfirmService", Order = 0)]
+    public ConfirmPaymentResponseBody Body;
 
-	public ConfirmPaymentResponse()
-	{
-	}
+    public ConfirmPaymentResponse()
+    {
+    }
 
-	public ConfirmPaymentResponse(ConfirmPaymentResponseBody Body)
-	{
-		this.Body = Body;
-	}
+    public ConfirmPaymentResponse(ConfirmPaymentResponseBody Body)
+    {
+        this.Body = Body;
+    }
 }

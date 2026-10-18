@@ -8,15 +8,15 @@ namespace LoanSystem.Services.Base;
 
 public interface ISmsPatternService
 {
-	Task<List<SmsPattern>> GetAll(Guid? customerId, SmsPatternStatus? Status, params string[] includs);
+    Task<List<SmsPattern>> GetAll(Guid? customerId, SmsPatternStatus? Status, params string[] includs);
 
-	Task<int> GetCount(Guid? customerId, SmsPatternStatus? Status);
+    Task<int> GetCount(Guid? customerId, SmsPatternStatus? Status);
 
-	Task<SmsPattern> GetById(Guid entityId, params string[] includs);
+    Task<SmsPattern> GetById(Guid entityId, params string[] includs);
 
-	Task Insert(SmsPattern entity, Guid? customerId = null);
+    Task Insert(SmsPattern entity, Guid? customerId = null);
 
-	Task Update(SmsPattern entity);
+    Task Update(SmsPattern entity);
 
-	Task Delete(SmsPattern entity);
+    Task Delete(SmsPattern entity);
 }

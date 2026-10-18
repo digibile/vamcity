@@ -4,7 +4,7 @@ namespace LoanSystemAvizhe.Services.Inquiry.Models;
 
 public class SanaModel
 {
-	public MemberModel Member { get; set; }
+    public MemberModel Member { get; set; }
 
-	public bool IsCompany { get; set; }
+    public bool IsCompany { get; set; }
 }

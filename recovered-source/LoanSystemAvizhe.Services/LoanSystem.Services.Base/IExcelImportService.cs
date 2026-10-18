@@ -6,19 +6,19 @@ namespace LoanSystem.Services.Base;
 
 public interface IExcelImportService
 {
-	Task<List<MemberImportPreviewModel>> PreviewImportMembers(ImportFileModel model);
+    Task<List<MemberImportPreviewModel>> PreviewImportMembers(ImportFileModel model);
 
-	Task<MemberImportResultModel> SubmitImportMembers(MemberImportSubmitModel submitModel);
+    Task<MemberImportResultModel> SubmitImportMembers(MemberImportSubmitModel submitModel);
 
-	Task<List<InstallmentImportPreviewModel>> PreviewImportInstallments(ImportFileModel model);
+    Task<List<InstallmentImportPreviewModel>> PreviewImportInstallments(ImportFileModel model);
 
-	Task<InstallmentImportResultModel> SubmitImportInstallments(InstallmentImportSubmitModel model);
+    Task<InstallmentImportResultModel> SubmitImportInstallments(InstallmentImportSubmitModel model);
 
-	Task<List<SavedMoneyImportPreviewModel>> PreviewImportSavedMoney(ImportFileModel model);
+    Task<List<SavedMoneyImportPreviewModel>> PreviewImportSavedMoney(ImportFileModel model);
 
-	Task<SavedMoneyImportResultModel> SubmitImportSavedMoney(SavedMoneyImportSubmitModel model);
+    Task<SavedMoneyImportResultModel> SubmitImportSavedMoney(SavedMoneyImportSubmitModel model);
 
-	Task<List<CompareRemainingsPreviewModel>> PreviewCompareRemainings(ImportFileModel importModel);
+    Task<List<CompareRemainingsPreviewModel>> PreviewCompareRemainings(ImportFileModel importModel);
 
-	Task ImportStarter();
+    Task ImportStarter();
 }

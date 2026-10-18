@@ -5,7 +5,7 @@ namespace LoanSystemAvizhe.Site.Areas.AppApi.Models;
 
 public class AppApiUserLoanResponseModel : BaseModel
 {
-	public new Guid Id { get; set; }
+    public new Guid Id { get; set; }
 
-	public int Code { get; set; }
+    public int Code { get; set; }
 }

@@ -8,11 +8,11 @@ namespace LoanSystem.Services.Base;
 
 public interface IWithdrawAgentFactorService
 {
-	Task Insert(WithdrawAgentFactor entity);
+    Task Insert(WithdrawAgentFactor entity);
 
-	Task InsertBulk(List<WithdrawAgentFactor> entities);
+    Task InsertBulk(List<WithdrawAgentFactor> entities);
 
-	Task Delete(List<WithdrawAgentFactor> entities);
+    Task Delete(List<WithdrawAgentFactor> entities);
 
-	Task<List<WithdrawAgentFactor>> GetByCondition(Expression<Func<WithdrawAgentFactor, bool>> condition, bool asTracking = false, params string[] includs);
+    Task<List<WithdrawAgentFactor>> GetByCondition(Expression<Func<WithdrawAgentFactor, bool>> condition, bool asTracking = false, params string[] includs);
 }

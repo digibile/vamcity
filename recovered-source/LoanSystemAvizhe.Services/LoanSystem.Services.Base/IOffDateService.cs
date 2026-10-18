@@ -8,17 +8,17 @@ namespace LoanSystem.Services.Base;
 
 public interface IOffDateService
 {
-	Task<List<OffDate>> GetAll(Guid? customerId);
+    Task<List<OffDate>> GetAll(Guid? customerId);
 
-	Task<OffDate> GetById(Guid entityId, params string[] includs);
+    Task<OffDate> GetById(Guid entityId, params string[] includs);
 
-	Task Modify(List<OffDate> entities);
+    Task Modify(List<OffDate> entities);
 
-	Task Insert(OffDate entity);
+    Task Insert(OffDate entity);
 
-	Task Update(OffDate entity);
+    Task Update(OffDate entity);
 
-	Task Delete(OffDate entity);
+    Task Delete(OffDate entity);
 
-	Task<List<OffDate>> GetByCondition(Expression<Func<OffDate, bool>> condition);
+    Task<List<OffDate>> GetByCondition(Expression<Func<OffDate, bool>> condition);
 }
