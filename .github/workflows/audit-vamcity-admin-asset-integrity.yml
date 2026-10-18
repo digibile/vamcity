@@ -91,6 +91,10 @@ jobs:
             source_url="https://raw.githubusercontent.com/digibile/vamcity/main/OM%20City/wwwroot/ui/$kind/$filename"
             source="$RUNNER_TEMP/source-assets/$kind/$filename"
             curl --fail --silent --show-error --location --retry 2 --max-time 60 "$source_url" -o "$source"
+            if [[ "$kind" == "js" ]]; then
+              node --check "$source" >/dev/null
+              echo "JS_SYNTAX_OK=$item"
+            fi
             source_hash="$(sha256sum "$source" | awk '{print $1}')"
             if [[ "$live_hash" == "$source_hash" ]]; then
               echo "ASSET_HASH_MATCH=$item"
@@ -181,3 +185,5 @@ jobs:
           REMOTE
 
 # Re-run after applying guarded admin list rendering fixes to the imported chunks.
+
+# Verify JavaScript syntax after the live admin asset recovery.
