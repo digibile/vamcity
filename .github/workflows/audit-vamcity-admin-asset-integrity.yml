@@ -187,3 +187,5 @@ jobs:
 # Re-run after applying guarded admin list rendering fixes to the imported chunks.
 
 # Verify JavaScript syntax after the live admin asset recovery.
+
+# Re-audit after the last guarded import from OM City on 2026-10-18.
