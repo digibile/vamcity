@@ -43,7 +43,7 @@ jobs:
             grep -Fq "$file.css?v=12" wwwroot/ui/css/vamcity-modern-theme.css
           done
           grep -Fq '/js/chunk-vendors.0d0536ea.js' wwwroot/ui/index.html
-          grep -Eq '/js/app.e76ab352.js\?v=otp-ui(1|2)' wwwroot/ui/index.html
+          grep -Eq '/js/app.e76ab352.js\?(v=otp-ui(1|2)|fix=20261018-3)' wwwroot/ui/index.html
           test -s wwwroot/ui/js/app.e76ab352.js
           grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' wwwroot/ui/js/app.e76ab352.js
           test -s wwwroot/ui/js/views-admin-UserLoanRequests.8e3264fe.js
@@ -141,7 +141,7 @@ jobs:
           test -s "$TMP/wwwroot/ui/index.html"
           test -s "$TMP/wwwroot/ui/css/vamcity-modern-theme.css"
           grep -Fq '/css/vamcity-modern-theme.css?v=12' "$TMP/wwwroot/ui/index.html"
-          grep -Eq '/js/app.e76ab352.js\?v=otp-ui(1|2)' "$TMP/wwwroot/ui/index.html"
+          grep -Eq '/js/app.e76ab352.js\?(v=otp-ui(1|2)|fix=20261018-3)' "$TMP/wwwroot/ui/index.html"
           grep -Fq 'ورود با رمز یک‌بارمصرف (OTP)' "$TMP/wwwroot/ui/js/app.e76ab352.js"
           grep -Fq 'e=Array.isArray(e)?e.filter((function(t){return t&&"object"===typeof t})):[]' "$TMP/wwwroot/ui/js/views-admin-UserLoanRequests.8e3264fe.js"
 
