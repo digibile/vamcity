@@ -425,15 +425,14 @@ jobs:
           import pathlib, re, sys
           p = pathlib.Path(sys.argv[1])
           s = p.read_text()
-          begin = "\\t# BEGIN VAMCITY REVERSE PROXY"
-          end = "\\t# END VAMCITY REVERSE PROXY"
+          begin = "\t# BEGIN VAMCITY REVERSE PROXY"
+          end = "\t# END VAMCITY REVERSE PROXY"
           while begin in s and end in s:
               a = s.index(begin)
               b = s.index(end, a) + len(end)
               s = s[:a] + s[b:]
-          # DirectAdmin versions differ in indentation/spacing of generated includes.
-          # Match the include line structurally rather than requiring literal tabs.
-          pattern = re.compile(r"(?m)^([ \\t]*)include[ \\t]+/usr/local/directadmin/data/users/roofixo/nginx_php\\.conf;[ \\t]*$")
+          # Match spaces/tabs and the literal dot in nginx_php.conf correctly.
+          pattern = re.compile(r"(?m)^([ \t]*)include[ \t]+/usr/local/directadmin/data/users/roofixo/nginx_php\.conf;[ \t]*$")
           matches = list(pattern.finditer(s))
           if len(matches) < 2:
               print("ERROR: expected two generated Roofixo HTTP/HTTPS insertion points; found", len(matches))
@@ -442,24 +441,24 @@ jobs:
                   if "server_name" in line or "nginx_php.conf" in line or "BEGIN VAMCITY" in line:
                       print(f"{line_no}: {line.strip()}")
               raise SystemExit(2)
-          block = """\\n\\t# BEGIN VAMCITY REVERSE PROXY
-          \\t# The requested legacy landing URL must route to the real Vue plans page.
-          \\tlocation = /clplans/0/ { return 302 /cl/plans/; }
-          \\tlocation = /clplans/0 { return 302 /cl/plans/; }
-          \\tlocation = /plans/0/ { return 302 /cl/plans/; }
-          \\tlocation = /plans/0 { return 302 /cl/plans/; }
-          \\tlocation / {
-          \\t\\tproxy_pass http://127.0.0.1:5187;
-          \\t\\tproxy_http_version 1.1;
-          \\t\\tproxy_set_header Host $host;
-          \\t\\tproxy_set_header X-Real-IP $remote_addr;
-          \\t\\tproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          \\t\\tproxy_set_header X-Forwarded-Proto $scheme;
-          \\t\\tproxy_set_header X-Forwarded-Host $host;
-          \\t\\tproxy_read_timeout 300s;
-          \\t\\tproxy_send_timeout 300s;
-          \\t}
-          \\t# END VAMCITY REVERSE PROXY"""
+          block = """\n\t# BEGIN VAMCITY REVERSE PROXY
+          \t# The requested legacy landing URL must route to the real Vue plans page.
+          \tlocation = /clplans/0/ { return 302 /cl/plans/; }
+          \tlocation = /clplans/0 { return 302 /cl/plans/; }
+          \tlocation = /plans/0/ { return 302 /cl/plans/; }
+          \tlocation = /plans/0 { return 302 /cl/plans/; }
+          \tlocation / {
+          \t\tproxy_pass http://127.0.0.1:5187;
+          \t\tproxy_http_version 1.1;
+          \t\tproxy_set_header Host $host;
+          \t\tproxy_set_header X-Real-IP $remote_addr;
+          \t\tproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          \t\tproxy_set_header X-Forwarded-Proto $scheme;
+          \t\tproxy_set_header X-Forwarded-Host $host;
+          \t\tproxy_read_timeout 300s;
+          \t\tproxy_send_timeout 300s;
+          \t}
+          \t# END VAMCITY REVERSE PROXY"""
           s = pattern.sub(lambda m: m.group(0) + block, s)
           p.write_text(s)
           print(f"VAMCITY_PROXY_INSERTED_IN_GENERATED_VHOSTS={len(matches)}")
