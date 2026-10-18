@@ -56,7 +56,7 @@ jobs:
           APP_JS="$APP_ROOT/wwwroot/js/app.e76ab352.js"
           test -s "$APP_JS"
           python3 - "$APP_JS" "$APP_ROOT/wwwroot/js" "$APP_ROOT/wwwroot/css" <<'PY'
-          import pathlib, re, sys
+          import json, pathlib, re, sys
           app = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
           js_root, css_root = pathlib.Path(sys.argv[2]), pathlib.Path(sys.argv[3])
           hashes = {}
@@ -65,7 +65,11 @@ jobs:
           if not hashes:
               raise SystemExit("LIVE_RUNTIME_CHUNK_MAP_NOT_FOUND")
           js_expected = {name: values[0] for name, values in hashes.items()}
-          css_expected = {name: values[1] for name, values in hashes.items() if len(values) > 1}
+          css_match = re.search(r'l\\.e=function\\(t\\)\\{var e=\\[\\],a=(\\{[^}]+\\})', app)
+          if not css_match:
+              raise SystemExit("LIVE_RUNTIME_CSS_MAP_NOT_FOUND")
+          css_enabled = set(json.loads(css_match.group(1)))
+          css_expected = {name: values[1] for name, values in hashes.items() if len(values) > 1 and name in css_enabled}
           missing_js = [f"{n}.{d}.js" for n,d in js_expected.items() if not (js_root/f"{n}.{d}.js").is_file() or (js_root/f"{n}.{d}.js").stat().st_size == 0]
           missing_css = [f"{n}.{d}.css" for n,d in css_expected.items() if not (css_root/f"{n}.{d}.css").is_file() or (css_root/f"{n}.{d}.css").stat().st_size == 0]
           print(f"EXPECTED_JS_CHUNKS={len(js_expected)}")
@@ -166,7 +170,10 @@ jobs:
           for name,digest in re.findall(r'"((?:views|layout|default|chunk)-[^"]+)":"([a-f0-9]{8})"', app):
               hashes.setdefault(name, []).append(digest)
           js_missing=[f"{n}.{v[0]}.js" for n,v in hashes.items() if not (js_root/f"{n}.{v[0]}.js").is_file() or (js_root/f"{n}.{v[0]}.js").stat().st_size==0]
-          css_missing=[f"{n}.{v[1]}.css" for n,v in hashes.items() if len(v)>1 and (not (css_root/f"{n}.{v[1]}.css").is_file() or (css_root/f"{n}.{v[1]}.css").stat().st_size==0)]
+          css_match = re.search(r'l\\.e=function\\(t\\)\\{var e=\\[\\],a=(\\{[^}]+\\})', app)
+          if not css_match: raise SystemExit("LIVE_RUNTIME_CSS_MAP_NOT_FOUND")
+          css_enabled = set(json.loads(css_match.group(1)))
+          css_missing=[f"{n}.{v[1]}.css" for n,v in hashes.items() if len(v)>1 and n in css_enabled and (not (css_root/f"{n}.{v[1]}.css").is_file() or (css_root/f"{n}.{v[1]}.css").stat().st_size==0)]
           print(f"POST_RECOVERY_MISSING_JS={len(js_missing)}")
           print(f"POST_RECOVERY_MISSING_CSS={len(css_missing)}")
           for x in js_missing[:80]: print("STILL_MISSING_JS="+x)
