@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ssh -i "$RUNNER_TEMP/vamcity-refresh-key" -p "$DEPLOY_PORT" \\
+          ssh -i "$RUNNER_TEMP/vamcity-refresh-key" -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
             -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
           APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
@@ -68,7 +68,7 @@ jobs:
           text = p.read_text(encoding="utf-8")
           old = "app.e76ab352.js"
           new = "app.e76ab352.js?fix=20261018-2"
-          text = re.sub(r'app\\.e76ab352\\.js(?:\\?[^"\\']*)?', new, text)
+          text = re.sub(r'app\.e76ab352\.js(?:\?[^"\']*)?', new, text)
           if new not in text:
               raise SystemExit("APP_SCRIPT_REFERENCE_NOT_UPDATED")
           p.write_text(text, encoding="utf-8")
