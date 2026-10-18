@@ -111,6 +111,13 @@ jobs:
               JOIN [vamcity_stage].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
               JOIN [vamcity_stage].dbo.AspNetRoles r ON r.Id=ur.RoleId
               WHERE r.NormalizedName=N'SUPERADMIN' AND u.IsActive=1;
+              SELECT 'active_superadmin_also_admin' AS metric, COUNT_BIG(*) AS value
+              FROM [vamcity_stage].dbo.AspNetUsers u
+              JOIN [vamcity_stage].dbo.AspNetUserRoles ur ON ur.UserId=u.Id
+              JOIN [vamcity_stage].dbo.AspNetRoles r ON r.Id=ur.RoleId AND r.NormalizedName=N'SUPERADMIN'
+              JOIN [vamcity_stage].dbo.AspNetUserRoles ur2 ON ur2.UserId=u.Id
+              JOIN [vamcity_stage].dbo.AspNetRoles r2 ON r2.Id=ur2.RoleId AND r2.NormalizedName=N'ADMIN'
+              WHERE u.IsActive=1;
               SELECT r.Name AS role_name, COUNT_BIG(*) AS assigned_users,
                      SUM(CASE WHEN u.IsActive=1 THEN CONVERT(bigint,1) ELSE CONVERT(bigint,0) END) AS active_users
               FROM [vamcity_stage].dbo.AspNetRoles r
