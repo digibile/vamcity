@@ -126,3 +126,5 @@ jobs:
           retention-days: 7
 
 # Trigger live browser verification after importing the recovered zilom files.
+
+# Re-run browser verification after the guarded admin assets were deployed.
