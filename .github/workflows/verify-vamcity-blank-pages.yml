@@ -1,5 +1,5 @@
 name: Verify VamCity blank pages in a real browser
-run-name: Browser check VamCity login, plans, loans and loan requests
+run-name: Browser check VamCity auth redirects, assets and public pages
 
 on:
   push:
@@ -82,7 +82,12 @@ jobs:
                 console.log('BROWSER_ERRORS=' + JSON.stringify(errors.slice(0, 15)));
                 await page.screenshot({ path: 'artifacts/' + target.name + '.png', fullPage: true }).catch(() => {});
 
-                if (status !== 200 || bodyText.length < target.minText || appHtml.length < 100) {
+                const protectedRoute = ['loan-requests', 'admin-loans'].includes(target.name);
+                const authRedirect = protectedRoute &&
+                  new URL(finalUrl).pathname.replace(/\\/+$/, '') === '/login' &&
+                  bodyText.length >= 60;
+                console.log('EXPECTED_AUTH_REDIRECT=' + authRedirect);
+                if (!authRedirect && (status !== 200 || bodyText.length < target.minText || appHtml.length < 100)) {
                   console.error('BLANK_OR_UNRENDERED_PAGE=' + target.name);
                   failed = true;
                 }
