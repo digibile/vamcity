@@ -1,0 +1,195 @@
+name: Recover missing VamCity admin chunks from OM City
+run-name: Restore only missing hashed UI assets from the imported Zilom files
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/recover-vamcity-admin-chunks-from-om-city.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vamcity-om-city-chunk-recovery
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout imported files
+        uses: actions/checkout@v4
+
+      - name: Configure existing server SSH access
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/vamcity-om-city-key"
+          chmod 600 "$RUNNER_TEMP/vamcity-om-city-key"
+          ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          chmod 600 "$HOME/.ssh/known_hosts"
+          {
+            echo "DEPLOY_HOST=$DEPLOY_HOST"
+            echo "DEPLOY_USER=$DEPLOY_USER"
+            echo "DEPLOY_PORT=$PORT"
+          } >> "$GITHUB_ENV"
+
+      - name: Find missing hashed chunks referenced by the live app
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$RUNNER_TEMP/vamcity-om-city-key" -p "$DEPLOY_PORT" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE' | tee "$RUNNER_TEMP/remote-chunk-audit.txt"
+          set -euo pipefail
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
+          test -n "$APP_ROOT"
+          APP_JS="$APP_ROOT/wwwroot/js/app.e76ab352.js"
+          if [[ ! -s "$APP_JS" ]]; then
+            echo "LIVE_APP_BUNDLE_NOT_FOUND=$APP_JS"
+            exit 2
+          fi
+          python3 - "$APP_JS" "$APP_ROOT/wwwroot/js" <<'PY'
+          import pathlib, re, sys
+          app_path = pathlib.Path(sys.argv[1])
+          js_root = pathlib.Path(sys.argv[2])
+          text = app_path.read_text(encoding="utf-8", errors="replace")
+          expected = {}
+          for name, digest in re.findall(r'"((?:views|layout|default|chunk)-[^"]+)":"([a-f0-9]{8})"', text):
+              expected.setdefault(name, digest)
+          if not expected:
+              raise SystemExit("LIVE_RUNTIME_CHUNK_MAP_NOT_FOUND")
+          missing = [f"{name}.{digest}.js" for name, digest in expected.items()
+                     if not (js_root / f"{name}.{digest}.js").is_file()
+                     or (js_root / f"{name}.{digest}.js").stat().st_size == 0]
+          print(f"LIVE_RUNTIME_CHUNK_COUNT={len(expected)}")
+          print(f"MISSING_CHUNK_COUNT={len(missing)}")
+          for filename in missing:
+              print("MISSING_JS=" + filename)
+          PY
+          REMOTE
+          grep '^MISSING_JS=' "$RUNNER_TEMP/remote-chunk-audit.txt" | cut -d= -f2- > "$RUNNER_TEMP/missing-chunks.txt" || true
+          echo "MISSING_CHUNKS=$(wc -l < "$RUNNER_TEMP/missing-chunks.txt" | tr -d ' ')"
+
+      - name: Stage only exact-hash assets present in OM City
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/om-city-assets"
+          found=0
+          absent=0
+          while IFS= read -r filename; do
+            [[ -n "$filename" ]] || continue
+            if [[ ! "$filename" =~ ^[A-Za-z0-9._-]+\.js$ ]]; then
+              echo "REJECTED_UNSAFE_FILENAME=$filename"
+              exit 2
+            fi
+            source="OM City/wwwroot/ui/js/$filename"
+            if [[ -s "$source" ]]; then
+              cp -- "$source" "$RUNNER_TEMP/om-city-assets/$filename"
+              found=$((found + 1))
+            else
+              echo "NO_IMPORTED_MATCH=$filename"
+              absent=$((absent + 1))
+            fi
+          done < "$RUNNER_TEMP/missing-chunks.txt"
+          echo "MATCHING_IMPORTED_ASSETS=$found"
+          echo "MISSING_FROM_IMPORTED_ASSETS=$absent"
+          if [[ "$found" -eq 0 ]]; then
+            if [[ ! -s "$RUNNER_TEMP/missing-chunks.txt" ]]; then
+              echo "ALL_REFERENCED_CHUNKS_ALREADY_PRESENT=1"
+              exit 0
+            fi
+            echo "NO_RECOVERABLE_CHUNKS_IN_OM_CITY=1"
+            exit 2
+          fi
+          tar -czf "$RUNNER_TEMP/om-city-missing-assets.tar.gz" -C "$RUNNER_TEMP/om-city-assets" .
+
+      - name: Install missing files without overwriting live assets
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -s "$RUNNER_TEMP/om-city-missing-assets.tar.gz" ]]; then
+            echo "NO_DEPLOYMENT_NEEDED=1"
+            exit 0
+          fi
+          scp -i "$RUNNER_TEMP/vamcity-om-city-key" -P "$DEPLOY_PORT" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$RUNNER_TEMP/om-city-missing-assets.tar.gz" \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/vamcity-om-city-missing-assets.tar.gz"
+          ssh -i "$RUNNER_TEMP/vamcity-om-city-key" -p "$DEPLOY_PORT" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
+          test -n "$APP_ROOT"
+          JS_ROOT="$APP_ROOT/wwwroot/js"
+          TMP="$(mktemp -d)"
+          trap 'rm -rf "$TMP" /tmp/vamcity-om-city-missing-assets.tar.gz' EXIT
+          tar -xzf /tmp/vamcity-om-city-missing-assets.tar.gz -C "$TMP"
+          installed=0
+          skipped=0
+          while IFS= read -r -d '' source; do
+            filename="$(basename "$source")"
+            if [[ ! "$filename" =~ ^[A-Za-z0-9._-]+\.js$ ]]; then
+              echo "REJECTED_UNSAFE_FILENAME=$filename"
+              exit 2
+            fi
+            target="$JS_ROOT/$filename"
+            if [[ -s "$target" ]]; then
+              echo "SKIPPED_ALREADY_PRESENT=$filename"
+              skipped=$((skipped + 1))
+              continue
+            fi
+            install -m 0644 "$source" "$TMP/.$filename.tmp"
+            mv "$TMP/.$filename.tmp" "$target"
+            echo "RECOVERED_JS=$filename BYTES=$(wc -c < "$target")"
+            installed=$((installed + 1))
+          done < <(find "$TMP" -type f -name '*.js' -print0)
+          echo "INSTALLED_COUNT=$installed"
+          echo "SKIPPED_COUNT=$skipped"
+          echo "DATABASE_TOUCHED=0"
+          echo "APP_CONTAINER_RESTARTED=0"
+          REMOTE
+
+      - name: Verify live routes and remaining missing chunks
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$RUNNER_TEMP/vamcity-om-city-key" -p "$DEPLOY_PORT" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
+          APP_JS="$APP_ROOT/wwwroot/js/app.e76ab352.js"
+          python3 - "$APP_JS" "$APP_ROOT/wwwroot/js" <<'PY'
+          import pathlib, re, sys
+          app = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
+          root = pathlib.Path(sys.argv[2])
+          expected = {}
+          for name, digest in re.findall(r'"((?:views|layout|default|chunk)-[^"]+)":"([a-f0-9]{8})"', app):
+              expected.setdefault(name, digest)
+          missing = [f"{n}.{d}.js" for n,d in expected.items() if not (root/f"{n}.{d}.js").is_file() or (root/f"{n}.{d}.js").stat().st_size == 0]
+          print(f"POST_RECOVERY_MISSING_CHUNK_COUNT={len(missing)}")
+          for f in missing[:80]: print("STILL_MISSING_JS="+f)
+          if missing: raise SystemExit(1)
+          PY
+          for route in /admin/userLoanRequests/ /admin/loans/; do
+            status="$(curl -k -sS -o /dev/null --max-time 15 -w '%{http_code}' "https://roofixo.ir$route" || true)"
+            echo "LIVE_ROUTE_HTTP=$status PATH=$route"
+          done
+          echo "DATABASE_TOUCHED=0"
+          echo "APP_CONTAINER_RESTARTED=0"
+          REMOTE
