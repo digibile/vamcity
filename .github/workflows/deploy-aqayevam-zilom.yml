@@ -128,7 +128,7 @@ jobs:
                 LOG_N=$((LOG_N+1))
                 TARGET="/var/opt/mssql/data/aqayevam_live_log$LOG_N.ldf"
               fi
-              if [ -z "$MOVE_ARGS" ]; then MOVE_ARGS="MOVE N'$SAFE_LOGICAL' TO N'$TARGET"; else MOVE_ARGS="$MOVE_ARGS, MOVE N'$SAFE_LOGICAL' TO N'$TARGET"; fi
+              if [ -z "$MOVE_ARGS" ]; then MOVE_ARGS="MOVE N'$SAFE_LOGICAL' TO N'$TARGET'"; else MOVE_ARGS="$MOVE_ARGS, MOVE N'$SAFE_LOGICAL' TO N'$TARGET'"; fi
             done <<< "$FILELIST"
             RESTORE_SQL="RESTORE DATABASE [$DB_NAME] FROM DISK = N'/var/opt/mssql/backup/aqayevam-source.bak' WITH $MOVE_ARGS, RECOVERY, STATS=5"
             docker exec "$SQL_CONTAINER" "$SQLCMD" -S localhost -U sa -P "$SQL_PASSWORD" -C -b -Q "$RESTORE_SQL"
