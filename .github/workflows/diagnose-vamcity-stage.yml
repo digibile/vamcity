@@ -153,3 +153,5 @@ jobs:
           fi
           echo "=== END DIAGNOSTICS ==="
           REMOTE
+
+# Re-run read-only diagnostics after OM City asset comparison on 2026-10-18.
