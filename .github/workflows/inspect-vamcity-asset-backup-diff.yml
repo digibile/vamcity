@@ -1,0 +1,70 @@
+name: Inspect backed-up VamCity asset differences
+run-name: Check what changed in the two restored dashboard assets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-vamcity-asset-backup-diff.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect backup versus restored public assets
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          PORT="${DEPLOY_PORT:-22}"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/vamcity-inspect-key"
+          chmod 600 "$RUNNER_TEMP/vamcity-inspect-key"
+          ssh-keyscan -T 10 -p "$PORT" -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          chmod 600 "$HOME/.ssh/known_hosts"
+          ssh -i "$RUNNER_TEMP/vamcity-inspect-key" -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
+          BACKUP=/home/roofixo/domains/roofixo.ir/vamcity-app/backups/om-city-asset-integrity-20261018T012732Z
+          python3 - "$APP_ROOT" "$BACKUP" <<'PY'
+          import pathlib, hashlib, sys
+          app_root, backup = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+          targets = [
+              ("js", "app.e76ab352.js", ["Response.data is undefined", "getUserClaim", "redirectToLogin", "auth/logout", "admin/userLoanRequests"]),
+              ("js", "views-admin-UserLoanRequests.8e3264fe.js", ["mounted:function", "fetchLoanRequestStatus", "loadData:function", "this.loadData()"]),
+          ]
+          for kind, name, terms in targets:
+              old = backup / kind / name
+              new = app_root / "wwwroot" / kind / name
+              print(f"ASSET={kind}/{name}")
+              for label, p in (("BACKUP", old), ("RESTORED", new)):
+                  if not p.is_file():
+                      print(f"{label}_MISSING=1")
+                      continue
+                  raw = p.read_bytes()
+                  text = raw.decode("utf-8", errors="replace")
+                  print(f"{label}_SIZE={len(raw)} {label}_SHA256={hashlib.sha256(raw).hexdigest()}")
+                  for term in terms:
+                      idx = text.find(term)
+                      if idx < 0:
+                          print(f"{label}_{term.replace(' ','_')}_ABSENT=1")
+                      else:
+                          print(f"{label}_{term.replace(' ','_')}_COUNT={text.count(term)}")
+                          if name.startswith("views-admin-") and term == "mounted:function":
+                              print(f"{label}_MOUNTED_CONTEXT={text[idx:idx+260]}")
+                          elif term in ("Response.data is undefined","getUserClaim","redirectToLogin","auth/logout"):
+                              print(f"{label}_CONTEXT_{term.replace(' ','_')}={text[max(0,idx-100):idx+220]}")
+          PY
+          REMOTE
