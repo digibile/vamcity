@@ -50,7 +50,7 @@ jobs:
           SRC=/home/roofixo/domains/zilom.ir/public_html
           test -d "$SRC"
           echo "Source directory exists: $SRC"
-          sudo find "$SRC" -type f -printf '%s\t%P\n' 2>/dev/null | sort -nr | head -80
+          sudo find "$SRC" -type f -printf '%s\t%P\n' 2>/dev/null | sort -nr | sed -n '1,80p'
           REMOTE
           cat /tmp/remote-inventory.txt
 
