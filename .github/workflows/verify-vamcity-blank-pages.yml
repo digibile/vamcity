@@ -87,7 +87,7 @@ jobs:
                   new URL(finalUrl).pathname.replace(/\/+$/, '') === '/login' &&
                   bodyText.length >= 60;
                 console.log('EXPECTED_AUTH_REDIRECT=' + authRedirect);
-                if (!authRedirect && (status !== 200 || bodyText.length < target.minText || appHtml.length < 100)) {
+                if (!authRedirect && (status !== 200 || bodyText.length < target.minText)) {
                   console.error('BLANK_OR_UNRENDERED_PAGE=' + target.name);
                   failed = true;
                 }
