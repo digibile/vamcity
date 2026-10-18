@@ -190,3 +190,5 @@ jobs:
           REMOTE
 
 # Re-run read-only diagnostics after OM City asset comparison on 2026-10-18.
+
+# Final read-only verification after admin tenant binding and bundle integrity repair, 2026-10-18.
