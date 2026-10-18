@@ -43,10 +43,10 @@ jobs:
 
       - name: Configure SSH
         env:
-          DEPLOY_HOST: \${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: \${{ secrets.DEPLOY_USER }}
-          DEPLOY_PORT: \${{ secrets.DEPLOY_PORT }}
-          DEPLOY_SSH_KEY: \${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           set -euo pipefail
           : "$DEPLOY_HOST"
@@ -63,7 +63,7 @@ jobs:
 
       - name: Copy release
         env:
-          SHA: \${{ github.sha }}
+          SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           scp -i ~/.ssh/aqayevam_key -P "$DEPLOY_PORT_EFFECTIVE" -o BatchMode=yes -o StrictHostKeyChecking=yes \
@@ -72,7 +72,7 @@ jobs:
 
       - name: Restore separate database and route Zilom safely
         env:
-          SHA: \${{ github.sha }}
+          SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           ssh -i ~/.ssh/aqayevam_key -p "$DEPLOY_PORT_EFFECTIVE" -o BatchMode=yes -o StrictHostKeyChecking=yes \
