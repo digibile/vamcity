@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: vamcity-om-city-chunk-recovery
+  group: vamcity-om-city-chunk-recovery-fast
   cancel-in-progress: false
 
 jobs:
@@ -20,9 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout imported files
-        uses: actions/checkout@v4
-
       - name: Configure existing server SSH access
         shell: bash
         env:
@@ -96,11 +93,12 @@ jobs:
               echo "REJECTED_UNSAFE_FILENAME=$filename"
               exit 2
             fi
-            source="OM City/wwwroot/ui/js/$filename"
-            if [[ -s "$source" ]]; then
-              cp -- "$source" "$RUNNER_TEMP/om-city-assets/$filename"
+            source_url="https://raw.githubusercontent.com/digibile/vamcity/main/OM%20City/wwwroot/ui/js/$filename"
+            target="$RUNNER_TEMP/om-city-assets/$filename"
+            if curl --fail --silent --show-error --location --retry 2 --max-time 45 "$source_url" -o "$target" && [[ -s "$target" ]]; then
               found=$((found + 1))
             else
+              rm -f "$target"
               echo "NO_IMPORTED_MATCH=$filename"
               absent=$((absent + 1))
             fi
