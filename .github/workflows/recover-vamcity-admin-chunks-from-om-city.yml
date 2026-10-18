@@ -163,7 +163,7 @@ jobs:
           set -euo pipefail
           APP_ROOT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' vamcity-stage-app)"
           python3 - "$APP_ROOT/wwwroot/js/app.e76ab352.js" "$APP_ROOT/wwwroot/js" "$APP_ROOT/wwwroot/css" <<'PY'
-          import pathlib, re, sys
+          import json, pathlib, re, sys
           app = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
           js_root, css_root = pathlib.Path(sys.argv[2]), pathlib.Path(sys.argv[3])
           hashes = {}
