@@ -67,12 +67,21 @@ jobs:
           echo "PUBLIC_BODY_BYTES=$(wc -c < "$TMP/public.html")"
           echo "PUBLIC_BODY_PREFIX=$(head -c 500 "$TMP/public.html" | tr "\n" " " | cut -c1-500)"
           echo "=== REFERENCE PLANS ROUTE ==="
-          PLANS_STATUS="$(curl -k -sS -o "$TMP/plans.html" --max-time 15 -w '%{http_code}' https://roofixo.ir/cl/plans/)"
-          echo "VAMCITY_PLANS_HTTP=$PLANS_STATUS"
+          PLANS_STATUS="$(curl -k -sS -D "$TMP/plans.headers" -o "$TMP/plans.html" --max-time 15 -w '%{http_code}' https://roofixo.ir/cl/plans/)"
+          PLANS_LOCATION="$(awk 'tolower($1)=="location:" {print $2}' "$TMP/plans.headers" | tail -1 | tr -d '\r')"
+          echo "VAMCITY_PLANS_HTTP=$PLANS_STATUS LOCATION=$PLANS_LOCATION"
           echo "VAMCITY_PLANS_BODY_BYTES=$(wc -c < "$TMP/plans.html")"
-          echo "VAMCITY_PLANS_TITLE=$(grep -oE '<title>[^<]*</title>' "$TMP/plans.html" | head -1 || true)"
-          test "$PLANS_STATUS" = 200
-          grep -q 'id="app"' "$TMP/plans.html"
+          if [ "$PLANS_STATUS" = 302 ]; then
+            case "$PLANS_LOCATION" in /plans.html|https://roofixo.ir/plans.html) ;; *) echo "UNEXPECTED_PLANS_REDIRECT=$PLANS_LOCATION"; exit 1 ;; esac
+          elif [ "$PLANS_STATUS" = 200 ]; then
+            grep -q 'id="app"' "$TMP/plans.html"
+          else
+            echo "VAMCITY_PLANS_HTTP_FAILED=$PLANS_STATUS"; exit 1
+          fi
+          PLANS_PAGE_STATUS="$(curl -k -sS -o "$TMP/plans-page.html" --max-time 15 -w '%{http_code}' https://roofixo.ir/plans.html)"
+          echo "VAMCITY_PLANS_HTML_HTTP=$PLANS_PAGE_STATUS"
+          test "$PLANS_PAGE_STATUS" = 200
+          grep -q 'طرح‌های تسهیلات' "$TMP/plans-page.html"
           echo "=== PAGE TITLE ==="
           TITLE="$(grep -oE '<title>[^<]*</title>' "$TMP/home.html" | head -1 || true)"
           echo "LIVE_PAGE_TITLE=$TITLE"
@@ -95,8 +104,10 @@ jobs:
           echo "=== ADMIN SPA ROUTES AND REQUIRED LAZY CHUNKS ==="
           for ROUTE in /admin/loans/ /admin/userLoanRequests/ /login/; do
             BODY="$TMP/route-$(echo "$ROUTE" | tr '/ ' '__').html"
-            CODE="$(curl -k -sS --max-time 15 -o "$BODY" -w '%{http_code}' "https://roofixo.ir$ROUTE" || true)"
-            echo "ADMIN_ROUTE_HTTP=$CODE PATH=$ROUTE BYTES=$(wc -c < "$BODY" 2>/dev/null || echo 0)"
+            CODE="$(curl -k -sS -L --max-time 20 -o "$BODY" -w '%{http_code}' "https://roofixo.ir$ROUTE" || true)"
+            BUNDLE="$(grep -Eo '/js/app\\.e76ab352\\.js[^"]*' "$BODY" | head -1 || true)"
+            echo "ADMIN_ROUTE_HTTP=$CODE PATH=$ROUTE BYTES=$(wc -c < "$BODY" 2>/dev/null || echo 0) APP_BUNDLE=$BUNDLE"
+            if [ "$CODE" != 200 ] || [ -z "$BUNDLE" ]; then echo "ADMIN_ROUTE_RENDER_FAILED=$ROUTE"; exit 1; fi
           done
           for ASSET in /js/app.e76ab352.js?fix=20261018-3 /js/views-admin-Dashboard.7e68aa0f.js /js/views-admin-Loans.89862ce8.js /js/views-admin-UserLoanRequests.8e3264fe.js /js/views-admin-Users.e167c344.js /js/views-admin-ManageLoan.0ac19cc6.js; do
             CODE="$(curl -k -sS --max-time 15 -o /dev/null -w '%{http_code}' "https://roofixo.ir$ASSET" || true)"
