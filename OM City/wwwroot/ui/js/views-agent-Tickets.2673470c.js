@@ -1,2 +1,0 @@
-(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["views-agent-Tickets"],{3849:function(e,n,t){"use strict";t.r(n);var s=function(){var e=this,n=e.$createElement,t=e._self._c||n;return t("Tickets",{attrs:{userType:"agent"}})},i=[],r=(t("d3b7"),{name:"AgentTicketView",components:{Tickets:function(){return Promise.resolve().then(t.bind(null,"3078"))}},data:function(){return{}}}),c=r,u=t("2877"),a=Object(u["a"])(c,s,i,!1,null,null,null);n["default"]=a.exports}}]);
-//# sourceMappingURL=views-agent-Tickets.2673470c.js.map

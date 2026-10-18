@@ -1,2 +1,0 @@
-(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["views-admin-InquiryManagement"],{7912:function(n,e,a){"use strict";a.r(e);var t=function(){var n=this,e=n.$createElement,a=n._self._c||e;return a("InquiryListContainer",{attrs:{area:"admin"}})},i=[],r=a("9a2a"),u={name:"InquiryManagementView",components:{InquiryListContainer:r["default"]},data:function(){return{}}},s=u,o=a("2877"),c=Object(o["a"])(s,t,i,!1,null,null,null);e["default"]=c.exports}}]);
-//# sourceMappingURL=views-admin-InquiryManagement.4b085fd2.js.map

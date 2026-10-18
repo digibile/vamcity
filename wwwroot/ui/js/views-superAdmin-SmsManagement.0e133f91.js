@@ -1,2 +1,0 @@
-(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["views-superAdmin-SmsManagement"],{a4a8:function(n,e,t){"use strict";t.r(e);var a=function(){var n=this,e=n.$createElement,t=n._self._c||e;return t("SMSListContainer",{attrs:{area:"superadmin"}})},s=[],r=t("917f"),i={name:"SmsManagementView",components:{SMSListContainer:r["default"]},data:function(){return{}}},u=i,o=t("2877"),c=Object(o["a"])(u,a,s,!1,null,null,null);e["default"]=c.exports}}]);
-//# sourceMappingURL=views-superAdmin-SmsManagement.0e133f91.js.map

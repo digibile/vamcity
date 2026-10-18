@@ -1,2 +1,0 @@
-(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["views-superAdmin-InquiryManagement"],{"84fe":function(n,e,t){"use strict";t.r(e);var a=function(){var n=this,e=n.$createElement,t=n._self._c||e;return t("InquiryListContainer",{attrs:{area:"superadmin"}})},r=[],i=t("9a2a"),u={name:"InquiryManagementView",components:{InquiryListContainer:i["default"]},data:function(){return{}}},s=u,o=t("2877"),c=Object(o["a"])(s,a,r,!1,null,null,null);e["default"]=c.exports}}]);
-//# sourceMappingURL=views-superAdmin-InquiryManagement.931f7147.js.map
