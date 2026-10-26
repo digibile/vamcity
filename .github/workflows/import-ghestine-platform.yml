@@ -1,0 +1,61 @@
+name: Import Ghestine snapshot
+
+on:
+  push:
+    branches:
+      - import/ghestine-platform-2026-10-26
+    paths:
+      - .github/workflows/import-ghestine-platform.yml
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout import branch
+        uses: actions/checkout@v4
+        with:
+          ref: import/ghestine-platform-2026-10-26
+          fetch-depth: 0
+
+      - name: Download and inspect server archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST="ghestine-platform"
+          mkdir -p "$DEST/source"
+          curl --fail --location --silent --show-error --retry 2 \
+            "https://digibail.ir/ghestine-all3.zip" \
+            --output "$DEST/ghestine-all3.zip"
+          unzip -t "$DEST/ghestine-all3.zip"
+          unzip -oq "$DEST/ghestine-all3.zip" -d "$DEST/source"
+          if grep -RIlE --binary-files=without-match \
+            '(BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY|gh[pousr]_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|client_secret[[:space:]]*[:=]|password[[:space:]]*=[[:space:]]*["'"'"'][^"'"'"']{6,})' \
+            "$DEST/source" --exclude='inspect-auth.sh' --exclude='*.md' >/tmp/ghestine-sensitive-files.txt; then
+            echo "Potential sensitive content detected in these paths:"
+            cat /tmp/ghestine-sensitive-files.txt
+            exit 1
+          fi
+          cat > "$DEST/IMPORT-INFO.md" <<'EOF'
+          # Ghestine platform snapshot
+
+          Imported from the public archive served at https://digibail.ir/ghestine-all3.zip.
+          The original archive is retained as ghestine-all3.zip; extracted files are under source/.
+          This is a source snapshot only. It does not deploy or modify the production website.
+          EOF
+
+      - name: Commit snapshot to this branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ghestine-platform/ghestine-all3.zip ghestine-platform/source ghestine-platform/IMPORT-INFO.md
+          if git diff --cached --quiet; then
+            echo "No snapshot changes to commit."
+            exit 0
+          fi
+          git commit -m "Import Ghestine platform snapshot from server"
+          git push origin HEAD:import/ghestine-platform-2026-10-26
