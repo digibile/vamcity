@@ -1,9 +1,7 @@
 name: Import Ghestine snapshot
 
 on:
-  push:
-    branches:
-      - import/ghestine-platform-2026-10-26
+  workflow_dispatch:
 
 permissions:
   contents: write
