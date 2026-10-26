@@ -1,12 +1,6 @@
 name: Deploy DigiBail Pay to production
 
 on:
-  push:
-    branches:
-      - import/ghestine-platform-2026-10-26
-    paths:
-      - 'ghestine-platform/source/all3/web/**'
-      - '.github/workflows/deploy-digibail-pay.yml'
   workflow_dispatch:
     inputs:
       confirm_production_deploy:
@@ -24,7 +18,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event_name == 'push' || inputs.confirm_production_deploy == true
+    if: inputs.confirm_production_deploy == true
     runs-on: ubuntu-latest
     environment: production
     steps:
