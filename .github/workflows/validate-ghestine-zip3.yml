@@ -1,4 +1,4 @@
-name: Validate Ghestine ZIP 3
+name: Validate DigiBail Pay release
 
 on:
   push:
