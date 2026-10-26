@@ -1,0 +1,71 @@
+name: Inspect DigiBail Pay backend source location
+
+on:
+  push:
+    branches:
+      - import/ghestine-platform-2026-10-26
+    paths:
+      - '.github/workflows/inspect-digibail-backend.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Configure SSH safely
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DIGIBAIL_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DIGIBAIL_SSH_KNOWN_HOSTS }}
+          SSH_HOST: ${{ secrets.DIGIBAIL_SSH_HOST }}
+          SSH_USER: ${{ secrets.DIGIBAIL_SSH_USER }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_PRIVATE_KEY" || { echo "::error::Missing DIGIBAIL_SSH_PRIVATE_KEY."; exit 1; }
+          test -n "$SSH_KNOWN_HOSTS" || { echo "::error::Missing DIGIBAIL_SSH_KNOWN_HOSTS."; exit 1; }
+          test -n "$SSH_HOST" || { echo "::error::Missing DIGIBAIL_SSH_HOST."; exit 1; }
+          test -n "$SSH_USER" || { echo "::error::Missing DIGIBAIL_SSH_USER."; exit 1; }
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          printf 'Host *\n  StrictHostKeyChecking yes\n  IdentitiesOnly yes\n  IdentityFile ~/.ssh/id_ed25519\n' > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          printf 'SSH_HOST=%s\nSSH_USER=%s\n' "$SSH_HOST" "$SSH_USER" >> "$GITHUB_ENV"
+
+      - name: Locate source and report deployment layout (read-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh "$SSH_USER@$SSH_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          echo "=== host ==="
+          hostname
+          echo "=== matching running containers ==="
+          if command -v docker >/dev/null 2>&1; then
+            docker ps --format '{{.Names}} | {{.Image}} | {{.Ports}}' | grep -E 'public_html-web|digibail|LoanSystemAvizhe' || true
+            for c in public_html-web-1; do
+              if docker inspect "$c" >/dev/null 2>&1; then
+                echo "--- $c working directory and mounts ---"
+                docker inspect "$c" --format 'workdir={{.Config.WorkingDir}} entrypoint={{json .Config.Entrypoint}} mounts={{json .Mounts}}'
+                echo "--- source/build project files inside $c ---"
+                docker exec "$c" sh -lc 'find /app -maxdepth 6 -type f \( -name "*.sln" -o -name "*.csproj" -o -name "Program.cs" \) -print 2>/dev/null | head -80' || true
+              fi
+            done
+          fi
+          echo "=== candidate project files on host (paths only) ==="
+          for base in /home/digibail /opt /srv; do
+            [ -d "$base" ] || continue
+            find "$base" -maxdepth 7 -type f \( -name '*.sln' -o -name '*.csproj' \) -print 2>/dev/null | head -120
+          done
+          echo "=== relevant deployment metadata ==="
+          for f in /home/digibail/domains/digibail.ir/public_html/index.html /home/digibail/domains/digibail.ir/public_html/.htaccess; do
+            if [ -f "$f" ]; then stat -c '%n | bytes=%s | modified=%y' "$f"; fi
+          done
+          echo "=== completed: read-only inspection; no files changed ==="
+          REMOTE
