@@ -7,6 +7,7 @@ on:
     paths:
       - 'ghestine-platform/**'
       - '.github/workflows/validate-ghestine-zip3.yml'
+      - '.github/workflows/deploy-digibail-pay.yml'
   workflow_dispatch:
 
 permissions:
