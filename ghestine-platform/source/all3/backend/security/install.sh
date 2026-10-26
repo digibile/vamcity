@@ -5,8 +5,16 @@ set -e
 ROOT="${1:?مسیر واقعی پروژه را به‌عنوان آرگومان اول بدهید؛ مثال: bash "$0" /home/USER/domains/DOMAIN/PROJECT}"
 HERE="$(cd "$(dirname "$0")" && pwd)"; SRC="$ROOT/src"
 [ -d "$SRC" ] || { echo "پوشه src پیدا نشد: $SRC"; exit 1; }
+# پیش‌بررسی کامل پیش از هر تغییر؛ این نصب‌کننده فقط برای ساختار Ghestine.API است.
+# اپ زنده digibail.ir فعلاً LoanSystemAvizhe.Site.dll است و این نصب‌کننده را نباید روی
+# public_html یا کانتینر کامپایل‌شده اجرا کرد.
+for required in "$SRC/Ghestine.API/Program.cs" "$SRC/Ghestine.Domain" "$SRC/Ghestine.API"; do
+  [ -e "$required" ] || { echo "ساختار ناسازگار: فایل/پوشه لازم نیست: $required"; echo "هیچ فایلی تغییر نکرده است."; exit 2; }
+done
+DBF=$(grep -rl "class AppDbContext" "$SRC" --include=*.cs | head -1); [ -n "$DBF" ] || { echo "AppDbContext پیدا نشد؛ هیچ فایلی تغییر نکرده است."; exit 2; }
+BE=$(grep -rl "class BaseEntity" "$SRC" --include=*.cs | head -1); [ -n "$BE" ] || { echo "BaseEntity پیدا نشد؛ هیچ فایلی تغییر نکرده است."; exit 2; }
+grep -q "Guid Id" "$BE" || { echo "BaseEntity کلید Guid ندارد؛ هیچ فایلی تغییر نکرده است."; exit 2; }
 B="$ROOT/.sec-backup-$(date +%Y%m%d%H%M%S)"; mkdir -p "$B"
-DBF=$(grep -rl "class AppDbContext" "$SRC" --include=*.cs | head -1); [ -n "$DBF" ] || { echo "AppDbContext پیدا نشد"; exit 1; }
 cp "$DBF" "$B/AppDbContext.cs.bak"; cp "$SRC/Ghestine.API/Program.cs" "$B/Program.cs.bak"; echo "بکاپ: $B"
 BE=$(grep -rl "class BaseEntity" "$SRC" --include=*.cs | head -1); [ -n "$BE" ] || { echo "کلاس BaseEntity پیدا نشد؛ موجودیت‌های جدید به آن وابسته‌اند. نتیجه را برای من بفرستید."; exit 1; }
 grep -q "Guid Id" "$BE" || { echo "BaseEntity کلید Guid ندارد ($BE)؛ نتیجه را برای من بفرستید."; exit 1; }
