@@ -59,6 +59,8 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+          printf 'Host *\n  StrictHostKeyChecking yes\n  IdentitiesOnly yes\n  IdentityFile ~/.ssh/id_ed25519\n' > ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
       - name: Check deployment settings
         shell: bash
@@ -93,7 +95,7 @@ jobs:
             ghestine-platform/source/all3/web/admin.html \
             "$SSH_USER@$SSH_HOST:$stage/"
 
-      - name: Backup and atomically install static routes
+      - name: Backup and install static routes
         id: install
         shell: bash
         env:
@@ -138,6 +140,7 @@ jobs:
         env:
           SSH_HOST: ${{ secrets.DIGIBAIL_SSH_HOST }}
           SSH_USER: ${{ secrets.DIGIBAIL_SSH_USER }}
+          WEB_ROOT: ${{ secrets.DIGIBAIL_WEB_ROOT }}
         run: |
           set -euo pipefail
           ssh "$SSH_USER@$SSH_HOST" "bash -s -- '$WEB_ROOT' '$GITHUB_SHA'" <<'REMOTE'
