@@ -6,6 +6,7 @@ on:
       - import/ghestine-platform-2026-10-26
     paths:
       - '.github/workflows/inspect-digibail-backend.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
