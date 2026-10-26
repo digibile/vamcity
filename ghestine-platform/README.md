@@ -1,28 +1,40 @@
-# Ghestine Platform — Snapshot from digibail.ir
+# قسطینه | بسته واردشده از فایل ZIP شماره ۳
 
-This directory is reserved for a separate snapshot of the Ghestine platform currently served from `digibail.ir`.
+این شاخه برای مرتب‌سازی و بررسی بسته‌ی قسطینه است. فایل مبنا در مخزن:
 
-## Scope
+- آرشیو اصلی: `ghestine-platform/ghestine-all3.zip`
+- نسخه‌ی استخراج‌شده برای بازبینی: `ghestine-platform/source/all3/`
+- راهنمای محتوای بسته: `ghestine-platform/source/all3/README.txt`
 
-The server inspection identified these candidate files/pages:
+## ساختار
 
-- `/home/digibail/domains/digibail.ir/public_html/index.html` — main Ghestine page
-- `/home/digibail/domains/digibail.ir/public_html/admin-preview/index.html` — admin preview
-- `/home/digibail/domains/digibail.ir/public_html/beta/index.html` — beta-plan management page
-- `/home/digibail/domains/digibail.ir/stats/index.html` — stats page (outside public_html)
+- `source/all3/web/`: قالب‌های وب
+- `source/all3/preview/`: پیش‌نمایش‌های مرورگری
+- `source/all3/backend/tenancy/`: فایل‌های ماژول چندمستاجری و نصب‌کننده
+- `source/all3/backend/core/`: فایل‌های هسته، پنل و نصب‌کننده
+- `source/all3/backend/security/`: ورود، ثبت‌نام، OTP و آزمون‌های امنیتی
+- `source/all3/beta/`: ابزار بررسی بخش بتا
+- `source/all3/install-all.sh`: نصب‌کننده‌ی ترتیبی ماژول‌ها
+- `source/all3/server-run.sh`: هماهنگ‌کننده‌ی نصب و آزمون روی سرور
 
-Potential related archives were also seen in `public_html`: `ghestine-beta-full.zip`, `ghestine-core _1_.zip`, and `ghestine-full _1_.zip`. Their contents have **not** yet been inspected or imported.
+## بررسی خودکار
 
-## Important status
+با هر تغییر در این پوشه، گردش‌کار `Validate Ghestine ZIP 3` این موارد را بررسی می‌کند:
 
-This README is a staging marker only. It does **not** mean the live platform source has already been transferred. The server files still need to be copied into this directory, reviewed, and checked for secrets before committing.
+1. سالم بودن آرشیو ZIP
+2. وجود فایل‌های کلیدی و استخراج‌شده
+3. صحت نحوی اسکریپت‌های Bash با `bash -n`
+4. قابل‌خواندن بودن فایل‌های HTML
+5. بررسی وجود فایل پروژه‌ی .NET برای تعیین امکان build
 
-## Safe import checklist
+## وضعیت واقعی
 
-1. Copy the live files into this directory without changing the running site.
-2. Inspect archive contents and compare them with the live pages to determine which source is authoritative.
-3. Exclude secrets, credentials, private keys, production environment files, database dumps, user data, and uploaded customer documents.
-4. Add a short inventory of the imported files and how to run/preview them.
-5. Commit the reviewed snapshot on a dedicated branch before any deployment work.
+- انتقال آرشیو و فایل‌های استخراج‌شده به GitHub انجام شده است.
+- موفقیت گردش‌کار انتقال، فقط انتقال فایل‌ها را تأیید می‌کند؛ به معنی build یا استقرار سایت نیست.
+- در این بسته فایل پروژه‌ی کامل `.NET` با `.csproj` و فایل‌های solution موجود نیست؛ بنابراین build واقعی بک‌اند از روی این پوشه به‌تنهایی ممکن نیست.
+- نصب‌کننده‌ها تغییرات سرور و پایگاه داده انجام می‌دهند. آن‌ها را بدون نسخه‌ی پشتیبان و بررسی مسیر پروژه اجرا نکنید.
+- هیچ رمز، کلید پیامک، مقدار OTP pepper یا اطلاعات واقعی کاربران نباید در GitHub ذخیره شود.
 
-No production deployment or server-side changes are performed by this directory.
+## استقرار
+
+استقرار تولیدی تا زمان تأیید پروژه‌ی اصلی، build موفق، مایگریشن کنترل‌شده و آزمون endpointها تأییدشده محسوب نمی‌شود. `server-run.sh` تعاملی است و برای اجرا در CI مناسب نیست. اجرای آن روی سرور باید با دسترسی کنترل‌شده و پس از بکاپ انجام شود.
