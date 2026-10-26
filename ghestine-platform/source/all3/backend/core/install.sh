@@ -2,7 +2,7 @@
 # نصب ماژول هسته‌ی قسطینه: محصولات وام، کارت مجازی، درگاه داخلی (پرداخت با کارت)، زونکن مدارک
 # استفاده: bash install.sh [مسیر_پروژه]
 set -e
-ROOT="${1:-/home/ghestine/domains/ghestine.ir/Ghestine}"
+ROOT="${1:?مسیر واقعی پروژه را به‌عنوان آرگومان اول بدهید؛ مثال: bash "$0" /home/USER/domains/DOMAIN/PROJECT}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/src"
 [ -d "$SRC" ] || { echo "پوشه src پیدا نشد: $SRC"; exit 1; }
