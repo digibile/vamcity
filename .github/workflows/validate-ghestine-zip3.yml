@@ -73,6 +73,29 @@ jobs:
           print(f"Checked {len(files)} HTML files.")
           PY
 
+      - name: Verify DigiBail Pay branding
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'دیجی‌بایل پی' ghestine-platform/source/all3/web/template-v3.html
+          echo "The packaged homepage is branded DigiBail Pay."
+
+      - name: Probe production website
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error --max-time 30 \
+            https://digibail.ir/ --output /tmp/digibail-live.html
+          test -s /tmp/digibail-live.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("/tmp/digibail-live.html").read_text(encoding="utf-8", errors="replace")
+          title = re.search(r"<title[^>]*>(.*?)</title>", html, re.I | re.S)
+          print("Production HTTP response received.")
+          print("Current live title:", re.sub(r"\\s+", " ", title.group(1)).strip() if title else "(no title tag)")
+          PY
+
       - name: Report .NET build availability
         shell: bash
         run: |
