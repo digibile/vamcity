@@ -1,7 +1,7 @@
 #!/bin/bash
 # اجرای مرحله‌به‌مرحله‌ی نصب و بررسی روی سرور. همه‌ی خروجی‌ها در یک گزارش جمع می‌شود (بدون رمز و کلید).
 # استفاده:  bash server-run.sh [مسیر_پروژه]
-ROOT="${1:-/home/ghestine/domains/ghestine.ir/Ghestine}"; H="$(cd "$(dirname "$0")" && pwd)"; R="$H/report-$(date +%Y%m%d-%H%M%S).txt"
+ROOT="${1:?مسیر واقعی پروژه را به‌عنوان آرگومان اول بدهید؛ مثال: bash "$0" /home/USER/domains/DOMAIN/PROJECT}"; H="$(cd "$(dirname "$0")" && pwd)"; R="$H/report-$(date +%Y%m%d-%H%M%S).txt"
 ask(){ read -r -p "$1 [y/N] " a; [ "$a" = y ] || [ "$a" = Y ]; }
 log(){ echo -e "\n##### $1" | tee -a "$R"; }
 run(){ "$@" 2>&1 | sed -E 's/(KEY|PEPPER|SECRET|PASSWORD|Password)=[^ ]+/\1=***/g' | tee -a "$R"; return "${PIPESTATUS[0]}"; }
