@@ -1,0 +1,83 @@
+name: Validate Ghestine ZIP 3
+
+on:
+  push:
+    branches:
+      - import/ghestine-platform-2026-10-26
+    paths:
+      - 'ghestine-platform/**'
+      - '.github/workflows/validate-ghestine-zip3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s ghestine-platform/ghestine-all3.zip
+          unzip -t ghestine-platform/ghestine-all3.zip
+
+      - name: Validate extracted structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in \
+            ghestine-platform/source/all3/README.txt \
+            ghestine-platform/source/all3/web/template-v3.html \
+            ghestine-platform/source/all3/install-all.sh \
+            ghestine-platform/source/all3/server-run.sh \
+            ghestine-platform/source/all3/backend/security/smoke-test.sh \
+            ghestine-platform/source/all3/backend/core/panel.html; do
+            test -s "$path" || { echo "Missing or empty: $path"; exit 1; }
+          done
+          echo "Extracted files present."
+
+      - name: Bash syntax checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          find ghestine-platform/source/all3 -type f -name '*.sh' -print0 |
+            while IFS= read -r -d '' file; do
+              echo "Checking $file"
+              bash -n "$file"
+            done
+
+      - name: HTML readability check
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class Checker(HTMLParser):
+              pass
+
+          files = list(Path("ghestine-platform/source/all3").rglob("*.html"))
+          if not files:
+              raise SystemExit("No HTML files found")
+          for path in files:
+              parser = Checker(convert_charrefs=True)
+              parser.feed(path.read_text(encoding="utf-8", errors="replace"))
+              parser.close()
+              print(f"Readable HTML: {path}")
+          print(f"Checked {len(files)} HTML files.")
+          PY
+
+      - name: Report .NET build availability
+        shell: bash
+        run: |
+          if find ghestine-platform/source/all3 -type f \( -name '*.sln' -o -name '*.csproj' \) | grep -q .; then
+            echo "Solution/project files found; build can be configured after checking SDK and dependencies."
+          else
+            echo "::warning::No .sln or .csproj exists in this imported ZIP snapshot. This workflow cannot claim the C# backend builds."
+          fi
