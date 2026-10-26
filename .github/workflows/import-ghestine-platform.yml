@@ -56,4 +56,6 @@ jobs:
             exit 0
           fi
           git commit -m "Import Ghestine platform snapshot from server"
+          git fetch origin import/ghestine-platform-2026-10-26
+          git rebase origin/import/ghestine-platform-2026-10-26
           git push origin HEAD:import/ghestine-platform-2026-10-26
