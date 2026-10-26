@@ -1,6 +1,12 @@
 name: Deploy DigiBail Pay to production
 
 on:
+  push:
+    branches:
+      - import/ghestine-platform-2026-10-26
+    paths:
+      - 'ghestine-platform/source/all3/web/**'
+      - '.github/workflows/deploy-digibail-pay.yml'
   workflow_dispatch:
     inputs:
       confirm_production_deploy:
@@ -18,7 +24,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: inputs.confirm_production_deploy == true
+    if: github.event_name == 'push' || inputs.confirm_production_deploy == true
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -43,6 +49,13 @@ jobs:
             200|401|403) echo "Auth API route exists; deployment may proceed." ;;
             *) echo "::error::Auth API preflight failed. Production files were not changed."; exit 1 ;;
           esac
+          for endpoint in /api/v1/Auth/login /api/v1/Auth/register /api/v1/Auth/verify-otp; do
+            code="$(curl --location --silent --show-error --max-time 15 -X POST -H 'Content-Type: application/json' -d '{}' -o /dev/null -w '%{http_code}' "https://digibail.ir$endpoint" || true)"
+            printf 'POST %-29s HTTP %s\n' "$endpoint" "${code:-000}"
+            case "$code" in
+              404|405|500|502|503|000) echo "::error::Auth endpoint $endpoint is not ready. Production files were not changed."; exit 1 ;;
+            esac
+          done
 
       - name: Configure SSH
         shell: bash
