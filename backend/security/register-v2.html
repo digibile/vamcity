@@ -1,0 +1,125 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>ثبت‌نام در دیجی‌بایل پی</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: centered auth card on a dark plum ground; segmented switch between password and OTP, captcha row, countdown. Palette: plum ink neutrals + saffron accent. All radii 14px, fields 48px high. */
+:root{--bg:#130c1f;--surface:#1d1330;--surface2:#271a3e;--line:#3a2c52;--fg:#f3edfb;--muted:#a99bc0;--brand:#4a2a86;--accent:#ffb629;--accent-ink:#2a1a00;--ok:#5fd6a0;--bad:#ff8a9a;--r:14px;--f-body:'Vazirmatn',Tahoma,sans-serif;--f-num:'JetBrains Mono','Vazirmatn',monospace;color-scheme:dark}
+:root[data-theme="light"]{--bg:#f6f2fc;--surface:#ffffff;--surface2:#efe8f9;--line:#dccff0;--fg:#1c1230;--muted:#645878;--brand:#3b1f6b;--accent:#e29a00;--ok:#12805a;--bad:#c43a52;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);line-height:1.8;direction:rtl;min-height:100vh;display:grid;place-items:center;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.card{width:min(440px,100%);background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:28px 24px;box-shadow:0 30px 80px -30px rgba(0,0,0,.6)}
+.logo{display:flex;gap:10px;align-items:center;font-weight:900;font-size:1.4rem;margin-bottom:4px}.logo i{width:38px;height:38px;border-radius:12px;background:var(--brand);display:grid;place-items:center;color:var(--accent);font-style:normal}
+h1{font-size:1.2rem;margin:10px 0 2px}.sub{color:var(--muted);font-size:.88rem;margin:0 0 16px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface2);border-radius:999px;padding:4px;margin-bottom:16px}.seg button{font:inherit;font-weight:700;font-size:.9rem;border:0;border-radius:999px;padding:8px;background:none;color:var(--muted);cursor:pointer;min-height:40px}.seg button[aria-selected=true]{background:var(--brand);color:#fff}
+.fld{margin-bottom:12px}.fld label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:4px}
+.in{position:relative}.in input{width:100%;font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:var(--r);padding:0 14px;min-height:48px}
+.in input.ltr{direction:ltr;text-align:left}.in .eye{position:absolute;inset-block:0;left:6px;width:40px;border:0;background:none;color:var(--muted);cursor:pointer;display:grid;place-items:center;border-radius:12px}.in .eye:hover{color:var(--fg)}
+.in input.pw{padding-left:48px}
+.h{font-size:.78rem;min-height:1.2em;margin-top:3px}.h.bad{color:var(--bad)}.h.ok{color:var(--ok)}
+.cap{display:flex;gap:8px;align-items:center}.cap img{height:48px;border-radius:12px;border:1px solid var(--line);flex:none;max-width:48%}.cap .in{flex:1;min-width:0}
+.rf{width:48px;height:48px;flex:none;border:1px solid var(--line);border-radius:var(--r);background:none;color:var(--muted);cursor:pointer;font-size:1.1rem}
+.btn{width:100%;font:inherit;font-weight:700;border:0;border-radius:var(--r);min-height:50px;background:var(--accent);color:var(--accent-ink);cursor:pointer;font-size:1rem}.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--fg);min-height:44px;font-size:.9rem;margin-top:8px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.otp{display:flex;gap:8px;direction:ltr;justify-content:center;margin:6px 0}.otp input{width:100%;max-width:52px;height:56px;text-align:center;font-family:var(--f-num);font-size:1.4rem;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:var(--r)}
+.timer{text-align:center;font-family:var(--f-num);color:var(--muted);margin:8px 0;font-size:.95rem}
+.msg{border-radius:var(--r);padding:8px 12px;font-size:.88rem;margin-bottom:12px;border:1px solid var(--line)}.msg.bad{color:var(--bad);border-color:var(--bad)}.msg.ok{color:var(--ok);border-color:var(--ok)}
+.foot{display:flex;justify-content:space-between;margin-top:16px;font-size:.86rem}.foot a{color:var(--accent);text-decoration:none}
+.pv{position:fixed;inset-inline:0;top:env(safe-area-inset-top,0px);background:var(--surface2);color:var(--muted);text-align:center;font-size:.78rem;padding:4px}
+[hidden]{display:none!important}
+.authtabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:rgba(127,127,127,.16);padding:4px;border-radius:12px;margin-bottom:16px}.authtabs a{text-align:center;padding:9px;border-radius:9px;text-decoration:none;color:inherit;font-weight:700}.authtabs a[aria-current=page]{background:var(--accent,#f5a400);color:#2a1a00}</style></head><body>
+
+<main class="card">
+ <nav class="authtabs" aria-label="ورود یا عضویت"><a id="tLogin" href="/login.html">ورود</a><a id="tReg" href="/register.html" aria-current="page">عضویت</a></nav>
+ <div class="logo"><i>د</i>دیجی‌بایل پی</div><h1>ثبت‌نام</h1><p class="sub" id="stepT">ابتدا شماره موبایل خود را تأیید کنید.</p>
+ <div id="msg" class="msg" hidden role="alert"></div>
+ <form id="f1" novalidate>
+  <div class="fld"><label for="rm">شماره موبایل</label><div class="in"><input id="rm" class="ltr" inputmode="numeric" maxlength="11" placeholder="09123456789" autocomplete="tel"></div><div class="h"></div></div>
+  <div class="fld"><label for="c1">کد امنیتی</label><div class="cap"><img id="ci1" alt="تصویر کد امنیتی"><button type="button" class="rf" data-rf="1" aria-label="کد امنیتی جدید">↻</button><div class="in"><input id="c1" class="ltr" inputmode="numeric" maxlength="5" autocomplete="off"></div></div><div class="h"></div></div>
+  <button class="btn" id="b1" type="submit">ارسال کد تأیید</button>
+ </form>
+ <form id="f2" novalidate hidden>
+  <p class="sub" id="sent"></p><div class="otp" id="otp"><input aria-label="رقم 1"><input aria-label="رقم 2"><input aria-label="رقم 3"><input aria-label="رقم 4"><input aria-label="رقم 5"><input aria-label="رقم 6"></div><div class="timer" id="tm" aria-live="polite"></div>
+  <button class="btn" id="b2" type="submit">تأیید موبایل</button><button class="btn ghost" type="button" id="bR" disabled>ارسال مجدد کد</button><button class="btn ghost" type="button" id="bB">تغییر شماره</button>
+ </form>
+ <form id="f3" novalidate hidden>
+  <div class="fld"><label for="ocrf">پر کردن خودکار از عکس کارت ملی (اختیاری)</label><input id="ocrf" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" style="width:100%;font:inherit"><div class="h" id="ocrh"></div><div class="h" style="color:var(--muted)">عکس فقط برای خواندن متن استفاده می‌شود و ذخیره نمی‌شود. نتیجه را حتماً بازبینی کنید.</div></div>
+  <div class="fld"><label for="rn">نام و نام خانوادگی</label><div class="in"><input id="rn" autocomplete="name"></div><div class="h"></div></div>
+  <div class="fld"><label for="rk">کد ملی</label><div class="in"><input id="rk" class="ltr" inputmode="numeric" maxlength="10"></div><div class="h"></div></div>
+  <div class="fld"><label for="re">ایمیل (اختیاری)</label><div class="in"><input id="re" class="ltr" type="email" autocomplete="email"></div><div class="h"></div></div>
+  <div class="fld"><label for="rp">رمز عبور (حداقل ۸ نویسه)</label><div class="in"><input id="rp" class="ltr pw" type="password" autocomplete="new-password"><button type="button" class="eye" id="eye" aria-label="نمایش رمز" aria-pressed="false"><svg id="eyeI" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="h"></div></div>
+  <div class="fld"><label for="c3">کد امنیتی</label><div class="cap"><img id="ci3" alt="تصویر کد امنیتی"><button type="button" class="rf" data-rf="3" aria-label="کد امنیتی جدید">↻</button><div class="in"><input id="c3" class="ltr" inputmode="numeric" maxlength="5" autocomplete="off"></div></div><div class="h"></div></div>
+  <label style="display:flex;gap:8px;font-size:.84rem;color:var(--muted);margin-bottom:12px"><input type="checkbox" id="rt"> قوانین و حریم خصوصی را می‌پذیرم.</label>
+  <button class="btn" id="b3" type="submit">ایجاد حساب</button>
+ </form>
+ <div class="foot"><a href="/login.html">قبلاً ثبت‌نام کرده‌ام</a><span></span></div>
+</main>
+<script>
+const NQ=(()=>{const n=new URLSearchParams(location.search).get('next');return n&&/^\/[A-Za-z0-9._\-\/]*$/.test(n)&&!n.startsWith('//')?n:''})();
+const MOCK=false;
+const API={captcha:'/api/v1/security/captcha',otpReq:'/api/v1/security/otp/request',otpVer:'/api/v1/security/otp/verify',otpSt:'/api/v1/security/otp/status',register:'/api/v1/security/register',after:NQ||'/profile.html'};
+const $=s=>document.querySelector(s),toEn=s=>String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+const fa=n=>Number(n).toLocaleString('fa-IR',{useGrouping:false}),okM=v=>/^09\d{9}$/.test(toEn(v));
+const okNid=v=>{v=toEn(v);if(!/^\d{10}$/.test(v)||/^(\d)\1{9}$/.test(v))return false;let s=0;for(let i=0;i<9;i++)s+=(+v[i])*(10-i);const r=s%11,c=+v[9];return r<2?c===r:c===11-r};
+function msg(t,k){const m=$('#msg');if(!t){m.hidden=true;return}m.hidden=false;m.className='msg '+(k||'bad');m.textContent=t}
+function hint(el,t,ok){const h=el.closest('.fld').querySelector('.h');h.textContent=t||'';h.className='h '+(t?(ok?'ok':'bad'):'')}
+async function call(method,url,body){if(MOCK)return mock(method,url,body);const r=await fetch(url,{method,headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,credentials:'same-origin'});const j=await r.json().catch(()=>({}));return{ok:r.ok,status:r.status,j}}
+function mock(m,u,b){return new Promise(res=>setTimeout(()=>{
+ if(u===API.captcha){const n=Math.floor(Math.random()*90000+10000);return res({ok:true,j:{id:'m'+n,image:'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="170" height="56"><rect width="170" height="56" rx="12" fill="#241047"/><text x="20" y="38" font-family="monospace" font-size="30" fill="#ddd" letter-spacing="6">${n}</text></svg>`)}})}
+ if(u===API.otpReq)return res({ok:true,status:200,j:{ok:true,expiresIn:120,resendIn:120}});
+ if(u===API.otpVer)return res((b.code||'').length===6?{ok:true,status:200,j:{ticket:'t'}}:{ok:false,status:400,j:{message:'کد نادرست است'}});
+ if(u===API.register)return res({ok:true,status:200,j:{token:'preview'}});
+ if(u.startsWith(API.otpSt))return res({ok:true,status:200,j:{expiresIn:0,resendIn:0}});res({ok:false,status:404,j:{}})},350))}
+const capId={};async function loadCap(k){const r=await call('GET',API.captcha);if(r.ok){capId[k]=r.j.id;$('#ci'+k).src=r.j.image;$('#c'+k).value=''}else msg('دریافت کد امنیتی ممکن نشد.')}
+document.querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>loadCap(b.dataset.rf));
+const EYE_ON='<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>',EYE_OFF='<path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-7-11-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 5c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/>';
+$('#eye').onclick=()=>{const i=$('#rp'),show=i.type==='password',s=i.selectionStart,e=i.selectionEnd;i.type=show?'text':'password';$('#eye').setAttribute('aria-pressed',show);$('#eyeI').innerHTML=show?EYE_OFF:EYE_ON;i.focus();try{i.setSelectionRange(s,e)}catch(_){}};
+function step(n){['f1','f2','f3'].forEach((id,i)=>$('#'+id).hidden=i!==n-1);$('#stepT').textContent=['ابتدا شماره موبایل خود را تأیید کنید.','کد ارسال‌شده را وارد کنید.','اطلاعات حساب را کامل کنید.'][n-1];msg('');if(n===3)loadCap('3')}
+let tmr=null,phone='',ticket='';
+function runTimer(exp,res){clearInterval(tmr);const t0=performance.now();const tick=()=>{const dt=(performance.now()-t0)/1000,e=Math.max(0,Math.ceil(exp-dt)),r=Math.max(0,Math.ceil(res-dt));
+ $('#tm').textContent=e>0?`اعتبار کد: ${fa(Math.floor(e/60))}:${fa(e%60).padStart(2,'۰')}`+(r>0?` · ارسال مجدد تا ${fa(r)} ثانیه دیگر`:''):'کد منقضی شد. کد جدید بگیرید.';
+ $('#bR').disabled=r>0;$('#bR').textContent=r>0?`ارسال مجدد (${fa(r)})`:'ارسال مجدد کد';$('#b2').disabled=e<=0;if(e<=0&&r<=0)clearInterval(tmr)};tick();tmr=setInterval(tick,500)}
+$('#f1').onsubmit=async e=>{e.preventDefault();msg('');const m=toEn($('#rm').value),c=toEn($('#c1').value);let bad=false;
+ if(!okM(m)){hint($('#rm'),'شماره باید ۱۱ رقم و با ۰۹ شروع شود');bad=true}else hint($('#rm'),'');if(c.length!==5){hint($('#c1'),'کد امنیتی ۵ رقمی را وارد کنید');bad=true}else hint($('#c1'),'');if(bad)return;
+ $('#b1').disabled=true;try{const r=await call('POST',API.otpReq,{phone:m,captchaId:capId['1'],captchaAnswer:c,purpose:'register'});
+  if(r.ok||(r.status===429&&r.j.resendIn)){phone=m;step(2);$('#sent').textContent='کد ۶ رقمی به '+fa(m)+' ارسال شد.';runTimer(r.j.expiresIn,r.j.resendIn);document.querySelector('#otp input').focus();if(!r.ok)msg(r.j.message)}else{msg(r.j.message||'ارسال انجام نشد');loadCap('1')}}catch(_){msg('اتصال برقرار نشد.')}$('#b1').disabled=false};
+$('#bR').onclick=()=>{step(1);loadCap('1');msg('برای ارسال مجدد، کد امنیتی را دوباره وارد کنید.','ok')};$('#bB').onclick=()=>{clearInterval(tmr);step(1);loadCap('1')};
+$('#f2').onsubmit=async e=>{e.preventDefault();const code=[...document.querySelectorAll('#otp input')].map(i=>i.value).join('');if(code.length<6){msg('کد ۶ رقمی را کامل وارد کنید');return}
+ $('#b2').disabled=true;try{const r=await call('POST',API.otpVer,{phone,code,purpose:'register'});if(r.ok){ticket=r.j.ticket;clearInterval(tmr);step(3)}else msg(r.j.message||'کد نادرست است')}catch(_){msg('اتصال برقرار نشد.')}$('#b2').disabled=false};
+$('#rk').oninput=()=>{const v=$('#rk').value;hint($('#rk'),v.length===10?(okNid(v)?'کد ملی از نظر ساختار معتبر است':'کد ملی معتبر نیست'):'',okNid(v))};
+$('#ocrf').onchange=async()=>{const f=$('#ocrf').files[0],h=$('#ocrh');if(!f)return;h.className='h';h.textContent='در حال خواندن عکس…';
+ if(f.size>6000000){h.className='h bad';h.textContent='حجم عکس حداکثر ۶ مگابایت است';return}
+ try{let j;if(MOCK){await new Promise(r=>setTimeout(r,700));j={found:true,data:{fields:{fullName:'علی رضایی',nationalCode:'0499370899'}}}}
+  else{const fd=new FormData();fd.append('ticket',ticket);fd.append('file',f);const r=await fetch('/api/v1/security/register/ocr',{method:'POST',body:fd,credentials:'same-origin'});j=await r.json().catch(()=>({}));if(!r.ok){h.className='h bad';h.textContent=j.message||'خواندن عکس انجام نشد';return}}
+  if(!j.found){h.className='h bad';h.textContent=j.message||'متنی خوانده نشد';return}
+  const fl=(j.data&&(j.data.fields||j.data))||{};let n=0;
+  if(fl.fullName&&!$('#rn').value){$('#rn').value=String(fl.fullName).slice(0,80);n++}
+  if(fl.nationalCode&&!$('#rk').value){$('#rk').value=toEn(fl.nationalCode).replace(/\D/g,'').slice(0,10);$('#rk').oninput();n++}
+  h.className='h '+(n?'ok':'bad');h.textContent=n?'اطلاعات خوانده شد؛ لطفاً درستی آن را بررسی کنید.':'اطلاعاتی برای پر کردن پیدا نشد؛ دستی وارد کنید.'}
+ catch(_){h.className='h bad';h.textContent='اتصال برقرار نشد'}};
+$('#f3').onsubmit=async e=>{e.preventDefault();msg('');const n=$('#rn').value.trim(),k=toEn($('#rk').value),p=$('#rp').value,c=toEn($('#c3').value);let bad=false;
+ if(n.split(' ').filter(Boolean).length<2){hint($('#rn'),'نام و نام خانوادگی را کامل بنویسید');bad=true}else hint($('#rn'),'');if(!okNid(k)){hint($('#rk'),'کد ملی معتبر نیست');bad=true}
+ if(p.length<8){hint($('#rp'),'حداقل ۸ نویسه');bad=true}else hint($('#rp'),'');if(c.length!==5){hint($('#c3'),'کد امنیتی ۵ رقمی را وارد کنید');bad=true}else hint($('#c3'),'');if(!$('#rt').checked){msg('برای ادامه، قوانین را بپذیرید.');bad=true}if(bad)return;
+ $('#b3').disabled=true;try{const r=await call('POST',API.register,{ticket,fullName:n,nationalCode:k,password:p,email:$('#re').value.trim()||null,captchaId:capId['3'],captchaAnswer:c});
+  if(r.ok){if(MOCK){msg('ثبت‌نام موفق (پیش‌نمایش)','ok')}else{const t=(r.j.data&&(r.j.data.accessToken||r.j.data.token))||r.j.accessToken||r.j.token;if(t){try{localStorage.setItem('token',t)}catch(_){}}location.href=API.after}}else{msg((r.j.message||'ثبت‌نام انجام نشد')+(r.status===409?' — از تب «ورود» وارد شوید.':''));loadCap('3')}}catch(_){msg('اتصال برقرار نشد.')}$('#b3').disabled=false};
+const ins=[...document.querySelectorAll('#otp input')];ins.forEach((el,i)=>{el.inputMode='numeric';el.maxLength=1;el.autocomplete=i?'off':'one-time-code';el.oninput=()=>{el.value=toEn(el.value).replace(/\D/g,'');if(el.value&&ins[i+1])ins[i+1].focus()};el.onkeydown=e=>{if(e.key==='Backspace'&&!el.value&&ins[i-1])ins[i-1].focus()};
+ el.onpaste=e=>{const t=toEn((e.clipboardData||window.clipboardData).getData('text')).replace(/\D/g,'').slice(0,6);if(!t)return;e.preventDefault();t.split('').forEach((c,k)=>ins[k]&&(ins[k].value=c));ins[Math.min(t.length,5)].focus()}});
+loadCap('1');
+
+/* ---------- برند مستأجر (از دامنه‌ی فعلی) ---------- */
+(function(){const DEF='دیجی‌بایل پی';let cur=DEF;
+ function sw(root){const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode())){if(cur!==DEF&&n.nodeValue.indexOf(DEF)>-1)n.nodeValue=n.nodeValue.split(DEF).join(cur)}}
+ function apply(b){if(!b||!b.name)return;cur=b.name;const br=b.brand||{};document.title=document.title.split(DEF).join(cur);
+  const s=document.documentElement.style;if(br.primary)s.setProperty('--brand',br.primary);if(br.accent)s.setProperty('--accent',br.accent);
+  document.querySelectorAll('.logo i').forEach(i=>{if(br.logoUrl){i.innerHTML='<img alt="" src="'+String(br.logoUrl).replace(/"/g,'')+'" style="width:100%;height:100%;object-fit:contain;border-radius:inherit">'}else i.textContent=br.logoText||cur.charAt(0)});
+  sw(document.body);
+  new MutationObserver(m=>{m.forEach(x=>x.addedNodes.forEach(a=>{if(a.nodeType===3){if(a.nodeValue.indexOf(DEF)>-1&&cur!==DEF)a.nodeValue=a.nodeValue.split(DEF).join(cur)}else if(a.nodeType===1)sw(a)}))}).observe(document.body,{childList:true,subtree:true})}
+ window.applyTenantBrand=async function(){try{const r=await fetch('/api/v1/tenant/config');if(r.ok){const j=await r.json();apply(j.data||j)}}catch(e){}}})();
+
+applyTenantBrand();
+
+{const ph=new URLSearchParams(location.search).get('phone');if(ph&&/^09\d{9}$/.test(ph))document.querySelector('#rm').value=ph}
+document.querySelectorAll('.authtabs a').forEach(a=>{a.href=a.getAttribute('href').split('?')[0]+(NQ?'?next='+encodeURIComponent(NQ):'')});
+</script>
+
+</body></html>

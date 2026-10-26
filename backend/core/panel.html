@@ -1,0 +1,1266 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>پنل مدیریت دیجی‌بایل پی</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: grouped right-hand navigation + working pane + slide-in detail drawer; plum surfaces, one saffron accent. Charts use validated categorical slots 1-3 (dark steps). */
+:root{
+  --bg:#17101f; --surface:#221832; --surface2:#2b2040; --line:#3a2c52; --fg:#f4eefb; --muted:#a99bc0;
+  --accent:#ffb629; --accent-ink:#2a1a00; --ok:#5fd6a0; --warn:#ffb629; --bad:#ff7a8a;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --f-body:'Vazirmatn',Tahoma,sans-serif; --f-num:'JetBrains Mono','Vazirmatn',monospace;
+  --ok-ink:#06281a; --accent-text:#ffb629; --hero1:#3b1f6b; --hero2:#17101f;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#f5f2fa; --surface:#ffffff; --surface2:#efe9f8; --line:#ddd2ee; --fg:#1d1430; --muted:#645878;
+  --accent:#e29a00; --accent-ink:#2a1a00; --ok:#12805a; --warn:#9a6a00; --bad:#c43a52; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --ok-ink:#ffffff; --accent-text:#8f5600; --hero1:#e6dcf7; --hero2:#f5f2fa; color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#f5f2fa; --surface:#ffffff; --surface2:#efe9f8; --line:#ddd2ee; --fg:#1d1430; --muted:#645878;
+  --accent:#e29a00; --accent-ink:#2a1a00; --ok:#12805a; --warn:#9a6a00; --bad:#c43a52; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --ok-ink:#ffffff; --accent-text:#8f5600; --hero1:#e6dcf7; --hero2:#f5f2fa; color-scheme:light}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);line-height:1.7;margin:0;direction:rtl;text-align:right;
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:16px}
+.app{display:grid;grid-template-columns:230px minmax(0,1fr);gap:20px;max-width:1320px;margin:0 auto}
+aside{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;align-self:start;position:sticky;top:84px;max-height:calc(100vh - 100px);overflow:auto}
+.brand{font-weight:900;font-size:1.2rem;padding:6px 10px 8px}
+.grp{color:var(--muted);font-size:.75rem;padding:12px 10px 4px}
+aside button{display:block;width:100%;font:inherit;font-size:.92rem;text-align:right;background:none;border:0;color:var(--fg);padding:7px 10px;border-radius:9px;cursor:pointer}
+aside button:hover{background:var(--surface2)}
+aside button[aria-current=true]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+aside .cnt{float:left;font-family:var(--f-num);font-size:.75rem;color:var(--bad)}
+aside button[aria-current=true] .cnt{color:var(--accent-ink)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{min-width:0}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px}
+h2{margin:0;font-size:1.4rem}h3{margin:0 0 10px;font-size:1.02rem}
+.sub{color:var(--muted);font-size:.85rem}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0}
+.tile span{color:var(--muted);font-size:.8rem}
+.tile b{display:block;font-family:var(--f-num);font-size:1.35rem;font-weight:500}
+.tile small{font-size:.75rem}
+.up{color:var(--ok)}.dn{color:var(--bad)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-bottom:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0;margin-bottom:16px}
+.cols .panel{margin-bottom:0}
+.tabs,.bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.tab{font:inherit;background:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 14px;cursor:pointer;font-size:.88rem}
+.tab[aria-selected=true]{color:var(--fg);border-color:var(--accent)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:620px}
+th{color:var(--muted);font-weight:500;text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line)}
+tbody tr[data-open]{cursor:pointer}tbody tr[data-open]:hover{background:var(--surface2)}
+td.n,.n{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.pill{border-radius:999px;padding:1px 10px;font-size:.78rem;border:1px solid currentColor;white-space:nowrap;display:inline-block}
+.pill.p{color:var(--warn)}.pill.a{color:var(--ok)}.pill.r{color:var(--bad)}.pill.m{color:var(--muted)}.pill.b{color:var(--s1)}
+.btn{font:inherit;font-weight:700;border-radius:8px;padding:4px 12px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer;font-size:.84rem;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.ok{background:var(--ok);color:var(--ok-ink);border-color:var(--ok)}
+.btn.bad{color:var(--bad);border-color:var(--bad)}
+.btn.solid{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);padding:7px 16px}
+.sel,input,textarea,select{font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+input[type=checkbox]{accent-color:var(--accent);width:auto}
+input[type=range]{accent-color:var(--accent);padding:0;width:100%}
+.bar input[type=search]{min-width:200px;flex:1}
+label{display:block;color:var(--muted);font-size:.82rem;margin:10px 0 4px}
+.frow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.frow>input{flex:1;min-width:120px}
+.chk{display:flex;gap:6px;align-items:center;margin:0}
+.empty{color:var(--muted);padding:14px 4px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:6px;vertical-align:-1px}
+svg text{fill:var(--muted);font-family:var(--f-num);font-size:10px}
+.hb{display:grid;grid-template-columns:90px 1fr 70px;gap:10px;align-items:center;margin:7px 0;font-size:.85rem}
+.hb .t{height:12px;background:var(--bg);border-radius:6px;overflow:hidden;direction:ltr}
+.hb .t i{display:block;height:100%;border-radius:0 6px 6px 0;background:var(--s1)}
+.hb b{font-family:var(--f-num);font-weight:500;text-align:left}
+.list{display:grid;gap:8px;font-size:.88rem}
+.list div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.list span:last-child{color:var(--muted);white-space:nowrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.card h3{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:.86rem;margin:8px 0}
+.kv span:nth-child(odd){color:var(--muted)}
+.tpl{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.tpl button{font:inherit;color:var(--fg);text-align:right;background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:14px;cursor:pointer}
+.tpl button[aria-pressed=true]{border-color:var(--accent)}.tpl small{color:var(--muted);display:block}
+ul.tree{list-style:none;margin:0;padding:0 18px 0 0;border-right:1px dashed var(--line)}
+ul.tree.root{border:0;padding:0}
+ul.tree li{margin:6px 0}
+.node{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+.node code{font-family:var(--f-num);color:var(--accent-text);font-size:.8rem}
+.score{font-size:2.4rem;font-family:var(--f-num);font-weight:500;line-height:1.2}
+.drawer{position:fixed;inset-block:0;inset-inline-end:0;width:min(440px,100%);background:var(--surface);border-inline-start:1px solid var(--line);z-index:20;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-bottom,0px)) 16px;overflow:auto;box-shadow:0 0 40px rgba(0,0,0,.5)}
+.tl{list-style:none;padding:0;margin:8px 0;border-right:2px solid var(--line)}
+.tl li{padding:0 14px 10px 0;position:relative;font-size:.86rem}
+.tl li:before{content:"";position:absolute;right:-6px;top:8px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--surface)}
+.tl small{color:var(--muted);display:block}
+.toast{position:fixed;inset-inline:0;bottom:calc(16px + env(safe-area-inset-bottom,0px));margin:auto;width:max-content;max-width:90%;background:var(--ok);color:var(--ok-ink);padding:8px 18px;border-radius:10px;font-weight:700;z-index:40}
+#tip{position:fixed;z-index:50;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.8rem;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.perm td:not(:first-child),.perm th:not(:first-child){text-align:center}
+.doc{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px}
+.doc article{line-height:1.9}.doc code,.code{font-family:var(--f-num);direction:ltr;unicode-bidi:embed;background:var(--bg);border-radius:6px;padding:1px 6px;font-size:.82rem}
+pre.code{display:block;direction:ltr;text-align:left;padding:12px;overflow:auto;white-space:pre;max-height:260px;margin:0}
+.pgv{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg)}.pgv.mob{max-width:340px;margin:0 auto}
+.pb{padding:16px;border-bottom:1px solid var(--line)}.pb h4{margin:0 0 6px}.pb p{margin:0 0 8px;color:var(--muted)}.pb.hero{background:linear-gradient(160deg,var(--hero1),var(--hero2))}.pb.cta{text-align:center}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}.g3 div{background:var(--surface);border-radius:8px;padding:8px;font-size:.85rem}
+.fake i{display:block;height:8px;border-radius:4px;background:var(--line);margin:8px 0}
+.story{width:min(270px,100%);aspect-ratio:9/16;border-radius:20px;padding:22px 18px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 30px rgba(0,0,0,.45)}
+.slogo{font-weight:900}.sh{font-weight:900;line-height:1.5}.sp{margin-top:8px;font-size:.85rem;opacity:.9}.scta{text-align:center;padding:10px;border-radius:12px;font-weight:700}
+@media(max-width:900px){.doc{grid-template-columns:1fr}}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:16;background:var(--bg)}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 12px;max-width:1320px;margin:0 auto 16px}
+.tb-brand{font-weight:900;white-space:nowrap}.tb-search{position:relative;flex:1;min-width:180px}.tb-search input{width:100%}
+#gres{position:absolute;inset-inline:0;top:100%;margin-top:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;z-index:30;display:grid}
+#gres button{font:inherit;color:var(--fg);background:none;border:0;text-align:right;padding:6px 8px;border-radius:8px;cursor:pointer}#gres button:hover{background:var(--surface2)}
+.tb-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.tb-actions a.btn{text-decoration:none;display:inline-block}
+.usr{display:flex;gap:8px;align-items:center;font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px 10px 3px 4px;cursor:pointer;text-align:right}
+.usr small{display:block;color:var(--muted);font-size:.72rem;line-height:1.2}.usr b{font-size:.84rem;line-height:1.2;display:block}
+.av{width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:900}.av.lg{width:48px;height:48px;font-size:1.2rem}
+.badge{background:var(--bad);color:#fff;border-radius:999px;font-size:.7rem;padding:0 6px;font-family:var(--f-num)}
+.thread{display:grid;gap:8px;margin:8px 0}.msg{border-radius:10px;padding:8px 12px;font-size:.86rem;background:var(--bg);border:1px solid var(--line)}.msg.s{background:var(--surface2)}.msg.n{border-style:dashed;color:var(--muted)}.msg small{color:var(--muted);display:block}.msg b{font-size:.78rem;color:var(--muted)}
+.contract{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:var(--f-body);font-size:.86rem;line-height:1.9;max-height:320px;overflow:auto;margin:0}
+.sld{position:relative;height:var(--h);border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+.sld-track{display:flex;height:100%;transition:transform .5s ease}
+.sld-s{flex:0 0 100%;padding:26px 34px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:8px;color:#fff}
+.sld-s h3{margin:0;font-size:1.5rem}.sld-s p{margin:0 0 6px;opacity:.9}
+.sld.fade .sld-track{display:block;position:relative}.sld.fade .sld-s{position:absolute;inset:0;opacity:0;transition:opacity .6s}.sld.fade .sld-s.on{opacity:1}
+.sld-a{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;cursor:pointer;font-size:1.3rem}.sld-a.r{right:10px}.sld-a.l{left:10px}
+.sld-d{position:absolute;bottom:10px;inset-inline:0;display:flex;gap:6px;justify-content:center}.sld-d button{width:9px;height:9px;border-radius:50%;border:0;background:rgba(255,255,255,.45);padding:0;cursor:pointer}.sld-d button[aria-current=true]{background:#fff;width:22px}
+.bn{display:grid;grid-template-columns:290px minmax(0,1fr);gap:16px;align-items:start}
+.tree2{max-height:72vh;overflow:auto}.tree2 details{border-bottom:1px solid var(--line);padding:6px 0}.tree2 summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.9rem}
+.tree2 details button{display:flex;justify-content:space-between;width:100%;font:inherit;font-size:.84rem;color:var(--muted);background:none;border:0;padding:4px 14px 4px 0;cursor:pointer;text-align:right;border-radius:8px}.tree2 details button[aria-current=true]{background:var(--surface2);color:var(--fg)}
+.prog{height:6px;background:var(--bg);border-radius:4px;overflow:hidden;width:70px;direction:ltr;flex:none}.prog i{display:block;height:100%;background:var(--ok)}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.dcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;text-align:right;font:inherit;color:var(--fg);padding:0}.dcard:hover{border-color:var(--muted)}
+.dcard .th{height:92px;background:var(--bg);display:grid;place-items:center;color:var(--muted);font-size:.78rem;overflow:hidden}.dcard .th img{width:100%;height:100%;object-fit:cover}.dcard .bd{padding:8px 10px;font-size:.84rem}
+.preview{border:1px dashed var(--line);border-radius:12px;min-height:150px;display:grid;place-items:center;overflow:hidden;background:var(--bg);color:var(--muted)}.preview img{max-width:100%;max-height:320px}
+@media(max-width:900px){
+  .bn{grid-template-columns:1fr}
+  .app{grid-template-columns:1fr}
+  aside{position:fixed;top:0;bottom:0;height:100vh;height:100dvh;align-self:stretch;overflow-y:auto;overscroll-behavior:contain;inset-inline-start:0;right:0;left:auto;width:min(300px,86vw);max-height:none;border-radius:0;z-index:70;transform:translateX(105%);transition:transform .22s ease;padding:14px 12px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:-20px 0 50px rgba(0,0,0,.35)}
+  body.navopen aside{transform:none}
+  aside button{padding:12px 12px;font-size:1rem}
+  #navBd{display:block}
+  #tbMenu{display:inline-flex}
+  .tb-actions{overflow-x:auto;flex-wrap:nowrap}
+  @media (prefers-reduced-motion:reduce){aside{transition:none}}
+  .cols{grid-template-columns:1fr}
+}
+#navBd{display:none;position:fixed;inset:0;z-index:65;background:rgba(10,5,20,.55);opacity:0;pointer-events:none;transition:opacity .2s}
+body.navopen #navBd{opacity:1;pointer-events:auto}
+#tbMenu{display:none;align-items:center;justify-content:center;min-width:44px;min-height:44px;font-size:1.3rem}
+.nvx{display:none}aside button.nvx,aside button.dcol{width:auto;display:none}
+@media(max-width:900px){aside button.nvx{display:inline-block;float:left;min-height:40px;padding:0 14px}#tbMenu{display:inline-flex}.dcol{display:none!important}#navBd{display:block}}@media(min-width:901px){aside button.dcol{display:inline-block}}
+@media(min-width:901px){.app.coll{grid-template-columns:64px minmax(0,1fr)}.app.coll aside{padding:8px 4px;overflow-x:hidden}.app.coll aside .grp{display:none}.app.coll aside .brand{font-size:0;padding:0 0 6px}.app.coll aside button.dcol{display:block;width:100%!important;float:none!important}.app.coll aside button{font-size:.7rem;padding:8px 2px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.app.coll aside .cnt{display:none}}
+</style></head><body>
+
+<header class="topbar" id="topbar">
+  <button class="btn" id="tbMenu" aria-label="باز کردن منو" aria-expanded="false">☰</button>
+  <div class="tb-brand">دیجی‌بایل پی</div>
+  <div class="tb-search"><input id="gq" type="search" placeholder="جستجوی سراسری: وام، مشتری، پذیرنده" aria-label="جستجوی سراسری" autocomplete="off"><div id="gres" hidden></div></div>
+  <div class="tb-actions">
+    <a class="btn" href="https://ghestine.ir" target="_blank" rel="noopener">مشاهده سایت</a>
+    <button class="btn" id="tbSupport">پشتیبانی سایت</button>
+    <button class="btn" id="tbTickets">تیکت‌ها <span class="badge" id="bgT" hidden></span></button>
+    <button class="btn" id="tbBell">اعلان‌ها <span class="badge" id="bgN" hidden></span></button>
+    <button class="btn" id="tbTheme">حالت روشن</button>
+    <button class="usr" id="tbUser" aria-label="حساب من"><span class="av">م</span><span><b>مدیر سیستم</b><small>مدیر کل</small></span></button>
+  </div>
+</header>
+<div class="app">
+  <aside id="nav" aria-label="منوی اصلی"></aside><div id="navBd"></div>
+  <main id="main"></main>
+</div>
+<div id="drawer" class="drawer" hidden></div>
+<div class="toast" id="toast" hidden></div>
+<div id="tip" hidden></div>
+
+<script>
+document.documentElement.dir='rtl';document.documentElement.lang='fa';
+const fa=n=>Number(n).toLocaleString('fa-IR').replace(/,/g,'٬');
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const M=n=>fa(n)+' م.ت'; // million toman shorthand
+function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2200)}
+
+/* ---------- configurable statuses & SMS rules ---------- */
+const ENT={LoanApplication:'وام‌ها',Installment:'اقساط',Merchant:'پذیرنده‌ها',Agent:'نمایندگان',Kyc:'احراز هویت',FraudCheck:'بررسی تقلب'};
+const FIELD={'':'بدون شرط',Amount:'مبلغ',Months:'مدت'};const OPS={gte:'≥',lte:'≤',eq:'='};
+const S={
+ LoanApplication:[['pending','در انتظار بررسی','p',1,0],['approved','تأیید شده','a',0,0],['issued','صدور وام','a',0,0],['completed','اتمام','m',0,1],['rejected','رد شده','r',0,1]],
+ Installment:[['due','سررسید نشده','m',1,0],['paid','پرداخت شده','a',0,1],['overdue','معوق','r',0,0]],
+ Merchant:[['pending','در انتظار','p',1,0],['approved','فعال','a',0,0],['rejected','رد شده','r',0,1]],
+ Agent:[['pending','در انتظار','p',1,0],['approved','فعال','a',0,0],['suspended','تعلیق','r',0,0]],
+ Kyc:[['pending','در انتظار','p',1,0],['verified','تأیید هویت','a',0,1],['failed','ناموفق','r',0,1]],
+ FraudCheck:[['review','نیازمند بررسی','p',1,0],['cleared','پاک','a',0,1],['blocked','مسدود','r',0,1]]};
+const RULES=[
+ {ent:'LoanApplication',st:'approved',field:'Amount',op:'gte',val:10000000,to:'مشتری',tpl:'{نام} عزیز، وام {مبلغ} تومانی شما تأیید شد.',on:true},
+ {ent:'LoanApplication',st:'issued',field:'',op:'gte',val:0,to:'مشتری',tpl:'وام شما صادر و به کیف پول واریز شد.',on:true},
+ {ent:'LoanApplication',st:'rejected',field:'',op:'gte',val:0,to:'مشتری',tpl:'متأسفانه درخواست وام شما تأیید نشد.',on:true},
+ {ent:'Installment',st:'overdue',field:'',op:'gte',val:0,to:'مشتری',tpl:'قسط شما معوق شده است. لطفاً پرداخت کنید.',on:true},
+ {ent:'Merchant',st:'pending',field:'',op:'gte',val:0,to:'مدیر',tpl:'پذیرنده‌ی جدید در انتظار تأیید است.',on:false}];
+const LOGS=[];
+const stDef=(ent,k)=>S[ent].find(x=>x[0]===k)||[k,k,'m'];
+const pill=(ent,k)=>{const d=stDef(ent,k);return `<span class="pill ${d[2]}">${esc(d[1])}</span>`};
+function notify(ent,st,ctx,label){
+  const d=stDef(ent,st);let n=0;
+  RULES.filter(r=>r.on&&r.ent===ent&&(!r.st||r.st===st)).forEach(r=>{
+    if(r.field){const v=r.field==='Amount'?ctx.amount:ctx.months;const ok=r.op==='gte'?v>=r.val:r.op==='lte'?v<=r.val:v===r.val;if(!ok)return}
+    const msg=r.tpl.replace('{نام}',ctx.name||'').replace('{مبلغ}',fa(ctx.amount||0)).replace('{مدت}',fa(ctx.months||0)).replace('{وضعیت}',d[1]);
+    LOGS.unshift({time:'همین الان',to:r.to,ref:label,msg,st:'در صف'});n++});
+  return n}
+
+/* ---------- mock data ---------- */
+const NAMES=['سارا احمدی','علی کریمی','مینا رضایی','حسین موسوی','نرگس صادقی','رضا جعفری','لیلا حیدری','امیر نوری','زهرا کاظمی','محمد قاسمی','فاطمه رحیمی','پویا شریفی'];
+const MERCH=['موبایل آسمان','لوازم خانگی رضوی','دیجی‌کالای نمونه','مبلمان ایران‌نو','طلای زرین','کامپیوتر پارس'];
+const loans=NAMES.map((n,i)=>({id:1240+i,name:n,phone:'۰۹۱۲'+fa(1000000+i*73211).replace(/٬/g,'').slice(0,7),merchant:MERCH[i%6],amount:(3+((i*7)%15))*1000000,months:[3,6,9,12][i%4],
+  st:['pending','approved','issued','issued','pending','completed','rejected','issued','pending','approved','issued','pending'][i],score:45+((i*13)%50),date:'۱۴۰۵/۰۶/'+fa(10+i),
+  tl:[['ثبت درخواست','۱۴۰۵/۰۶/'+fa(10+i)],['اعتبارسنجی خودکار','همان روز']]}));
+const custs=NAMES.map((n,i)=>({name:n,phone:loans[i].phone,kyc:['verified','verified','pending','verified','failed','verified','pending','verified','verified','pending','verified','verified'][i],limit:(5+i*3)*1000000,active:i%3,risk:20+((i*17)%70)}));
+const merchants=MERCH.map((n,i)=>({name:n,city:['تهران','اصفهان','شیراز','مشهد','تبریز','تهران'][i],sales:(40+i*35)*1000000,pct:[2.5,3,2,3.5,2.5,3][i],st:['approved','approved','pending','approved','pending','approved'][i],due:(6+i*4)*1000000,settled:i%2===0}));
+const agentTree={code:'AG-7K2M',name:'سارا احمدی',pct:1.5,cust:42,sub:[{code:'AG-Q9D4',name:'علی کریمی',pct:1,cust:18,sub:[{code:'AG-L3PX',name:'نرگس صادقی',pct:.8,cust:6,sub:[]},{code:'AG-B8N2',name:'رضا جعفری',pct:.8,cust:3,sub:[]}]},{code:'AG-X3LP',name:'مینا رضایی',pct:1,cust:11,sub:[{code:'AG-D5T7',name:'امیر نوری',pct:.8,cust:2,sub:[]}]}]};
+const fraud=[['درخواست #۱۲۴۸','سارا احمدی',84,['چند درخواست در یک ساعت','دستگاه تکراری'],'review'],['درخواست #۱۲۵۳','حسین موسوی',71,['ناسازگاری کد ملی و موبایل'],'review'],['درخواست #۱۲۳۱','لیلا حیدری',63,['IP خارج از کشور'],'cleared'],['درخواست #۱۲۲۰','پویا شریفی',92,['شماره در فهرست سیاه','دستگاه تکراری'],'blocked']];
+const tx=[['واریز به کیف پول','سارا احمدی',5000000,'+'],['پرداخت قسط','علی کریمی',1250000,'-'],['صدور وام','مینا رضایی',12000000,'+'],['تسویه با پذیرنده','موبایل آسمان',8400000,'-'],['پرداخت قسط','نرگس صادقی',900000,'-'],['واریز به کیف پول','رضا جعفری',2000000,'+']];
+const overdue=[['سارا احمدی','قسط ۳ از ۶',1250000,4],['حسین موسوی','قسط ۲ از ۹',830000,12],['لیلا حیدری','قسط ۵ از ۱۲',640000,35],['امیر نوری','قسط ۱ از ۳',2100000,67],['زهرا کاظمی','قسط ۴ از ۶',1500000,95]];
+const tickets=[['#۵۰۲','پرداخت قسط ثبت نشده','سارا احمدی','بالا','open'],['#۵۰۱','تغییر شماره موبایل','علی کریمی','متوسط','wip'],['#۴۹۹','درخواست افزایش اعتبار','مینا رضایی','پایین','closed']];
+const audit=[['مدیر کل','تأیید وام #۱۲۴۱','۱۴۰۵/۰۶/۱۸ ۱۰:۲۲'],['کارشناس اعتبار','رد وام #۱۲۴۶','۱۴۰۵/۰۶/۱۸ ۰۹:۵۰'],['مدیر کل','تغییر نرخ کارمزد محصول ۶ ماهه','۱۴۰۵/۰۶/۱۷ ۱۶:۰۵'],['حسابدار','ثبت تسویه موبایل آسمان','۱۴۰۵/۰۶/۱۷ ۱۱:۴۰']];
+const products=[{n:'طرح بتا بانک رفاه',min:0,max:0,m:0,fee:0,down:0,on:true,kind:'beta'},{n:'اقساط ۳ ماهه',min:1,max:20,m:3,fee:2,down:0,on:true},{n:'اقساط ۶ ماهه',min:1,max:30,m:6,fee:2.5,down:10,on:true},{n:'اقساط ۹ ماهه',min:3,max:40,m:9,fee:2.5,down:15,on:true},{n:'اقساط ۱۲ ماهه',min:5,max:50,m:12,fee:3,down:20,on:false}];
+const scoring=[['درآمد ماهانه ≥ ۱۰ م.ت',20,1],['احراز هویت تأیید شده',25,1],['سابقه‌ی معوقه نداشتن',25,1],['سن بین ۲۲ تا ۶۰',10,1],['حساب بانکی هم‌نام',10,1],['دستگاه و IP معتبر',10,0]];
+const roles=['مدیر کل','کارشناس اعتبار','پشتیبان','حسابدار'];
+const perms=[['مشاهده‌ی وام‌ها',[1,1,1,1]],['تأیید و رد وام',[1,1,0,0]],['مدیریت محصولات',[1,0,0,0]],['تسویه‌ی مالی',[1,0,0,1]],['ارسال پیامک',[1,0,1,0]],['مدیریت کاربران',[1,0,0,0]]];
+const state={view:'dash',sTab:'tpl',cTab:'rules',ent:'LoanApplication',lf:'all',tpl:2,sim:{inc:12,age:30,kyc:1,late:0},cf:{}};
+
+/* ---------- helpers ---------- */
+function tbl(cols,rows,open){return `<div class="scroll"><table><thead><tr>${cols.map(c=>`<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${
+ rows.map((r,i)=>`<tr ${open?`data-open="${open}:${i}"`:''}>${cols.map(c=>`<td class="${c[2]||''}">${c[1](r,i)}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${cols.length}" class="empty">موردی برای نمایش نیست.</td></tr>`}</tbody></table></div>`}
+const tiles=a=>`<div class="tiles">${a.map(t=>`<div class="tile"><span>${t[0]}</span><b>${t[1]}</b>${t[2]?`<small class="${t[3]||''}">${t[2]}</small>`:''}</div>`).join('')}</div>`;
+const head=(t,s,extra='')=>`<div class="top"><div><h2>${t}</h2>${s?`<div class="sub">${s}</div>`:''}</div><div>${extra}</div></div>`;
+const search=ph=>`<input id="q" type="search" placeholder="${ph||'جستجو در جدول'}" aria-label="جستجو">`;
+const needs=()=>Object.values({a:loans.filter(l=>l.st==='pending').length,b:custs.filter(c=>c.kyc==='pending').length}).reduce((a,b)=>a+b,0);
+
+function lineChart(labels,series){
+  const W=560,H=230,L=46,R=14,T=12,B=26,max=Math.ceil(Math.max(...series.flatMap(s=>s.v))/50)*50,n=labels.length;
+  const x=i=>L+(W-L-R)*i/(n-1),y=v=>T+(H-T-B)*(1-v/max);
+  let g='';for(let k=0;k<=4;k++){const v=max*k/4;g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1" opacity=".7"/><text x="${L-6}" y="${y(v)+3}" text-anchor="end">${fa(v)}</text>`}
+  const xl=labels.map((t,i)=>`<text x="${x(i)}" y="${H-8}" text-anchor="middle" style="font-family:var(--f-body)">${t}</text>`).join('');
+  const paths=series.map((s,si)=>{const d=s.v.map((v,i)=>(i?'L':'M')+x(i)+' '+y(v)).join(' ');
+    const area=si===0?`<path d="${d} L${x(n-1)} ${y(0)} L${x(0)} ${y(0)} Z" fill="${s.c}" opacity=".12"/>`:'';
+    const last=s.v.length-1;return area+`<path d="${d}" fill="none" stroke="${s.c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${x(last)}" cy="${y(s.v[last])}" r="4.5" fill="${s.c}" stroke="var(--surface)" stroke-width="2"/>`}).join('');
+  const hit=labels.map((t,i)=>`<rect x="${x(i)-(W-L-R)/(n-1)/2}" y="${T}" width="${(W-L-R)/(n-1)}" height="${H-T-B}" fill="transparent" data-tip="${t}||${series.map(s=>s.n+': '+fa(s.v[i])+' م.ت').join('||')}"/>`).join('');
+  return `<div class="legend">${series.map(s=>`<span><i style="background:${s.c}"></i>${s.n}</span>`).join('')}</div><svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="نمودار خطی ماهانه">${g}${xl}${paths}${hit}</svg>`}
+function hbars(items,color){const mx=Math.max(...items.map(i=>i[1]));return items.map(i=>`<div class="hb" data-tip="${i[0]}||${fa(i[1])} ${i[2]||''}"><span>${i[0]}</span><div class="t"><i style="width:${i[1]/mx*100}%;${color?`background:${color}`:''}"></i></div><b>${fa(i[1])}</b></div>`).join('')}
+
+/* ---------- views ---------- */
+const V={};
+V.dash=()=>head('داشبورد','وضعیت پرتفوی وام در یک نگاه')+tiles([
+ ['مانده‌ی پرتفوی','۴۱۸ م.ت','۸٪ بیشتر از ماه قبل','up'],['وام‌های فعال',fa(342),'۱۲ مورد جدید این هفته','up'],['نرخ تأیید','۶۸٪','۳٪ کمتر','dn'],
+ ['اقساط معوق','۱۲٪','۲٪ بیشتر','dn'],['وصولی این ماه','۹۶ م.ت','۸۴٪ هدف','up'],['نیازمند بررسی',fa(needs()+fraud.filter(f=>f[4]==='review').length),'وام، هویت، تقلب']])+
+ `<div class="cols"><div class="panel"><h3>پرداخت وام و وصولی (میلیون تومان)</h3>${lineChart(['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور'],[{n:'وام پرداختی',c:'var(--s1)',v:[120,150,140,190,230,260]},{n:'وصولی',c:'var(--s2)',v:[80,100,125,140,170,205]}])}</div>
+ <div class="panel"><h3>سن اقساط معوق (تعداد)</h3>${hbars([['۱ تا ۷ روز',48],['۸ تا ۳۰ روز',31],['۳۱ تا ۶۰ روز',17],['۶۱ تا ۹۰ روز',9],['بیش از ۹۰ روز',5]],'var(--s2)')}</div></div>
+ <div class="cols"><div class="panel"><h3>وضعیت درخواست‌های وام</h3>${hbars(S.LoanApplication.map(s=>[s[1],loans.filter(l=>l.st===s[0]).length*7+3,'درخواست']),'var(--s1)')}</div>
+ <div class="panel"><h3>آخرین فعالیت‌ها</h3><div class="list">${audit.map(a=>`<div><span>${a[0]}: ${a[1]}</span><span>${a[2].slice(-5)}</span></div>`).join('')}</div></div></div>`;
+
+V.loans=()=>{const chips=[['all','همه']].concat(S.LoanApplication.map(s=>[s[0],s[1]]));
+ const rows=loans.filter(l=>state.lf==='all'||l.st===state.lf);
+ return head('درخواست‌های وام','برای دیدن جزئیات و تغییر وضعیت روی هر ردیف بزنید')+
+ `<div class="panel"><div class="bar">${chips.map(c=>`<button class="tab" data-lf="${c[0]}" aria-selected="${state.lf===c[0]}">${c[1]}</button>`).join('')}${search('جستجوی نام یا شماره')}</div>`+
+ tbl([['کد',l=>fa(l.id),'n'],['مشتری',l=>esc(l.name)],['پذیرنده',l=>esc(l.merchant)],['مبلغ',l=>M(l.amount/1e6),'n'],['مدت',l=>fa(l.months)+' ماه'],['امتیاز',l=>fa(l.score),'n'],['وضعیت',l=>pill('LoanApplication',l.st)],['تاریخ',l=>l.date,'n']],rows.map(l=>l),'loan')+'</div>'};
+
+V.products=()=>head('محصولات وام','هر پذیرنده می‌تواند چند محصول فعال داشته باشد','<button class="btn solid" id="addProd">محصول جدید</button>')+
+ `<div class="cards">${products.map((p,i)=>`<div class="card"><h3>${p.n}<span class="frow"><button class="btn" data-pe="${i}">ویرایش</button><button class="btn ${p.on?'ok':''}" data-prod="${i}">${p.on?'فعال':'غیرفعال'}</button></span></h3>
+ <div class="kv"><span>بازه‌ی مبلغ</span><b class="n">${fa(p.min)} تا ${fa(p.max)} م.ت</b><span>مدت</span><b class="n">${fa(p.m)} ماه</b><span>کارمزد ماهانه</span><b class="n">${fa(p.fee)}٪</b><span>پیش‌پرداخت</span><b class="n">${fa(p.down)}٪</b></div></div>`).join('')}</div>`;
+
+V.scoring=()=>{const s=state.sim;let pts=(s.inc>=10?20:s.inc>=6?10:0)+(s.kyc?25:0)+(s.late?0:25)+(s.age>=22&&s.age<=60?10:0)+10+10;
+ const dec=pts>=70?['تأیید خودکار','a']:pts>=50?['بررسی دستی','p']:['رد خودکار','r'];
+ return head('موتور اعتبارسنجی','قوانین امتیازدهی و آستانه‌ی تصمیم')+
+ `<div class="cols"><div class="panel"><h3>قوانین امتیاز</h3>${tbl([['قانون',r=>r[0]],['امتیاز',r=>fa(r[1]),'n'],['فعال',(r,i)=>`<input type="checkbox" data-sc="${i}" ${r[2]?'checked':''} aria-label="فعال"> `]],scoring)}
+ <p class="sub">آستانه‌ها: ۷۰ به بالا تأیید خودکار، ۵۰ تا ۶۹ بررسی دستی، زیر ۵۰ رد خودکار.</p></div>
+ <div class="panel"><h3>شبیه‌ساز تصمیم</h3>
+ <label for="inc">درآمد ماهانه: <b class="n">${fa(s.inc)}</b> م.ت</label><input id="inc" type="range" min="0" max="40" value="${s.inc}">
+ <label for="age">سن: <b class="n">${fa(s.age)}</b></label><input id="age" type="range" min="18" max="75" value="${s.age}">
+ <div class="frow" style="margin-top:10px"><label class="chk"><input type="checkbox" id="skyc" ${s.kyc?'checked':''}> هویت تأیید شده</label><label class="chk"><input type="checkbox" id="slate" ${s.late?'checked':''}> سابقه‌ی معوقه</label></div>
+ <div class="score">${fa(pts)}</div><span class="pill ${dec[1]}">${dec[0]}</span></div></div>`};
+
+V.fraud=()=>head('ریسک و تقلب','درخواست‌های با امتیاز ریسک بالا')+tiles([['مورد باز',fa(fraud.filter(f=>f[4]==='review').length)],['مسدود شده',fa(fraud.filter(f=>f[4]==='blocked').length)],['میانگین ریسک',fa(Math.round(fraud.reduce((a,f)=>a+f[2],0)/fraud.length))]])+
+ `<div class="panel">${tbl([['مورد',f=>f[0]],['مشتری',f=>f[1]],['ریسک',f=>`<span class="n ${f[2]>=80?'dn':''}">${fa(f[2])}</span>`],['علائم',f=>f[3].map(esc).join('، ')],['وضعیت',f=>pill('FraudCheck',f[4])],['',(f,i)=>f[4]==='review'?`<button class="btn ok" data-fr="cleared:${i}">پاک</button> <button class="btn bad" data-fr="blocked:${i}">مسدود</button>`:'']],fraud)}</div>`;
+
+V.customers=()=>head('مشتریان')+`<div class="panel"><div class="bar">${search('جستجوی نام یا شماره')}</div>`+tbl([['نام',c=>esc(c.name)],['موبایل',c=>c.phone,'n'],['هویت',c=>pill('Kyc',c.kyc)],['سقف اعتبار',c=>M(c.limit/1e6),'n'],['وام فعال',c=>fa(c.active),'n'],['ریسک',c=>`<span class="n ${c.risk>=70?'dn':''}">${fa(c.risk)}</span>`]],custs,'cust')+'</div>';
+
+V.kyc=()=>head('احراز هویت','صف بررسی مدارک و استعلام شاهکار')+`<div class="panel">`+tbl([['نام',c=>esc(c.name)],['موبایل',c=>c.phone,'n'],['وضعیت',c=>pill('Kyc',c.kyc)],['',(c,i)=>c.kyc==='pending'?`<button class="btn ok" data-ky="verified:${i}">تأیید</button> <button class="btn bad" data-ky="failed:${i}">رد</button>`:'']],custs)+'</div>';
+
+V.merchants=()=>head('پذیرنده‌ها')+tiles([['فروش اقساطی این ماه',M(merchants.reduce((a,m)=>a+m.sales/1e6,0))],['کمیسیون دریافتی','۱۸ م.ت'],['در انتظار تأیید',fa(merchants.filter(m=>m.st==='pending').length)]])+
+ `<div class="panel">`+tbl([['فروشگاه',m=>esc(m.name)],['شهر',m=>m.city],['فروش',m=>M(m.sales/1e6),'n'],['کارمزد',m=>fa(m.pct)+'٪','n'],['وضعیت',m=>pill('Merchant',m.st)],['',(m,i)=>m.st==='pending'?`<button class="btn ok" data-mr="approved:${i}">تأیید</button> <button class="btn bad" data-mr="rejected:${i}">رد</button>`:'']],merchants,'merch')+'</div>';
+
+let treeHtml=n=>`<li><div class="node"><b>${esc(n.name)}</b><code>${n.code}</code><span class="sub">${fa(n.cust)} مشتری · ${fa(n.pct)}٪ کمیسیون</span><button class="btn" data-cp="${n.code}">کپی لینک</button></div>${n.sub.length?`<ul class="tree">${n.sub.map(treeHtml).join('')}</ul>`:''}</li>`;
+V.agents=()=>head('نمایندگان و زیرمجموعه‌ها','هر نماینده لینک ثبت‌نام اختصاصی دارد و می‌تواند زیرمجموعه بگیرد')+tiles([['کل نمایندگان',fa(6)],['مشتریان جذب‌شده',fa(82)],['کمیسیون پرداختی','۴٫۲ م.ت']])+`<div class="panel"><ul class="tree root">${treeHtml(agentTree)}</ul></div>`;
+
+V.orgs=()=>head('سازمان‌ها','اعتبار گروهی برای کارکنان شرکت‌ها و دانشگاه‌ها')+`<div class="panel">`+tbl([['سازمان',o=>o[0]],['اعضا',o=>fa(o[1]),'n'],['سقف اعتبار گروهی',o=>M(o[2]),'n'],['وضعیت',o=>pill('Merchant',o[3])]],[['شرکت پارس‌نو',120,400,'approved'],['دانشگاه صنعتی نمونه',860,2500,'approved'],['بیمارستان مهر',45,150,'pending']])+'</div>';
+
+V.collect=()=>head('اقساط و وصول','پیگیری معوقات و یادآوری')+tiles([['مجموع معوق','۶٫۳ م.ت','۵ مشتری','dn'],['وصولی امروز','۱٫۲ م.ت'],['وعده‌ی پرداخت','۳ مورد']])+
+ `<div class="cols"><div class="panel"><h3>مبلغ معوق بر اساس سن (میلیون تومان)</h3>${hbars([['۱ تا ۷ روز',3],['۸ تا ۳۰ روز',5],['۳۱ تا ۶۰ روز',2],['۶۱ تا ۹۰ روز',2],['بیش از ۹۰ روز',1]],'var(--s2)')}</div></div>
+ <div class="panel"><h3>فهرست معوقات</h3>`+tbl([['مشتری',o=>o[0]],['قسط',o=>o[1]],['مبلغ',o=>fa(o[2])+' ت','n'],['تأخیر',o=>`<span class="${o[3]>60?'dn':''} n">${fa(o[3])} روز</span>`],['',(o,i)=>`<button class="btn" data-co="sms:${i}">یادآوری پیامکی</button> <button class="btn" data-co="promise:${i}">ثبت وعده</button>`]],overdue)+'</div>';
+
+V.wallet=()=>head('کیف پول و تراکنش‌ها')+tiles([['مجموع موجودی کیف پول‌ها','۸۴ م.ت'],['واریز امروز','۱۲ م.ت'],['تراکنش امروز',fa(86)]])+`<div class="panel"><div class="bar">${search('جستجو در تراکنش‌ها')}</div>`+tbl([['نوع',t=>t[0]],['طرف حساب',t=>esc(t[1])],['مبلغ',t=>`<span class="${t[3]==='+'?'up':'dn'}">${t[3]==='+'?'+':'−'}${fa(t[2])}</span>`,'n']],tx)+'</div>';
+
+V.settle=()=>head('تسویه با پذیرنده‌ها','مانده‌ی قابل پرداخت بعد از کسر کارمزد')+`<div class="panel">`+tbl([['فروشگاه',m=>esc(m.name)],['مانده',m=>M(m.due/1e6),'n'],['کارمزد',m=>fa(m.pct)+'٪','n'],['وضعیت',m=>m.settled?'<span class="pill a">تسویه شده</span>':'<span class="pill p">آماده‌ی پرداخت</span>'],['',(m,i)=>m.settled?'':`<button class="btn solid" data-se="${i}">ثبت تسویه</button>`]],merchants.filter(m=>m.st==='approved'))+'</div>';
+
+V.comm=()=>{const pane={rules:smsRules,logs:smsLogs}[state.cTab]();
+ return head('پیامک و اعلان‌ها','وقتی وضعیت چیزی عوض شد و شرط برقرار بود، پیامک برود')+`<div class="tabs">${[['rules','قوانین'],['logs','سابقه‌ی ارسال']].map(x=>`<button class="tab" data-ct="${x[0]}" aria-selected="${state.cTab===x[0]}">${x[1]}</button>`).join('')}</div>`+pane};
+function entSel(id){return `<select id="${id}">`+Object.keys(ENT).map(k=>`<option value="${k}" ${k===state.ent?'selected':''}>${ENT[k]}</option>`).join('')+'</select>'}
+function smsRules(){const rows=RULES.map((r,i)=>`<tr><td>${ENT[r.ent]}<br>${pill(r.ent,r.st)}</td><td>${r.field?FIELD[r.field]+' '+OPS[r.op]+' '+fa(r.val):'همیشه'}</td><td>${r.to}</td><td style="min-width:200px">${esc(r.tpl)}</td><td><button class="btn ${r.on?'ok':''}" data-tg="${i}">${r.on?'فعال':'خاموش'}</button> <button class="btn bad" data-ds="${i}">حذف</button></td></tr>`).join('');
+ const sts=S[state.ent].map(s=>`<option value="${s[0]}">${esc(s[1])}</option>`).join('');
+ return `<div class="panel"><div class="scroll"><table style="min-width:680px"><thead><tr><th>وقتی</th><th>شرط</th><th>گیرنده</th><th>متن</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+ <label>قانون جدید</label><div class="frow">${entSel('entSel')}<select id="rSt">${sts}</select><select id="rCf"><option value="">بدون شرط</option><option value="Amount">مبلغ</option><option value="Months">مدت</option></select><select id="rOp"><option value="gte">≥</option><option value="lte">≤</option><option value="eq">=</option></select><input id="rVl" placeholder="مقدار" style="max-width:130px" inputmode="numeric"><select id="rTo"><option>مشتری</option><option>پذیرنده</option><option>مدیر</option></select></div>
+ <label for="rTp">متن پیامک (متغیرها: {نام} {مبلغ} {مدت} {وضعیت} {کدپیگیری})</label><textarea id="rTp" rows="2" style="width:100%"></textarea><p><button class="btn solid" id="addRule">افزودن قانون</button></p></div>`}
+function smsLogs(){return `<div class="panel">`+tbl([['زمان',l=>l.time],['گیرنده',l=>l.to],['مرجع',l=>esc(l.ref)],['متن',l=>esc(l.msg)],['وضعیت',l=>`<span class="pill m">${l.st}</span>`]],LOGS)+`<p class="sub">تا وصل شدن درگاه پیامک، پیام‌ها فقط در صف ثبت می‌شوند. برای دیدن نمونه، وضعیت یک وام را در بخش «درخواست‌های وام» تغییر دهید.</p></div>`}
+
+V.tickets=()=>head('پشتیبانی','تیکت‌های مشتریان')+`<div class="panel">`+tbl([['کد',t=>t[0],'n'],['موضوع',t=>t[1]],['مشتری',t=>t[2]],['اولویت',t=>`<span class="pill ${t[3]==='بالا'?'r':t[3]==='متوسط'?'p':'m'}">${t[3]}</span>`],['وضعیت',t=>({open:'<span class="pill p">باز</span>',wip:'<span class="pill b">در حال بررسی</span>',closed:'<span class="pill m">بسته</span>'})[t[4]]],['',(t,i)=>t[4]!=='closed'?`<button class="btn" data-tk="${i}">بستن</button>`:'']],tickets)+'</div>';
+
+V.users=()=>head('کاربران و نقش‌ها','دسترسی هر نقش به بخش‌های پنل')+`<div class="panel perm"><div class="scroll"><table><thead><tr><th>دسترسی</th>${roles.map(r=>`<th>${r}</th>`).join('')}</tr></thead><tbody>${perms.map((p,pi)=>`<tr><td>${p[0]}</td>${p[1].map((v,ri)=>`<td><input type="checkbox" data-pm="${pi}:${ri}" ${v?'checked':''} ${ri===0?'disabled':''} aria-label="${p[0]} ${roles[ri]}"></td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+
+V.reports=()=>head('گزارش‌ها')+`<div class="cards">${[['پرتفوی وام','مانده، سررسید و تمرکز به تفکیک محصول'],['وصول و معوقات','نرخ وصول و سن اقساط'],['عملکرد پذیرنده‌ها','فروش، کارمزد و تسویه'],['شبکه‌ی نمایندگان','مشتریان و کمیسیون هر سطح'],['ریسک و تقلب','امتیاز، علائم و تصمیم‌ها'],['صورت مالی ماهانه','درآمد کارمزد و هزینه‌ها']].map((r,i)=>`<div class="card"><h3>${r[0]}</h3><p class="sub">${r[1]}</p><button class="btn" data-rp="${r[0]}">نمایش گزارش</button></div>`).join('')}</div>`;
+
+V.audit=()=>head('گزارش فعالیت‌ها','هر تغییر مهم با نام کاربر ثبت می‌شود')+`<div class="panel">`+tbl([['کاربر',a=>a[0]],['اقدام',a=>a[1]],['زمان',a=>a[2],'n']],audit)+'</div>';
+
+V.settings=()=>{const t=[['tpl','قالب و محتوا'],['status','وضعیت‌ها'],['slider','اسلایدر صفحه اصلی'],['ctpl','قالب قرارداد'],['foot','تماس و فوتر'],['params','پارامترهای وام'],['gw','درگاه‌ها']];
+ return head('تنظیمات')+`<div class="tabs">${t.map(x=>`<button class="tab" data-st="${x[0]}" aria-selected="${state.sTab===x[0]}">${x[1]}</button>`).join('')}</div>`+({tpl:tplPane,status:statusPane,slider:sliderPane,ctpl:ctplPane,foot:footPane,params:paramPane,gw:gwPane}[state.sTab])()};
+function tplPane(){return `<div class="panel"><b>قالب صفحه اصلی</b><div class="tpl" style="margin-top:10px"><button data-t="1" aria-pressed="${state.tpl===1}">قالب ۱<small>طراحی ساده و کلاسیک</small></button><button data-t="2" aria-pressed="${state.tpl===2}">قالب ۲<small>طراحی جدید با محاسبه‌گر قسط</small></button></div>
+ <label for="hero">عنوان اصلی صفحه</label><input id="hero" style="width:100%" value="همین حالا بخرید، ماه‌به‌ماه پرداخت کنید"><label for="sub">متن زیر عنوان</label><textarea id="sub" rows="3" style="width:100%">خرید اقساطی از فروشگاه‌های طرف قرارداد، بدون ضامن و بدون چک.</textarea><p><button class="btn solid" id="save">ذخیره تغییرات</button></p></div>`}
+function statusPane(){const rows=S[state.ent].map((s,i)=>`<tr><td>${pill(state.ent,s[0])}</td><td class="n">${esc(s[0])}</td><td>${s[3]?'اولیه ':''}${s[4]?'پایانی':''}</td><td><button class="btn bad" data-del="${i}">حذف</button></td></tr>`).join('');
+ return `<div class="panel"><label for="entSel" style="margin-top:0">وضعیت‌های کدام بخش؟</label>${entSel('entSel')}<div class="scroll" style="margin-top:12px"><table><thead><tr><th>عنوان</th><th>کلید</th><th>نوع</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+ <label>افزودن وضعیت</label><div class="frow"><input id="nsT" placeholder="عنوان، مثلاً در انتظار مدارک"><input id="nsK" placeholder="کلید انگلیسی، مثلاً docs"><select id="nsC"><option value="p">زرد</option><option value="a">سبز</option><option value="r">قرمز</option><option value="m">خاکستری</option><option value="b">آبی</option></select><label class="chk"><input type="checkbox" id="nsF"> پایانی</label><button class="btn solid" id="addSt">افزودن</button></div></div>`}
+function paramPane(){return `<div class="panel"><div class="cols" style="margin:0">${[['نرخ کارمزد پیش‌فرض ماهانه (٪)','2.5'],['جریمه‌ی دیرکرد روزانه (٪)','0.1'],['مهلت بدون جریمه (روز)','3'],['حداکثر وام فعال برای هر مشتری','3'],['سقف اعتبار اولیه (م.ت)','5'],['حداقل پیش‌پرداخت (٪)','0']].map((p,i)=>`<div><label for="pp${i}">${p[0]}</label><input id="pp${i}" value="${fa(p[1])}" style="width:100%"></div>`).join('')}</div><p><button class="btn solid" id="save">ذخیره پارامترها</button></p></div>`}
+function gwPane(){return `<div class="panel"><div class="cols" style="margin:0">${[['درگاه پیامک (کلید API)','kavenegar'],['درگاه پرداخت','zarinpal'],['استعلام هویت (شاهکار)','shahkar'],['اعتبارسنجی بانکی','credit-bureau']].map((g,i)=>`<div><label for="gw${i}">${g[0]}</label><input id="gw${i}" type="password" placeholder="کلید را وارد کنید" style="width:100%"><span class="sub">${g[1]} · متصل نیست</span></div>`).join('')}</div><p><button class="btn solid" id="save">ذخیره کلیدها</button></p></div>`}
+
+/* ---------- drawer ---------- */
+function openLoan(i){const l=loans[i];const d=$('#drawer');d.hidden=false;
+ d.innerHTML=`<div class="top"><h2>وام #${fa(l.id)}</h2><button class="btn" id="closeD">بستن</button></div>${pill('LoanApplication',l.st)}
+ <div class="kv"><span>مشتری</span><b>${esc(l.name)}</b><span>موبایل</span><b class="n">${l.phone}</b><span>پذیرنده</span><b>${esc(l.merchant)}</b><span>مبلغ</span><b class="n">${fa(l.amount)} تومان</b><span>مدت</span><b>${fa(l.months)} ماه</b><span>امتیاز اعتباری</span><b class="n">${fa(l.score)}</b></div>
+ <h3>تغییر وضعیت</h3><div class="frow">${S.LoanApplication.filter(s=>s[0]!==l.st).map(s=>`<button class="btn" data-ls="${s[0]}:${i}">${esc(s[1])}</button>`).join('')}</div>
+ <h3 style="margin-top:16px">سابقه</h3><ul class="tl">${l.tl.slice().reverse().map(t=>`<li>${esc(t[0])}<small>${t[1]}</small></li>`).join('')}</ul>`}
+function openCust(i){const c=custs[i];const d=$('#drawer');d.hidden=false;
+ d.innerHTML=`<div class="top"><h2>${esc(c.name)}</h2><button class="btn" id="closeD">بستن</button></div>${pill('Kyc',c.kyc)}
+ <div class="kv"><span>موبایل</span><b class="n">${c.phone}</b><span>سقف اعتبار</span><b class="n">${fa(c.limit)} تومان</b><span>وام فعال</span><b class="n">${fa(c.active)}</b><span>امتیاز ریسک</span><b class="n">${fa(c.risk)}</b></div>
+ <h3>وام‌های این مشتری</h3>${tbl([['کد',l=>fa(l.id),'n'],['مبلغ',l=>M(l.amount/1e6),'n'],['وضعیت',l=>pill('LoanApplication',l.st)]],loans.filter(l=>l.name===c.name))}`}
+
+/* ---------- shell ---------- */
+const NAV=[['نمای کلی',[['dash','داشبورد']]],['وام',[['loans','درخواست‌های وام'],['products','محصولات وام'],['scoring','موتور اعتبارسنجی'],['fraud','ریسک و تقلب'],['contracts','قراردادها'],['beta','طرح بتا (بانک رفاه)']]],
+ ['مشتریان',[['customers','مشتریان'],['kyc','احراز هویت'],['binder','زونکن دیجیتال']]],['شبکه‌ی فروش',[['merchants','پذیرنده‌ها'],['agents','نمایندگان'],['orgs','سازمان‌ها']]],
+ ['مالی',[['collect','اقساط و وصول'],['wallet','کیف پول'],['gate','درگاه داخلی'],['settle','تسویه']]],['ارتباطات',[['comm','پیامک و اعلان'],['tickets','پشتیبانی']]],
+ ['اتصال‌ها',[['hub','مرکز اتصال‌ها'],['docs','مستندات']]],['سازنده‌ها',[['forms','فرم‌ساز'],['pages','صفحه‌ساز'],['stories','استوری‌ساز'],['repb','گزارش‌ساز']]],['سیستم',[['reports','گزارش‌ها'],['users','کاربران و نقش‌ها'],['audit','گزارش فعالیت‌ها'],['settings','تنظیمات']]]];
+const BADGE={loans:()=>loans.filter(l=>l.st==='pending').length,kyc:()=>custs.filter(c=>c.kyc==='pending').length,fraud:()=>fraud.filter(f=>f[4]==='review').length,merchants:()=>merchants.filter(m=>m.st==='pending').length};
+function render(){
+ $('#nav').innerHTML='<div class="brand">دیجی‌بایل پی<button class="btn nvx" data-nvclose="1" aria-label="بستن منو">×</button><button class="btn dcol" data-ncoll="1" style="float:left;min-height:30px;padding:0 10px" aria-label="جمع کردن منو" title="جمع/باز کردن منو">⇔</button></div>'+NAV.map(g=>`<div class="grp">${g[0]}</div>`+g[1].map(i=>`<button data-v="${i[0]}" aria-current="${state.view===i[0]}">${i[1]}${BADGE[i[0]]&&BADGE[i[0]]()?`<span class="cnt">${fa(BADGE[i[0]]())}</span>`:''}</button>`).join('')).join('');
+ $('#main').innerHTML=V[state.view]();
+}
+$('#nav').onclick=e=>{if(e.target.closest('[data-nvclose]')){setNav(0);return}if(e.target.closest('[data-ncoll]')){const a=document.querySelector('.app');a.classList.toggle('coll');try{localStorage.setItem('gcoll',a.classList.contains('coll')?1:0)}catch(_){}return}const b=e.target.closest('[data-v]');if(b){setNav(0);state.view=b.dataset.v;$('#drawer').hidden=true;render();window.scrollTo(0,0)}};
+$('#main').addEventListener('input',e=>{
+ if(e.target.id==='q'){const q=e.target.value.trim();document.querySelectorAll('#main tbody tr').forEach(tr=>tr.hidden=q&&!tr.textContent.includes(q));return}
+ if(e.target.id==='inc'){state.sim.inc=+e.target.value;render();$('#inc').focus();return}
+ if(e.target.id==='age'){state.sim.age=+e.target.value;render();$('#age').focus()}});
+$('#main').addEventListener('change',e=>{const t=e.target;
+ if(t.id==='entSel'){state.ent=t.value;render();return}
+ if(t.id==='skyc'){state.sim.kyc=t.checked?1:0;render();return}
+ if(t.id==='slate'){state.sim.late=t.checked?1:0;render();return}
+ if(t.dataset.sc){scoring[+t.dataset.sc][2]=t.checked?1:0;return}
+ if(t.dataset.pm){const[p,r]=t.dataset.pm.split(':').map(Number);perms[p][1][r]=t.checked?1:0;toast('دسترسی به‌روز شد')}});
+function act(e){const t=e.target,c=s=>t.closest(s);let x;
+ if(c('[data-open]')&&!c('button')){const[k,i]=c('[data-open]').dataset.open.split(':');({loan:openLoan,cust:openCust,merch:openMerch,tk:openTk}[k])(+i);return}
+ if(x=c('[data-lf]')){state.lf=x.dataset.lf;render();return}
+ if(x=c('[data-ls]')){const[k,i]=x.dataset.ls.split(':');const l=loans[+i];if(k==='issued'&&l.ct!=='signed'){toast('قبل از صدور وام، قرارداد باید امضا شود');return}if(k==='approved'&&l.docs.some(d=>d[1]!=='ok')){toast('همه‌ی مدارک باید تأیید شوند');return}l.st=k;l.tl.push([stDef('LoanApplication',k)[1],'همین الان']);
+   const n=notify('LoanApplication',k,{name:l.name,amount:l.amount,months:l.months},'وام #'+fa(l.id));openLoan(+i);render();toast('وضعیت تغییر کرد'+(n?` · ${fa(n)} پیامک در صف`:''));return}
+ if(x=c('[data-prod]')){products[+x.dataset.prod].on=!products[+x.dataset.prod].on;render();return}
+ if(t.id==='addProd'){products.push({n:'محصول جدید',min:1,max:20,m:6,fee:2.5,down:10,on:false});render();toast('محصول اضافه شد');return}
+ if(x=c('[data-fr]')){const[k,i]=x.dataset.fr.split(':');fraud[+i][4]=k;render();toast('ثبت شد');return}
+ if(x=c('[data-ky]')){const[k,i]=x.dataset.ky.split(':');custs[+i].kyc=k;render();toast('ثبت شد');return}
+ if(x=c('[data-mr]')){const[k,i]=x.dataset.mr.split(':');merchants[+i].st=k;const n=notify('Merchant',k,{},merchants[+i].name);render();toast('ثبت شد'+(n?` · ${fa(n)} پیامک در صف`:''));return}
+ if(x=c('[data-cp]')){const u='https://ghestine.ir/register.html?ref='+x.dataset.cp;try{navigator.clipboard.writeText(u).then(()=>toast('لینک کپی شد'),()=>toast(u))}catch(_){toast(u)}return}
+ if(x=c('[data-co]')){const[k,i]=x.dataset.co.split(':');if(k==='sms'){const o=overdue[+i];notify('Installment','overdue',{name:o[0],amount:o[2]},o[0]);toast('یادآوری در صف پیامک قرار گرفت')}else toast('وعده‌ی پرداخت ثبت شد');return}
+ if(x=c('[data-se]')){const m=merchants.filter(m=>m.st==='approved')[+x.dataset.se];m.settled=true;render();toast('تسویه ثبت شد');return}
+ if(x=c('[data-tk]')){tickets[+x.dataset.tk][4]='closed';render();toast('تیکت بسته شد');return}
+ if(x=c('[data-rp]')){toast('گزارش «'+x.dataset.rp+'» در نسخه‌ی اصلی از سرور ساخته می‌شود');return}
+ if(x=c('[data-ct]')){state.cTab=x.dataset.ct;render();return}
+ if(x=c('[data-st]')){state.sTab=x.dataset.st;render();return}
+ if(x=c('[data-t]')){state.tpl=+x.dataset.t;render();toast('قالب '+fa(state.tpl)+' انتخاب شد');return}
+ if(x=c('[data-del]')){S[state.ent].splice(+x.dataset.del,1);render();toast('وضعیت حذف شد');return}
+ if(x=c('[data-tg]')){RULES[+x.dataset.tg].on=!RULES[+x.dataset.tg].on;render();return}
+ if(x=c('[data-ds]')){RULES.splice(+x.dataset.ds,1);render();return}
+ if(t.id==='save'){toast('ذخیره شد');return}
+ if(t.id==='addSt'){const a=$('#nsT').value.trim(),k=$('#nsK').value.trim();if(!a||!k){toast('عنوان و کلید را وارد کنید');return}S[state.ent].push([k,a,$('#nsC').value,0,$('#nsF').checked?1:0]);render();toast('وضعیت اضافه شد');return}
+ if(t.id==='addRule'){const tp=$('#rTp').value.trim();if(!tp){toast('متن پیامک را بنویسید');return}RULES.push({ent:state.ent,st:$('#rSt').value,field:$('#rCf').value,op:$('#rOp').value,val:+$('#rVl').value||0,to:$('#rTo').value,tpl:tp,on:true});render();toast('قانون اضافه شد');return}
+ if(t.id==='closeD'){$('#drawer').hidden=true}}
+document.addEventListener('click',act);
+/* tooltip */
+const tip=$('#tip');
+document.addEventListener('mousemove',e=>{const h=e.target.closest&&e.target.closest('[data-tip]');if(!h){tip.hidden=true;return}
+ tip.innerHTML=h.dataset.tip.split('||').map((s,i)=>i?`<div>${s}</div>`:`<b>${s}</b>`).join('');tip.hidden=false;
+ const w=tip.offsetWidth;tip.style.left=Math.min(Math.max(8,e.clientX-w-12),innerWidth-w-8)+'px';tip.style.top=(e.clientY+14)+'px'});
+/* ===================== مرکز اتصال‌ها ===================== */
+const CATS=[['credit','اعتبارسنجی و استعلام'],['pay','درگاه پرداخت ایران'],['payx','پرداخت خارجی'],['crypto','ارز دیجیتال'],['sms','پیامک ایران'],['smsx','پیامک خارجی'],['msg','پیام‌رسان‌ها'],['bi','گزارش و تحلیل']];
+const INT=[
+['iranian','credit','اعتبارسنجی ایرانیان','گزارش اعتبار و رتبه‌ی مشتری','نام کاربری|user,رمز عبور|pass,کلید API|key'],
+['samat','credit','سمات','استعلام سوابق تسهیلات، با قرارداد رسمی','نام کاربری|user,رمز عبور|pass,کد مؤسسه|inst'],
+['shahkar','credit','شاهکار','تطبیق کد ملی و شماره موبایل','نام کاربری|user,رمز عبور|pass,کلید|key'],
+['sayad','credit','صیاد','استعلام وضعیت چک','توکن|token,کد مؤسسه|inst'],
+['sajam','credit','سجام','احراز هویت متمرکز مشتریان','نام کاربری|user,رمز عبور|pass'],
+['finnotech','credit','فینوتک','واسط API استعلام‌های بانکی و اعتباری','Client ID|cid,توکن|token'],
+['zarinpal','pay','زرین‌پال','درگاه پرداخت اینترنتی','مرچنت کد|merchant'],
+['idpay','pay','آی‌دی‌پی','درگاه پرداخت اینترنتی','کلید API|key'],
+['nextpay','pay','نکست‌پی','درگاه پرداخت اینترنتی','کلید API|key'],
+['payping','pay','پی‌پینگ','درگاه پرداخت و لینک پرداخت','توکن|token'],
+['payir','pay','پی‌دات‌آی‌آر','درگاه پرداخت اینترنتی','کلید API|key'],
+['zibal','pay','زیبال','درگاه پرداخت و تسویه‌ی اشتراکی','مرچنت|merchant'],
+['vandar','pay','وندار','درگاه پرداخت و مدیریت تسویه','توکن|token'],
+['saman','pay','سامان‌کیش (سپ)','درگاه مستقیم بانکی','شناسه ترمینال|terminal,رمز|pass'],
+['behpardakht','pay','به‌پرداخت ملت','درگاه مستقیم بانکی','شناسه ترمینال|terminal,نام کاربری|user,رمز|pass'],
+['parsian','pay','بانک پارسیان','درگاه مستقیم بانکی','پین|pin'],
+['pasargad','pay','بانک پاسارگاد','درگاه مستقیم بانکی','ترمینال|terminal,مرچنت|merchant,کلید خصوصی|key'],
+['irankish','pay','ایران‌کیش','درگاه مستقیم بانکی','ترمینال|terminal,رمز|pass,کلید عمومی|key'],
+['asanpardakht','pay','آسان‌پرداخت','درگاه و پرداخت‌یار','شناسه پذیرنده|merchant,نام کاربری|user,رمز|pass'],
+['stripe','payx','Stripe','کارت‌های بین‌المللی','Secret Key|secret,Webhook Secret|whsec'],
+['paypal','payx','PayPal','پرداخت بین‌المللی','Client ID|cid,Secret|secret'],
+['nowpayments','crypto','NOWPayments','پرداخت با ارزهای دیجیتال','API Key|key,IPN Secret|ipn'],
+['cryptomus','crypto','Cryptomus','پرداخت و فاکتور کریپتو','Merchant ID|merchant,API Key|key'],
+['plisio','crypto','Plisio','پرداخت کریپتو','Secret Key|key'],
+['coinbase','crypto','Coinbase Commerce','پرداخت کریپتو','API Key|key,Webhook Secret|whsec'],
+['btcpay','crypto','BTCPay Server','سرور پرداخت بیت‌کوین، میزبانی شخصی','آدرس سرور|url,API Key|key,Store ID|store'],
+['binancepay','crypto','Binance Pay','پرداخت با حساب بایننس','API Key|key,Secret|secret'],
+['kavenegar','sms','کاوه‌نگار','پیامک و OTP','کلید API|key,شماره خط|line'],
+['smsir','sms','SMS.ir','پیامک و OTP','کلید API|key,شماره خط|line'],
+['ghasedak','sms','قاصدک','پیامک و OTP','کلید API|key,شماره خط|line'],
+['melipayamak','sms','ملی‌پیامک','پیامک انبوه و OTP','نام کاربری|user,رمز|pass,شماره خط|line'],
+['ippanel','sms','IPPanel','پیامک و OTP','کلید API|key,شماره خط|line'],
+['farapayamak','sms','فراپیامک','پیامک انبوه','نام کاربری|user,رمز|pass,شماره خط|line'],
+['twilio','smsx','Twilio','پیامک و تماس بین‌المللی','Account SID|sid,Auth Token|token,From|from'],
+['vonage','smsx','Vonage','پیامک بین‌المللی','API Key|key,API Secret|secret,From|from'],
+['telegram','msg','تلگرام','ربات اعلان برای مدیران و مشتریان','Bot Token|token,Chat ID مدیران|chat'],
+['bale','msg','بله','ربات اعلان','Bot Token|token,Chat ID مدیران|chat'],
+['eitaa','msg','ایتا','ارسال به کانال و گروه','توکن|token,Chat ID|chat'],
+['rubika','msg','روبیکا','ربات اعلان','توکن|token'],
+['whatsapp','msg','واتساپ','WhatsApp Business Cloud API','Phone Number ID|pid,Access Token|token'],
+['instagram','msg','اینستاگرام','انتشار استوری و پاسخ پیام','Access Token|token,Page ID|page'],
+['email','msg','ایمیل (SMTP)','اعلان و گزارش‌های زمان‌بندی‌شده','SMTP Host|host,Port|port,User|user,Pass|pass'],
+['metabase','bi','Metabase','داشبورد و گزارش‌ساز متن‌باز','آدرس|url,کلید API|key'],
+['powerbi','bi','Power BI','گزارش‌های مایکروسافت','Workspace ID|ws,Client ID|cid'],
+['grafana','bi','Grafana','پایش و داشبورد زنده','آدرس|url,توکن|token'],
+['looker','bi','Looker Studio','داشبورد گوگل','Service Account JSON|json'],
+['gsheets','bi','Google Sheets','خروجی خودکار به صفحه‌گسترده','Spreadsheet ID|sheet,Service Account JSON|json'],
+['sftp','bi','SFTP / CSV','تحویل فایل برای حسابداری','میزبان|host,کاربر|user,کلید|key']];
+const CON={zarinpal:{on:1,vals:{merchant:'••••'}},kavenegar:{on:1,vals:{key:'••••',line:'۱۰۰۰۱۲۳'}},telegram:{on:1,vals:{token:'••••',chat:'-100'}}};
+const DEF={pay:'zarinpal',sms:'kavenegar',msg:'telegram'};
+state.hc='credit';state.hq='';state.doc='install';
+const ci=id=>INT.find(x=>x[0]===id);
+const fieldsOf=it=>it[4].split(',').map(s=>s.split('|'));
+const secret=k=>/pass|key|secret|token|pin|whsec|ipn|json/i.test(k);
+V.hub=()=>{
+  const c=state.hc,q=state.hq;const items=INT.filter(i=>(q?true:i[1]===c)&&(!q||(i[2]+i[3]).toLowerCase().includes(q.toLowerCase())));
+  const total=Object.values(CON).filter(x=>x.on).length;
+  return head('مرکز اتصال‌ها',`${fa(INT.length)} سرویس ایرانی و خارجی · ${fa(total)} متصل`)+
+  `<div class="bar"><input id="hq" type="search" placeholder="جستجوی سرویس، مثلاً زرین‌پال" value="${esc(q)}" aria-label="جستجو" style="flex:1;min-width:200px"></div>
+  <div class="tabs">${CATS.map(x=>`<button class="tab" data-hc="${x[0]}" aria-selected="${!q&&c===x[0]}">${x[1]} <span class="n">${fa(INT.filter(i=>i[1]===x[0]).length)}</span></button>`).join('')}</div>
+  ${(c==='payx'||c==='crypto'||c==='smsx')&&!q?'<div class="panel sub">استفاده از خدمات خارجی و ارز دیجیتال را قبل از فعال‌سازی با قوانین جاری و مشاوره‌ی حقوقی بررسی کنید. تسویه‌ی ریالی و محدودیت‌ها بر عهده‌ی شماست.</div>':''}
+  <div class="cards">${items.map(i=>{const k=CON[i[0]];const on=k&&k.on;const isDef=DEF[i[1]]===i[0];
+   return `<div class="card"><h3>${i[2]}${on?'<span class="pill a">متصل</span>':'<span class="pill m">غیرفعال</span>'}</h3><p class="sub" style="margin:0 0 10px">${i[3]}</p>
+   <div class="frow">${isDef?'<span class="pill b">پیش‌فرض</span>':''}<button class="btn" data-ic="${i[0]}">پیکربندی</button><button class="btn" data-idoc="${i[0]}">مستندات</button>${on&&!isDef&&DEF[i[1]]!==undefined?`<button class="btn" data-idef="${i[0]}">پیش‌فرض شود</button>`:''}</div></div>`}).join('')||'<div class="empty">سرویسی پیدا نشد.</div>'}</div>`};
+function openInt(id){const it=ci(id),k=CON[id]||{on:0,vals:{}};const d=$('#drawer');d.hidden=false;
+  const cb=['pay','payx','crypto'].includes(it[1])?`https://ghestine.ir/api/v1/payments/callback/${id}`:['msg','sms','smsx'].includes(it[1])?`https://ghestine.ir/api/v1/integrations/${id}/webhook`:'';
+  d.innerHTML=`<div class="top"><h2>${it[2]}</h2><button class="btn" id="closeD">بستن</button></div><p class="sub">${it[3]}</p>
+  ${fieldsOf(it).map(f=>`<label for="if_${f[1]}">${f[0]}</label><input id="if_${f[1]}" style="width:100%" type="${secret(f[1])?'password':'text'}" value="${esc(k.vals[f[1]]||'')}" autocomplete="off">`).join('')}
+  <label class="chk" style="margin-top:12px"><input type="checkbox" id="if_sbx" ${k.sbx?'checked':''}> حالت آزمایشی (Sandbox)</label>
+  ${cb?`<label>آدرس بازگشت و وب‌هوک (در پنل سرویس‌دهنده ثبت کنید)</label><input readonly style="width:100%;direction:ltr" value="${cb}">`:''}
+  <div class="frow" style="margin-top:16px"><button class="btn" data-itest="${id}">تست اتصال</button><button class="btn solid" data-isave="${id}">ذخیره و فعال‌سازی</button>${k.on?`<button class="btn bad" data-ioff="${id}">غیرفعال</button>`:''}<button class="btn" data-idoc="${id}">مستندات</button></div>
+  <p class="sub">کلیدها در نسخه‌ی اصلی رمزنگاری‌شده ذخیره می‌شوند و بعد از ذخیره دیگر نمایش داده نمی‌شوند.</p>`}
+/* ===================== مستندات ===================== */
+const DOCS={
+ install:['نصب و راه‌اندازی',`<ol><li>زیپ ماژول را روی سرور باز کنید و <code>bash install.sh</code> را اجرا کنید.</li><li>قبل از مایگریشن بکاپ دیتابیس بگیرید.</li><li>دستورهای <code>dotnet ef migrations add</code> و <code>dotnet ef database update</code> را اجرا کنید.</li><li>با <code>/home/ghestine/deploy.sh</code> دیپلوی کنید.</li><li>سلامت سرویس: <code>curl http://127.0.0.1:5200/health</code></li><li>اگر سایت بالا نیامد، <code>fix_nginx_proxy.sh</code> را اجرا کنید تا تنظیم پروکسی دایرکت‌ادمین برگردد.</li></ol>`],
+ arch:['معماری اتصال‌ها',`<p>هر دسته یک اینترفیس دارد و هر سرویس‌دهنده یک آداپتور جدا. با افزودن آداپتور جدید، بقیه‌ی کد تغییر نمی‌کند.</p><ul><li><code>IPaymentGateway</code>: ساخت تراکنش، تأیید پرداخت (verify)، بازگشت وجه</li><li><code>ICreditBureau</code>: استعلام اعتبار و سوابق</li><li><code>ISmsGateway</code>: ارسال پیامک و OTP</li><li><code>IMessenger</code>: ارسال به تلگرام، بله، ایتا و غیره</li></ul><p>تنظیمات هر اتصال در جدول <code>IntegrationConfig</code> با مقدار رمزنگاری‌شده ذخیره می‌شود. اگر درگاه پیش‌فرض خطا بدهد، سیستم به درگاه بعدی در فهرست اولویت می‌رود.</p>`],
+ pay:['جریان پرداخت',`<ol><li>ساخت تراکنش با شناسه‌ی یکتا و مبلغ (ریال یا تومان طبق هر درگاه).</li><li>هدایت کاربر به درگاه.</li><li>بازگشت کاربر به آدرس callback.</li><li><b>تأیید (verify) سمت سرور</b> قبل از ثبت هر مبلغ در کیف پول یا قسط.</li><li>ثبت در دفتر تراکنش با کلید یکتا تا بازگشت تکراری دو بار حساب نشود.</li></ol><p>هرگز نتیجه‌ی پرداخت را فقط از پارامترهای مرورگر باور نکنید.</p>`],
+ sms:['پیامک',`<p>پیامک‌ها از دو مسیر می‌روند: قوانین وضعیت (مثلاً تأیید وام) و OTP. هر پیام در <code>SmsLog</code> ثبت می‌شود. برای OTP از قالب (template) سرویس‌دهنده استفاده کنید تا فیلتر نشود.</p>`],
+ credit:['اعتبارسنجی',`<p>استعلام فقط با رضایت‌نامه‌ی مشتری انجام می‌شود. نتیجه به موتور اعتبارسنجی داده می‌شود و در پرونده‌ی مشتری با زمان و منبع ثبت می‌شود. دسترسی به سرویس‌هایی مثل سمات و ایرانیان نیازمند قرارداد با آن مجموعه است.</p>`],
+ msg:['پیام‌رسان‌ها',`<p>برای تلگرام، بله و ایتا ربات بسازید، توکن را وارد کنید و ربات را به گروه مدیران اضافه کنید. وب‌هوک سرور آدرس <code>/api/v1/integrations/{id}/webhook</code> است. استفاده از اینستاگرام و واتساپ نیاز به حساب تجاری تأییدشده دارد.</p>`],
+ build:['سازنده‌ها',`<p>فرم‌ها، صفحه‌ها و استوری‌ها به‌صورت JSON ذخیره می‌شوند و نسخه دارند. فرم‌های منتشرشده روی <code>/f/{slug}</code> و صفحه‌ها روی <code>/p/{slug}</code> نمایش داده می‌شوند. گزارش‌های ذخیره‌شده می‌توانند زمان‌بندی شوند و به ایمیل یا پیام‌رسان بروند.</p>`],
+ sec:['امنیت',`<ul><li>کلیدها فقط در بک‌اند نگهداری شوند و به مرورگر نروند.</li><li>دسترسی به این صفحه فقط برای نقش مدیر.</li><li>تغییر هر اتصال در گزارش فعالیت‌ها ثبت می‌شود.</li><li>روی وب‌هوک‌ها امضا یا توکن بررسی شود.</li></ul>`],
+ trouble:['عیب‌یابی',`<ul><li>درگاه برنمی‌گردد: آدرس callback را در پنل درگاه بررسی کنید.</li><li>پیامک نمی‌رود: وضعیت <code>Queued</code> در سابقه یعنی هنوز سرویس‌دهنده‌ای فعال نشده.</li><li>خطای <code>Cannot release the application lock</code>: مشکل پایدار دیتابیس سرور است؛ با پشتیبانی هاستینگ پیگیری کنید.</li></ul>`]};
+function docFor(id){const it=ci(id);const c=it[1];const cb=['pay','payx','crypto'].includes(c)?`<li>آدرس بازگشت: <code>https://ghestine.ir/api/v1/payments/callback/${id}</code></li>`:'';
+ return [it[2],`<p>${it[3]}.</p><ol><li>در پنل ${it[2]} حساب بسازید و دسترسی لازم را بگیرید.</li><li>این مقادیر را کپی کنید: ${fieldsOf(it).map(f=>`<b>${f[0]}</b>`).join('، ')}.</li><li>در «مرکز اتصال‌ها» مقادیر را وارد و «تست اتصال» را بزنید.</li>${cb}<li>ابتدا در حالت آزمایشی تست کنید و بعد فعال کنید.</li></ol><p class="sub">جزئیات دقیق API و محدودیت‌ها را از مستندات رسمی ${it[2]} بگیرید؛ آداپتور سرور بر همان اساس نوشته می‌شود.</p>`]}
+V.docs=()=>{const keys=Object.keys(DOCS);const cur=DOCS[state.doc]||(ci(state.doc)?docFor(state.doc):DOCS.install);
+ return head('مستندات','نصب، معماری و راهنمای هر اتصال')+`<div class="doc"><nav class="panel" style="margin:0">${keys.map(k=>`<button class="tab" style="display:block;width:100%;margin-bottom:6px;text-align:right" data-dk="${k}" aria-selected="${state.doc===k}">${DOCS[k][0]}</button>`).join('')}<div class="grp">سرویس‌ها</div><select id="docSel" style="width:100%"><option value="">انتخاب سرویس</option>${INT.map(i=>`<option value="${i[0]}" ${state.doc===i[0]?'selected':''}>${i[2]}</option>`).join('')}</select></nav>
+ <article class="panel" style="margin:0"><h3 style="font-size:1.2rem">${cur[0]}</h3>${cur[1]}</article></div>`};
+
+/* ===================== فرم‌ساز ===================== */
+const FT={text:'متن کوتاه',area:'متن بلند',num:'عدد',mobile:'موبایل',nid:'کد ملی',date:'تاریخ شمسی',sel:'لیست انتخابی',file:'فایل',chk:'تأیید'};
+const toEn=s=>String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+const okNid=v=>{v=toEn(v);if(!/^\d{10}$/.test(v)||/^(\d)\1{9}$/.test(v))return false;let s=0;for(let i=0;i<9;i++)s+=(+v[i])*(10-i);const r=s%11,c=+v[9];return r<2?c===r:c===11-r};
+const FORMS={merchant:{title:'ثبت‌نام پذیرنده',fields:[['text','نام فروشگاه',1],['nid','کد ملی مدیر',1],['mobile','موبایل',1],['sel','صنف',1],['text','شماره شبا',1],['file','مجوز کسب‌وکار',0],['chk','قوانین را می‌پذیرم',1]]},
+ credit:{title:'درخواست اعتبار',fields:[['text','نام و نام خانوادگی',1],['nid','کد ملی',1],['mobile','موبایل',1],['num','درآمد ماهانه (تومان)',1],['date','تاریخ تولد',1],['chk','رضایت‌نامه‌ی استعلام اعتبار',1]]}};
+state.fb={slug:'merchant-signup',...JSON.parse(JSON.stringify(FORMS.merchant))};
+function fbPreview(){const f=state.fb;return `<h3>${esc(f.title)}</h3>`+f.fields.map((x,i)=>{const id='pv_'+i,l=esc(x[1])+(x[2]?' *':'');
+  const inp={area:`<textarea id="${id}" rows="3" style="width:100%"></textarea>`,sel:`<select id="${id}" style="width:100%"><option>گزینه‌ی ۱</option><option>گزینه‌ی ۲</option></select>`,file:`<input id="${id}" type="file" style="width:100%">`,chk:`<label class="chk"><input type="checkbox" id="${id}"> ${l}</label>`,
+   num:`<input id="${id}" inputmode="numeric" style="width:100%">`,mobile:`<input id="${id}" inputmode="numeric" placeholder="۰۹۱۲۳۴۵۶۷۸۹" style="width:100%">`,nid:`<input id="${id}" inputmode="numeric" maxlength="10" style="width:100%">`,date:`<input id="${id}" placeholder="۱۳۸۰/۰۱/۰۱" style="width:100%">`,text:`<input id="${id}" style="width:100%">`}[x[0]];
+  return (x[0]==='chk'?'':`<label for="${id}">${l}</label>`)+inp+`<div class="sub" id="m_${i}"></div>`}).join('')+`<p><button class="btn solid" data-b="form:submit">ارسال فرم</button></p>`}
+function fbJson(){return JSON.stringify({slug:state.fb.slug,title:state.fb.title,fields:state.fb.fields.map(x=>({type:x[0],label:x[1],required:!!x[2]}))},null,1)}
+V.forms=()=>{const f=state.fb;return head('فرم‌ساز','فرم ثبت‌نام، درخواست اعتبار و تماس را بدون برنامه‌نویسی بسازید',`<button class="btn solid" data-b="form:pub">انتشار فرم</button>`)+
+ `<div class="bar">${Object.keys(FORMS).map(k=>`<button class="tab" data-b="form:preset:${k}">${FORMS[k].title}</button>`).join('')}</div>
+ <div class="cols"><div class="panel"><h3>فیلدها</h3><label for="fbT">عنوان فرم</label><input id="fbT" data-b="form:title" value="${esc(f.title)}" style="width:100%"><label for="fbS">نشانی (slug)</label><input id="fbS" data-b="form:slug" value="${esc(f.slug)}" style="width:100%;direction:ltr">
+ <div id="fbList" style="margin-top:12px">${fbList()}</div>
+ <div class="frow" style="margin-top:10px"><select id="fbAdd">${Object.keys(FT).map(k=>`<option value="${k}">${FT[k]}</option>`).join('')}</select><button class="btn" data-b="form:add">افزودن فیلد</button></div></div>
+ <div class="panel"><h3>پیش‌نمایش زنده</h3><div id="fbPv">${fbPreview()}</div></div></div>
+ <div class="panel"><h3>خروجی (JSON)</h3><pre id="fbJs" class="code">${esc(fbJson())}</pre><p class="sub">فرم منتشرشده روی <code>ghestine.ir/f/${esc(f.slug)}</code> در دسترس است و پاسخ‌ها در بخش مشتریان ثبت می‌شوند.</p></div>`};
+function fbList(){return state.fb.fields.map((x,i)=>`<div class="frow" style="margin-bottom:6px"><input data-b="form:l:${i}" value="${esc(x[1])}" aria-label="عنوان فیلد"><select data-b="form:t:${i}">${Object.keys(FT).map(k=>`<option value="${k}" ${k===x[0]?'selected':''}>${FT[k]}</option>`).join('')}</select><label class="chk"><input type="checkbox" data-b="form:r:${i}" ${x[2]?'checked':''}> الزامی</label><button class="btn" data-b="form:up:${i}" aria-label="بالا">↑</button><button class="btn" data-b="form:dn:${i}" aria-label="پایین">↓</button><button class="btn bad" data-b="form:del:${i}">حذف</button></div>`).join('')}
+function fbRefresh(list){if(list)$('#fbList').innerHTML=fbList();$('#fbPv').innerHTML=fbPreview();$('#fbJs').textContent=fbJson()}
+
+/* ===================== صفحه‌ساز ===================== */
+const BT={hero:'بنر اصلی',calc:'محاسبه‌گر قسط',features:'مزیت‌ها',steps:'مراحل',faq:'سؤالات متداول',cta:'دعوت به اقدام',text:'متن آزاد'};
+state.pg={title:'صفحه‌ی معرفی',slug:'about',dev:'d',blocks:[{t:'hero',h:'همین حالا بخرید، ماه‌به‌ماه پرداخت کنید',p:'خرید اقساطی بدون ضامن و بدون چک'},{t:'calc',h:'محاسبه‌گر قسط',p:''},{t:'features',h:'چرا دیجی‌بایل پی؟',p:'بدون ضامن\nپاسخ در ۵ دقیقه\nپرداخت تا ۱۲ ماه'},{t:'faq',h:'سؤالات متداول',p:'چطور اعتبار می‌گیرم؟\nکارمزد چقدر است؟'},{t:'cta',h:'امروز شروع کنید',p:'ثبت‌نام'}]};
+function pgPreview(){const p=state.pg;return `<div class="pgv ${p.dev==='m'?'mob':''}">`+p.blocks.map(b=>{const L=b.p.split('\n').filter(Boolean);
+ return {hero:`<section class="pb hero"><h4>${esc(b.h)}</h4><p>${esc(b.p)}</p><span class="pill b">محاسبه قسط</span></section>`,
+  calc:`<section class="pb"><h4>${esc(b.h)}</h4><div class="fake"><i></i><i style="width:60%"></i></div><b class="n">۲٬۶۲۵٬۰۰۰ تومان / ماه</b></section>`,
+  features:`<section class="pb"><h4>${esc(b.h)}</h4><div class="g3">${L.map(x=>`<div>${esc(x)}</div>`).join('')}</div></section>`,
+  steps:`<section class="pb"><h4>${esc(b.h)}</h4><ol>${L.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></section>`,
+  faq:`<section class="pb"><h4>${esc(b.h)}</h4>${L.map(x=>`<details><summary>${esc(x)}</summary><span class="sub">پاسخ را در ویرایشگر بنویسید.</span></details>`).join('')}</section>`,
+  cta:`<section class="pb cta"><h4>${esc(b.h)}</h4><span class="btn solid">${esc(b.p)}</span></section>`,
+  text:`<section class="pb"><h4>${esc(b.h)}</h4><p>${esc(b.p)}</p></section>`}[b.t]}).join('')+'</div>'}
+function pgList(){return state.pg.blocks.map((b,i)=>`<div class="card" style="margin-bottom:8px"><div class="frow"><b>${BT[b.t]}</b><span style="flex:1"></span><button class="btn" data-b="page:up:${i}">↑</button><button class="btn" data-b="page:dn:${i}">↓</button><button class="btn bad" data-b="page:del:${i}">حذف</button></div>
+ <label for="pgh${i}">عنوان</label><input id="pgh${i}" data-b="page:h:${i}" value="${esc(b.h)}" style="width:100%"><label for="pgp${i}">${b.t==='cta'?'متن دکمه':'متن (هر خط یک مورد)'}</label><textarea id="pgp${i}" data-b="page:p:${i}" rows="2" style="width:100%">${esc(b.p)}</textarea></div>`).join('')}
+V.pages=()=>{const p=state.pg;return head('صفحه‌ساز','صفحه‌ی فرود، معرفی و قوانین با بلوک‌های آماده','<button class="btn solid" data-b="page:pub">انتشار صفحه</button>')+
+ `<div class="cols"><div class="panel"><h3>بلوک‌ها</h3><div class="frow"><input id="pgT" data-b="page:title" value="${esc(p.title)}" aria-label="عنوان صفحه"><input id="pgS" data-b="page:slug" value="${esc(p.slug)}" style="direction:ltr;max-width:160px" aria-label="نشانی"></div>
+ <div id="pgList" style="margin-top:12px">${pgList()}</div><div class="frow"><select id="pgAdd">${Object.keys(BT).map(k=>`<option value="${k}">${BT[k]}</option>`).join('')}</select><button class="btn" data-b="page:add">افزودن بلوک</button></div></div>
+ <div class="panel"><div class="top" style="margin:0 0 8px"><h3 style="margin:0">پیش‌نمایش زنده</h3><div class="tabs" style="margin:0"><button class="tab" data-b="page:dev:d" aria-selected="${p.dev==='d'}">دسکتاپ</button><button class="tab" data-b="page:dev:m" aria-selected="${p.dev==='m'}">موبایل</button></div></div><div id="pgPv">${pgPreview()}</div></div></div>`};
+function pgRefresh(list){if(list)$('#pgList').innerHTML=pgList();$('#pgPv').innerHTML=pgPreview()}
+
+/* ===================== استوری‌ساز ===================== */
+const SBG={plum:['#3b1f6b','#17101f'],saffron:['#ffb629','#e0791a'],ocean:['#1f5fbf','#0e2a52'],mint:['#16805a','#0b2f27']};
+const STPL={discount:{h:'کارمزد اقساط ۳ ماهه صفر شد',p:'تا پایان هفته روی همه‌ی خریدها',cta:'همین حالا بخرید',bg:'saffron',c:'#2a1a00'},agent:{h:'نماینده دیجی‌بایل پی شوید',p:'از هر خرید زیرمجموعه‌هایتان کمیسیون بگیرید',cta:'لینک اختصاصی بگیرید',bg:'plum',c:'#ffffff'},due:{h:'یادآوری قسط',p:'قسط این ماه را از حساب من پرداخت کنید',cta:'پرداخت قسط',bg:'ocean',c:'#ffffff'}};
+state.sb={...STPL.discount,size:'ig',align:'center',fs:26,ch:{ig:1,tg:1,bale:0,eitaa:0,rubika:0,wa:0}};
+const SZ={ig:'اینستاگرام ۱۰۸۰×۱۹۲۰',tg:'تلگرام ۱۰۸۰×۱۹۲۰',bale:'بله ۱۰۸۰×۱۹۲۰',eitaa:'ایتا ۱۰۸۰×۱۹۲۰',rubika:'روبیکا ۱۰۸۰×۱۹۲۰',wa:'وضعیت واتساپ ۱۰۸۰×۱۹۲۰'};
+function sbPreview(){const s=state.sb,g=SBG[s.bg];return `<div class="story" style="background:linear-gradient(160deg,${g[0]},${g[1]});color:${s.c};text-align:${s.align}"><div class="slogo">دیجی‌بایل پی</div><div><div class="sh" style="font-size:${s.fs}px">${esc(s.h)}</div><div class="sp">${esc(s.p)}</div></div><div class="scta" style="background:${s.c};color:${g[1]}">${esc(s.cta)}</div></div>`}
+V.stories=()=>{const s=state.sb;return head('استوری‌ساز','طراحی استوری ۹ به ۱۶ و انتشار هم‌زمان در شبکه‌ها')+
+ `<div class="bar">${Object.keys(STPL).map(k=>`<button class="tab" data-b="story:tpl:${k}">${{discount:'تخفیف کارمزد',agent:'جذب نماینده',due:'یادآوری قسط'}[k]}</button>`).join('')}</div>
+ <div class="cols"><div class="panel"><h3>محتوا</h3>
+ <label for="sbH">عنوان</label><input id="sbH" data-b="story:h" value="${esc(s.h)}" style="width:100%"><label for="sbP">توضیح</label><input id="sbP" data-b="story:p" value="${esc(s.p)}" style="width:100%"><label for="sbC">متن دکمه</label><input id="sbC" data-b="story:cta" value="${esc(s.cta)}" style="width:100%">
+ <label for="sbF">اندازه‌ی عنوان</label><input id="sbF" type="range" min="18" max="40" value="${s.fs}" data-b="story:fs">
+ <div class="frow" style="margin-top:10px">${Object.keys(SBG).map(k=>`<button class="btn" data-b="story:bg:${k}" style="background:linear-gradient(160deg,${SBG[k][0]},${SBG[k][1]});color:#fff;min-width:60px">${{plum:'بنفش',saffron:'زعفرانی',ocean:'آبی',mint:'سبز'}[k]}</button>`).join('')}</div>
+ <div class="frow" style="margin-top:10px"><button class="tab" data-b="story:al:right" aria-selected="${s.align==='right'}">راست</button><button class="tab" data-b="story:al:center" aria-selected="${s.align==='center'}">وسط</button><button class="tab" data-b="story:col:#ffffff">متن سفید</button><button class="tab" data-b="story:col:#2a1a00">متن تیره</button></div>
+ <h3 style="margin-top:16px">انتشار در</h3><div class="frow">${Object.keys(SZ).map(k=>`<label class="chk"><input type="checkbox" data-b="story:ch:${k}" ${s.ch[k]?'checked':''}> ${SZ[k]}</label>`).join('')}</div>
+ <p><button class="btn solid" data-b="story:pub">انتشار یا زمان‌بندی</button></p></div>
+ <div class="panel" style="display:grid;place-items:center"><div id="sbPv">${sbPreview()}</div></div></div>`};
+
+/* ===================== گزارش‌ساز ===================== */
+const DS={loans:{n:'وام‌ها',rows:()=>loans,ent:'LoanApplication',g:{st:'وضعیت',merchant:'پذیرنده',months:'مدت'},sum:['مبلغ','amount'],avg:['امتیاز','score'],gst:'st'},
+ merchants:{n:'پذیرنده‌ها',rows:()=>merchants,ent:'Merchant',g:{st:'وضعیت',city:'شهر'},sum:['فروش','sales'],avg:['کارمزد','pct'],gst:'st'},
+ customers:{n:'مشتریان',rows:()=>custs,ent:'Kyc',g:{kyc:'وضعیت هویت'},sum:['سقف اعتبار','limit'],avg:['ریسک','risk'],gst:'kyc'}};
+state.rb={ds:'loans',g:'merchant',m:'sum',f:'all',view:'bar',saved:[['وام‌ها به تفکیک پذیرنده','هفتگی · تلگرام'],['وضعیت هویت مشتریان','ماهانه · ایمیل']]};
+function rbCompute(){const r=state.rb,d=DS[r.ds];let rows=d.rows();if(r.f!=='all')rows=rows.filter(x=>x[d.gst]===r.f);
+ const m=new Map();rows.forEach(x=>{const k=x[r.g];(m.get(k)||m.set(k,[]).get(k)).push(x)});
+ return [...m].map(([k,a])=>{const lab=r.g===d.gst?stDef(d.ent,k)[1]:String(k);const v=r.m==='count'?a.length:r.m==='sum'?a.reduce((s,x)=>s+x[d.sum[1]],0):a.reduce((s,x)=>s+x[d.avg[1]],0)/a.length;return [lab,Math.round(v*10)/10]}).sort((a,b)=>b[1]-a[1])}
+function rbOut(){const r=state.rb,d=DS[r.ds],data=rbCompute();const ml={count:'تعداد',sum:'مجموع '+d.sum[0],avg:'میانگین '+d.avg[0]}[r.m];
+ return `<div class="sub" style="margin-bottom:8px">${ml} به تفکیک ${d.g[r.g]}</div>`+(data.length?(r.view==='bar'?hbars(data,'var(--s1)'):tbl([[d.g[r.g],x=>esc(x[0])],[ml,x=>fa(x[1]),'n']],data)):'<div class="empty">داده‌ای با این فیلتر نیست.</div>')}
+V.repb=()=>{const r=state.rb,d=DS[r.ds];const flt=[['all','همه']].concat(S[d.ent].map(s=>[s[0],s[1]]));
+ return head('گزارش‌ساز','گزارش دلخواه بسازید، ذخیره و زمان‌بندی کنید','<button class="btn solid" data-b="rep:save">ذخیره گزارش</button>')+
+ `<div class="cols"><div class="panel"><h3>تنظیم گزارش</h3><div class="frow"><div><label for="rbD">منبع داده</label><select id="rbD" data-b="rep:ds">${Object.keys(DS).map(k=>`<option value="${k}" ${k===r.ds?'selected':''}>${DS[k].n}</option>`).join('')}</select></div>
+ <div><label for="rbG">گروه‌بندی</label><select id="rbG" data-b="rep:g">${Object.keys(d.g).map(k=>`<option value="${k}" ${k===r.g?'selected':''}>${d.g[k]}</option>`).join('')}</select></div>
+ <div><label for="rbM">معیار</label><select id="rbM" data-b="rep:m"><option value="count" ${r.m==='count'?'selected':''}>تعداد</option><option value="sum" ${r.m==='sum'?'selected':''}>مجموع ${d.sum[0]}</option><option value="avg" ${r.m==='avg'?'selected':''}>میانگین ${d.avg[0]}</option></select></div>
+ <div><label for="rbF">فیلتر وضعیت</label><select id="rbF" data-b="rep:f">${flt.map(x=>`<option value="${x[0]}" ${x[0]===r.f?'selected':''}>${esc(x[1])}</option>`).join('')}</select></div></div>
+ <div class="tabs" style="margin-top:12px"><button class="tab" data-b="rep:view:bar" aria-selected="${r.view==='bar'}">نمودار</button><button class="tab" data-b="rep:view:tbl" aria-selected="${r.view==='tbl'}">جدول</button></div><div id="rbOut">${rbOut()}</div></div>
+ <div class="panel"><h3>خروجی و زمان‌بندی</h3><div class="frow"><button class="btn" data-b="rep:exp:Excel">Excel</button><button class="btn" data-b="rep:exp:CSV">CSV</button><button class="btn" data-b="rep:exp:PDF">PDF</button><button class="btn" data-b="rep:exp:JSON">JSON</button></div>
+ <label for="rbS">ارسال خودکار</label><div class="frow"><select id="rbS"><option>روزانه</option><option>هفتگی</option><option>ماهانه</option></select><select id="rbC"><option>ایمیل</option><option>تلگرام</option><option>بله</option><option>ایتا</option><option>Google Sheets</option></select><button class="btn" data-b="rep:sch">زمان‌بندی</button></div>
+ <p class="sub">تاریخ‌ها در خروجی شمسی هستند. اتصال به Metabase، Power BI و Grafana از «مرکز اتصال‌ها» انجام می‌شود.</p>
+ <h3 style="margin-top:16px">گزارش‌های ذخیره‌شده</h3><div class="list">${r.saved.map(s=>`<div><span>${esc(s[0])}</span><span>${esc(s[1])}</span></div>`).join('')}</div></div></div>`};
+
+/* ===================== ویرایش حرفه‌ای ===================== */
+function openMerch(i){const m=merchants[i];const d=$('#drawer');d.hidden=false;
+ d.innerHTML=`<div class="top"><h2>${esc(m.name)}</h2><button class="btn" id="closeD">بستن</button></div>${pill('Merchant',m.st)}
+ <label for="em_city">شهر</label><input id="em_city" value="${esc(m.city)}" style="width:100%"><label for="em_pct">کارمزد (٪)</label><input id="em_pct" value="${m.pct}" style="width:100%" inputmode="decimal">
+ <label for="em_sheba">شماره شبا برای تسویه</label><input id="em_sheba" value="${esc(m.sheba||'')}" placeholder="IR..." style="width:100%;direction:ltr">
+ <label>محصولات مجاز</label><div class="frow">${products.map((p,pi)=>`<label class="chk"><input type="checkbox" id="em_p${pi}" ${(m.prods||[0,1]).includes(pi)?'checked':''}> ${p.n}</label>`).join('')}</div>
+ <p><button class="btn solid" data-sv="merch:${i}">ذخیره تغییرات</button></p>`}
+function openProd(i){const p=products[i];const d=$('#drawer');d.hidden=false;
+ d.innerHTML=`<div class="top"><h2>ویرایش محصول</h2><button class="btn" id="closeD">بستن</button></div>${[['n','عنوان',p.n],['min','حداقل مبلغ (م.ت)',p.min],['max','حداکثر مبلغ (م.ت)',p.max],['m','مدت (ماه)',p.m],['fee','کارمزد ماهانه (٪)',p.fee],['down','پیش‌پرداخت (٪)',p.down]].map(f=>`<label for="ep_${f[0]}">${f[1]}</label><input id="ep_${f[0]}" value="${esc(f[2])}" style="width:100%">`).join('')}
+ <p><button class="btn solid" data-sv="prod:${i}">ذخیره تغییرات</button> <button class="btn bad" data-sv="proddel:${i}">حذف</button></p>`}
+const _oc=openCust;openCust=function(i){_oc(i);const c=custs[i];$('#drawer').insertAdjacentHTML('beforeend',`<h3 style="margin-top:16px">ویرایش</h3><label for="ec_limit">سقف اعتبار (تومان)</label><input id="ec_limit" value="${c.limit}" style="width:100%" inputmode="numeric"><label for="ec_note">یادداشت داخلی</label><textarea id="ec_note" rows="3" style="width:100%">${esc(c.note||'')}</textarea>
+ <p class="frow"><button class="btn solid" data-sv="cust:${i}">ذخیره</button><button class="btn ${c.blocked?'ok':'bad'}" data-sv="custblock:${i}">${c.blocked?'رفع مسدودی':'مسدود کردن حساب'}</button></p>`)};
+
+/* ===================== رویدادها ===================== */
+function bAct(el,ev){const[k,a,x,y]=el.dataset.b.split(':');const v=el.type==='checkbox'?el.checked:el.value;
+ if(k==='form'){const f=state.fb;
+  if(a==='title'){f.title=v;fbRefresh();return}if(a==='slug'){f.slug=v;$('#fbJs').textContent=fbJson();return}
+  if(a==='l'){f.fields[+x][1]=v;fbRefresh();return}if(a==='t'){f.fields[+x][0]=v;fbRefresh();return}if(a==='r'){f.fields[+x][2]=v?1:0;fbRefresh();return}
+  if(ev==='input')return;
+  if(a==='up'&&+x>0){[f.fields[+x-1],f.fields[+x]]=[f.fields[+x],f.fields[+x-1]];fbRefresh(1)}
+  if(a==='dn'&&+x<f.fields.length-1){[f.fields[+x+1],f.fields[+x]]=[f.fields[+x],f.fields[+x+1]];fbRefresh(1)}
+  if(a==='del'){f.fields.splice(+x,1);fbRefresh(1)}
+  if(a==='add'){f.fields.push([$('#fbAdd').value,FT[$('#fbAdd').value],0]);fbRefresh(1)}
+  if(a==='preset'){state.fb={slug:x==='merchant'?'merchant-signup':'credit-request',...JSON.parse(JSON.stringify(FORMS[x]))};render()}
+  if(a==='pub')toast('فرم منتشر شد: ghestine.ir/f/'+f.slug+' (نمونه)');
+  if(a==='submit'){const bad=f.fields.map((q,i)=>[q,i]).filter(([q,i])=>q[2]&&(q[0]==='chk'?!$('#pv_'+i).checked:!$('#pv_'+i).value.trim()));toast(bad.length?'فیلدهای الزامی را پر کنید':'فرم معتبر است')}return}
+ if(k==='page'){const p=state.pg;
+  if(a==='title'){p.title=v;return}if(a==='slug'){p.slug=v;return}if(a==='h'){p.blocks[+x].h=v;pgRefresh();return}if(a==='p'){p.blocks[+x].p=v;pgRefresh();return}
+  if(ev==='input')return;
+  if(a==='up'&&+x>0){[p.blocks[+x-1],p.blocks[+x]]=[p.blocks[+x],p.blocks[+x-1]];pgRefresh(1)}
+  if(a==='dn'&&+x<p.blocks.length-1){[p.blocks[+x+1],p.blocks[+x]]=[p.blocks[+x],p.blocks[+x+1]];pgRefresh(1)}
+  if(a==='del'){p.blocks.splice(+x,1);pgRefresh(1)}
+  if(a==='add'){p.blocks.push({t:$('#pgAdd').value,h:BT[$('#pgAdd').value],p:'مورد ۱\nمورد ۲'});pgRefresh(1)}
+  if(a==='dev'){p.dev=x;render()}if(a==='pub')toast('صفحه منتشر شد: ghestine.ir/p/'+p.slug+' (نمونه)');return}
+ if(k==='story'){const s=state.sb;
+  if(['h','p','cta'].includes(a)){s[a]=v;$('#sbPv').innerHTML=sbPreview();return}if(a==='fs'){s.fs=+v;$('#sbPv').innerHTML=sbPreview();return}
+  if(ev==='input')return;
+  if(a==='tpl'){Object.assign(s,STPL[x]);render();return}if(a==='bg'){s.bg=x;render();return}if(a==='al'){s.align=x;render();return}if(a==='col'){s.c=x+(y||'');render();return}
+  if(a==='ch'){s.ch[x]=v?1:0;return}if(a==='pub'){const n=Object.keys(s.ch).filter(k=>s.ch[k]).length;toast(n?`استوری برای ${fa(n)} کانال ثبت شد (نمونه)`:'حداقل یک کانال انتخاب کنید')}return}
+ if(k==='rep'){const r=state.rb;
+  if(a==='ds'){r.ds=v;r.g=Object.keys(DS[v].g)[0];r.f='all';render();return}if(a==='g'){r.g=v;render();return}if(a==='m'){r.m=v;render();return}if(a==='f'){r.f=v;render();return}
+  if(ev==='input')return;
+  if(a==='view'){r.view=x;render()}if(a==='save'){r.saved.unshift([DS[r.ds].n+' به تفکیک '+DS[r.ds].g[r.g],'ذخیره‌شده']);render();toast('گزارش ذخیره شد')}
+  if(a==='exp')toast('خروجی '+x+' در نسخه‌ی اصلی از سرور ساخته می‌شود');
+  if(a==='sch'){r.saved.unshift([DS[r.ds].n+' به تفکیک '+DS[r.ds].g[r.g],$('#rbS').value+' · '+$('#rbC').value]);render();toast('زمان‌بندی ثبت شد')}}}
+$('#main').addEventListener('input',e=>{
+ if(e.target.dataset&&e.target.dataset.b&&e.target.type!=='checkbox'&&e.target.tagName!=='SELECT')bAct(e.target,'input');
+ if(e.target.id==='hq'){state.hq=e.target.value;const p=e.target.selectionStart;render();const n=$('#hq');n.focus();n.setSelectionRange(p,p)}
+ const m=/^pv_(\d+)$/.exec(e.target.id);if(m){const f=state.fb.fields[+m[1]],o=$('#m_'+m[1]),v=toEn(e.target.value);if(!o)return;
+  o.className='sub';o.textContent='';if(!v)return;
+  if(f[0]==='nid'){const ok=okNid(v);o.textContent=ok?'کد ملی معتبر است':'کد ملی معتبر نیست';o.className=ok?'sub up':'sub dn'}
+  if(f[0]==='mobile'){const ok=/^09\d{9}$/.test(v);o.textContent=ok?'شماره معتبر است':'شماره باید ۱۱ رقم و با ۰۹ شروع شود';o.className=ok?'sub up':'sub dn'}}});
+$('#main').addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.b&&(e.target.type==='checkbox'||e.target.tagName==='SELECT'))bAct(e.target,'change');
+ if(e.target.id==='docSel'&&e.target.value){state.doc=e.target.value;render()}});
+function act2(e){const t=e.target,c=s=>t.closest(s);let x;
+ if(x=c('button[data-b]')){bAct(x,'click');return}
+ if(x=c('[data-hc]')){state.hc=x.dataset.hc;state.hq='';render();return}
+ if(x=c('[data-ic]')){openInt(x.dataset.ic);return}
+ if(x=c('[data-idoc]')){state.doc=x.dataset.idoc;state.view='docs';$('#drawer').hidden=true;render();window.scrollTo(0,0);return}
+ if(x=c('[data-dk]')){state.doc=x.dataset.dk;render();return}
+ if(x=c('[data-idef]')){DEF[ci(x.dataset.idef)[1]]=x.dataset.idef;render();toast('پیش‌فرض تغییر کرد');return}
+ if(x=c('[data-itest]')){const it=ci(x.dataset.itest);const ok=fieldsOf(it).every(f=>$('#if_'+f[1]).value.trim());toast(ok?'اتصال آزمایشی موفق بود (شبیه‌سازی نمونه)':'همه‌ی فیلدها را پر کنید');return}
+ if(x=c('[data-isave]')){const id=x.dataset.isave,it=ci(id),vals={};let ok=true;fieldsOf(it).forEach(f=>{vals[f[1]]=$('#if_'+f[1]).value.trim();if(!vals[f[1]])ok=false});if(!ok){toast('همه‌ی فیلدها را پر کنید');return}
+  CON[id]={on:1,vals,sbx:$('#if_sbx').checked};if(!DEF[it[1]]&&DEF[it[1]]!==undefined)DEF[it[1]]=id;$('#drawer').hidden=true;render();toast(it[2]+' فعال شد');return}
+ if(x=c('[data-ioff]')){CON[x.dataset.ioff].on=0;$('#drawer').hidden=true;render();toast('غیرفعال شد');return}
+ if(x=c('[data-sv]')){const[k,i]=x.dataset.sv.split(':'),n=+i;
+  if(k==='merch'){const m=merchants[n];m.city=$('#em_city').value;m.pct=parseFloat(toEn($('#em_pct').value))||m.pct;m.sheba=$('#em_sheba').value;m.prods=products.map((p,pi)=>pi).filter(pi=>$('#em_p'+pi).checked)}
+  if(k==='prod'){const p=products[n];p.n=$('#ep_n').value;['min','max','m','fee','down'].forEach(f=>p[f]=parseFloat(toEn($('#ep_'+f).value))||0)}
+  if(k==='proddel')products.splice(n,1);
+  if(k==='cust'){custs[n].limit=parseInt(toEn($('#ec_limit').value))||custs[n].limit;custs[n].note=$('#ec_note').value}
+  if(k==='custblock')custs[n].blocked=!custs[n].blocked;
+  aud('ویرایش '+({merch:'پذیرنده',prod:'محصول',proddel:'حذف محصول',cust:'مشتری',custblock:'مسدودی مشتری'}[k]||'')+' شماره '+fa(n+1));$('#drawer').hidden=true;render();toast('ذخیره شد');return}
+ if(x=c('[data-pe]')){openProd(+x.dataset.pe);return}}
+document.addEventListener('click',act2);
+
+/* ===================== هدر، تم تیره/روشن ===================== */
+const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':!(typeof matchMedia==='function'&&matchMedia('(prefers-color-scheme: light)').matches)};
+function themeBtn(){const b=$('#tbTheme');if(b)b.textContent=isDark()?'حالت روشن':'حالت تیره'}
+function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('gh-theme',t)}catch(_){}themeBtn();render()}
+try{const t=localStorage.getItem('gh-theme');if(t)document.documentElement.dataset.theme=t}catch(_){}
+
+/* ===================== تیکت‌ها ===================== */
+ENT.Ticket='تیکت‌ها';
+S.Ticket=[['new','جدید','b',1,0],['wip','در حال بررسی','p',0,0],['wait','منتظر مشتری','m',0,0],['solved','حل‌شده','a',0,0],['closed','بسته','m',0,1]];
+const AGENTS=['—','نرگس صادقی','رضا جعفری','لیلا حیدری'];
+const PRI={high:['فوری','r'],mid:['متوسط','p'],low:['کم','m']};
+tickets.length=0;
+tickets.push(
+ {id:502,subject:'پرداخت قسط ثبت نشده',cust:'سارا احمدی',cat:'پرداخت',pri:'high',st:'new',as:'—',sla:2,msgs:[['c','قسط ماه گذشته را پرداخت کردم ولی در حساب من ثبت نشده.','۱۴۰۵/۰۸/۰۲ ۱۰:۱۵']]},
+ {id:501,subject:'تغییر شماره موبایل',cust:'علی کریمی',cat:'حساب کاربری',pri:'mid',st:'wip',as:'رضا جعفری',sla:9,msgs:[['c','شماره‌ی قبلی را ندارم، چطور عوض کنم؟','۱۴۰۵/۰۸/۰۱ ۱۶:۴۰'],['s','برای تغییر شماره، تصویر کارت ملی را ارسال کنید.','۱۴۰۵/۰۸/۰۱ ۱۷:۰۵']]},
+ {id:499,subject:'درخواست افزایش اعتبار',cust:'مینا رضایی',cat:'اعتبار',pri:'low',st:'wait',as:'لیلا حیدری',sla:30,msgs:[['c','می‌خواهم سقف اعتبارم بیشتر شود.','۱۴۰۵/۰۷/۲۹ ۱۱:۰۰'],['s','لطفاً فیش حقوقی سه ماه اخیر را بارگذاری کنید.','۱۴۰۵/۰۷/۲۹ ۱۲:۳۰']]},
+ {id:497,subject:'مشکل در بارگذاری مدارک',cust:'حسین موسوی',cat:'مدارک',pri:'mid',st:'solved',as:'نرگس صادقی',sla:0,msgs:[['c','فایل بارگذاری نمی‌شود.','۱۴۰۵/۰۷/۲۸ ۰۹:۰۰'],['s','حجم فایل را زیر ۵ مگابایت کنید.','۱۴۰۵/۰۷/۲۸ ۰۹:۳۰']]},
+ {id:490,subject:'سؤال درباره‌ی کارمزد',cust:'نرگس صادقی',cat:'عمومی',pri:'low',st:'closed',as:'رضا جعفری',sla:0,msgs:[['c','کارمزد ۶ ماهه چقدر است؟','۱۴۰۵/۰۷/۲۰ ۱۴:۰۰']]});
+state.tf='all';
+const open_=t=>!['solved','closed'].includes(t.st);
+V.tickets=()=>{const rows=tickets.filter(t=>state.tf==='all'||t.st===state.tf);const late=tickets.filter(t=>open_(t)&&t.sla<=0).length;
+ return head('تیکت‌ها','پشتیبانی مشتریان با سطح خدمت (SLA) و ارجاع به کارشناس')+tiles([['تیکت باز',fa(tickets.filter(open_).length)],['نزدیک به تأخیر',fa(tickets.filter(t=>open_(t)&&t.sla>0&&t.sla<=4).length),'کمتر از ۴ ساعت','dn'],['میانگین پاسخ','۲٫۸ ساعت','۱۰٪ بهتر','up'],['رضایت مشتری','۹۱٪']])+
+ `<div class="panel"><div class="bar">${[['all','همه']].concat(S.Ticket.map(s=>[s[0],s[1]])).map(c=>`<button class="tab" data-tf="${c[0]}" aria-selected="${state.tf===c[0]}">${c[1]}${c[0]!=='all'?` <span class="n">${fa(tickets.filter(t=>t.st===c[0]).length)}</span>`:''}</button>`).join('')}${search('جستجوی موضوع یا مشتری')}<button class="btn solid" id="newTk">تیکت جدید</button></div>`+
+ tbl([['کد',t=>fa(t.id),'n'],['موضوع',t=>esc(t.subject)],['مشتری',t=>esc(t.cust)],['دسته',t=>t.cat],['اولویت',t=>`<span class="pill ${PRI[t.pri][1]}">${PRI[t.pri][0]}</span>`],['وضعیت',t=>pill('Ticket',t.st)],['کارشناس',t=>t.as],['مهلت پاسخ',t=>open_(t)?`<span class="n ${t.sla<=0?'dn':t.sla<=4?'':'up'}">${t.sla>0?fa(t.sla)+' ساعت':fa(-t.sla)+' ساعت تأخیر'}</span>`:'—']],rows,'tk')+'</div>'};
+function openTk(i){const t=tickets[i];const d=$('#drawer');d.hidden=false;
+ d.innerHTML=`<div class="top"><h2>تیکت #${fa(t.id)}</h2><button class="btn" id="closeD">بستن</button></div>${pill('Ticket',t.st)} <b>${esc(t.subject)}</b>
+ <div class="kv"><span>مشتری</span><b>${esc(t.cust)}</b><span>دسته</span><b>${t.cat}</b>
+ <span>اولویت</span><select data-b="tk:pri:${i}" aria-label="اولویت">${Object.keys(PRI).map(k=>`<option value="${k}" ${k===t.pri?'selected':''}>${PRI[k][0]}</option>`).join('')}</select>
+ <span>کارشناس</span><select data-b="tk:as:${i}" aria-label="کارشناس">${AGENTS.map(a=>`<option ${a===t.as?'selected':''}>${a}</option>`).join('')}</select></div>
+ <h3>گفتگو</h3><div class="thread">${t.msgs.map(m=>`<div class="msg ${m[0]}"><b>${{c:'مشتری',s:'پشتیبانی',n:'یادداشت داخلی'}[m[0]]}</b><div>${esc(m[1])}</div><small>${m[2]}</small></div>`).join('')}</div>
+ <label for="tkR">پاسخ</label><textarea id="tkR" rows="3" style="width:100%"></textarea><label class="chk"><input type="checkbox" id="tkN"> یادداشت داخلی (برای مشتری نمایش داده نمی‌شود)</label>
+ <p class="frow"><button class="btn solid" data-b="tk:send:${i}">ارسال</button>${S.Ticket.filter(s=>s[0]!==t.st).map(s=>`<button class="btn" data-b="tk:st:${s[0]}:${i}">${s[1]}</button>`).join('')}</p>`}
+
+/* ===================== وام: قرارداد، مدارک، اقساط ===================== */
+state.lt='info';
+state.ctpl='قرارداد خرید اقساطی شماره {کد}\n\nاین قرارداد بین شرکت دیجی‌بایل پی و {نام} (خریدار) با شماره موبایل {موبایل} بسته می‌شود.\n\nماده ۱. موضوع: خرید کالا از {پذیرنده} به مبلغ {مبلغ} تومان.\nماده ۲. بازپرداخت: {مدت} قسط ماهانه به مبلغ {قسط} تومان، شامل کارمزد ماهانه ۲٫۵٪.\nماده ۳. دیرکرد: برای هر روز تأخیر، ۰٫۱٪ مبلغ قسط معوق به‌عنوان جریمه محاسبه می‌شود.\nماده ۴. امضا: تأیید این قرارداد با کد یک‌بار مصرف پیامکی به منزله‌ی امضای خریدار است.';
+const DOCN=['کارت ملی','شناسنامه','فیش حقوقی','گواهی اشتغال'];
+loans.forEach((l,i)=>{l.docs=DOCN.map((n,j)=>[n,j<2?'ok':(j===2?(i%2?'ok':'wait'):'none')]);l.ct=['issued','completed'].includes(l.st)?'signed':l.st==='approved'?'sent':'none';if(l.ct==='signed')l.tl.push(['قرارداد امضا شد','همان روز'])});
+const CTS={none:['ساخته نشده','m'],draft:['پیش‌نویس','b'],sent:['ارسال‌شده برای امضا','p'],signed:['امضا شده','a']};
+const DST={none:['آپلود نشده','m'],wait:['در انتظار بررسی','p'],ok:['تأیید شد','a'],bad:['رد شد','r']};
+const pay=l=>{const total=l.amount*(1+0.025*l.months);return {total,monthly:total/l.months}};
+function sched(l){const p=pay(l);const paid=l.st==='completed'?l.months:l.st==='issued'?l.id%3:0;
+ return Array.from({length:l.months},(_,k)=>{const m0=8+k;const yr=1405+Math.floor((m0-1)/12),mo=(m0-1)%12+1;return [k+1,`${fa(yr)}/${fa(String(mo).padStart(2,'0'))}/۱۰`,p.monthly,k<paid?'paid':(l.st==='issued'&&k===paid&&l.id%5===0?'overdue':'due')]})}
+function ctText(l){const p=pay(l);return state.ctpl.replace('{کد}',fa(l.id)).replace('{نام}',l.name).replace('{موبایل}',l.phone).replace('{پذیرنده}',l.merchant).replace('{مبلغ}',fa(l.amount)).replace('{مدت}',fa(l.months)).replace('{قسط}',fa(Math.round(p.monthly)))}
+openLoan=function(i){const l=loans[i],d=$('#drawer'),t=state.lt;d.hidden=false;
+ const tabs=[['info','جزئیات'],['ct','قرارداد'],['docs','مدارک'],['sched','اقساط']].map(x=>`<button class="tab" data-b="ln:tab:${x[0]}:${i}" aria-selected="${t===x[0]}">${x[1]}</button>`).join('');
+ let body='';
+ if(t==='info')body=`<div class="kv"><span>مشتری</span><b>${esc(l.name)}</b><span>موبایل</span><b class="n">${l.phone}</b><span>پذیرنده</span><b>${esc(l.merchant)}</b><span>مبلغ</span><b class="n">${fa(l.amount)} تومان</b><span>مدت</span><b>${fa(l.months)} ماه</b><span>قسط ماهانه</span><b class="n">${fa(Math.round(pay(l).monthly))} تومان</b><span>امتیاز اعتباری</span><b class="n">${fa(l.score)}</b><span>قرارداد</span><span class="pill ${CTS[l.ct][1]}">${CTS[l.ct][0]}</span><span>مدارک</span><b>${fa(l.docs.filter(x=>x[1]==='ok').length)} از ${fa(l.docs.length)} تأیید</b></div>
+  <h3>تغییر وضعیت</h3><div class="frow">${S.LoanApplication.filter(s=>s[0]!==l.st).map(s=>`<button class="btn" data-ls="${s[0]}:${i}">${esc(s[1])}</button>`).join('')}</div><p class="sub">تأیید وام بعد از تأیید همه‌ی مدارک و صدور وام بعد از امضای قرارداد ممکن است.</p>
+  <h3 style="margin-top:14px">سابقه</h3><ul class="tl">${l.tl.slice().reverse().map(x=>`<li>${esc(x[0])}<small>${x[1]}</small></li>`).join('')}</ul>`;
+ if(t==='ct')body=`<span class="pill ${CTS[l.ct][1]}">${CTS[l.ct][0]}</span>
+  <div class="frow" style="margin:10px 0">${l.ct==='none'?`<button class="btn solid" data-b="ln:ct:create:${i}">ساخت قرارداد از قالب</button>`:''}${l.ct==='draft'?`<button class="btn solid" data-b="ln:ct:send:${i}">ارسال برای امضا (کد پیامکی)</button>`:''}${l.ct==='sent'?`<button class="btn solid" data-b="ln:ct:sign:${i}">ثبت امضای مشتری</button><button class="btn" data-b="ln:ct:send:${i}">ارسال دوباره‌ی کد</button>`:''}${l.ct==='signed'?`<span class="sub">امضا با کد پیامکی ثبت شد · ${l.sign||'۱۴۰۵/۰۸/۰۲'}</span>`:''}</div>
+  ${l.ct==='none'?'<div class="empty">هنوز قراردادی ساخته نشده است.</div>':`<pre class="contract">${esc(ctText(l))}</pre>`}<p class="sub">متن قرارداد از «تنظیمات › قالب قرارداد» ساخته می‌شود.</p>`;
+ if(t==='docs')body=`<p class="sub">هر مدرک پس از بارگذاری مشتری بررسی می‌شود.</p><div class="list">${l.docs.map((x,j)=>`<div style="align-items:center"><span>${x[0]}</span><span class="frow"><span class="pill ${DST[x[1]][1]}">${DST[x[1]][0]}</span>${x[1]==='wait'?`<button class="btn ok" data-b="ln:doc:ok:${j}:${i}">تأیید</button><button class="btn bad" data-b="ln:doc:bad:${j}:${i}">رد</button>`:''}${x[1]==='none'?`<button class="btn" data-b="ln:doc:ask:${j}:${i}">درخواست از مشتری</button><button class="btn" data-b="ln:doc:up:${j}:${i}">ثبت بارگذاری (نمونه)</button>`:''}${x[1]==='bad'?`<button class="btn" data-b="ln:doc:ask:${j}:${i}">درخواست مجدد</button>`:''}${x[1]==='ok'?`<button class="btn" data-b="ln:doc:undo:${j}:${i}">لغو تأیید</button>`:''}</span></div>`).join('')}</div>`;
+ if(t==='sched'){const rows=sched(l);body=`<p class="sub">مجموع بازپرداخت: <b class="n">${fa(Math.round(pay(l).total))}</b> تومان</p>`+tbl([['قسط',r=>fa(r[0]),'n'],['سررسید',r=>r[1],'n'],['مبلغ',r=>fa(Math.round(r[2])),'n'],['وضعیت',r=>pill('Installment',r[3])]],rows)}
+ d.innerHTML=`<div class="top"><h2>وام #${fa(l.id)}</h2><button class="btn" id="closeD">بستن</button></div>${pill('LoanApplication',l.st)}<div class="tabs" style="margin-top:10px">${tabs}</div>${body}`};
+
+/* ===================== درگاه داخلی ===================== */
+INT.unshift(['internal','pay','درگاه داخلی دیجی‌بایل پی','پرداخت با کیف پول و اعتبار اقساطی','IP مجاز سرور پذیرنده|ips']);CON.internal={on:1,vals:{ips:'—'}};DEF.pay='internal';
+const rk=()=>Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,8);
+merchants.forEach(m=>{m.key='pk_live_'+rk()});
+const GT=[['GH-90412','موبایل آسمان','سارا احمدی',2400000,'اعتبار اقساطی','ok','۱۰:۲۲'],['GH-90411','لوازم خانگی رضوی','علی کریمی',850000,'کیف پول','ok','۱۰:۰۸'],['GH-90410','موبایل آسمان','مینا رضایی',5200000,'اعتبار اقساطی','wait','۰۹:۵۵'],['GH-90409','مبلمان ایران‌نو','حسین موسوی',1300000,'درگاه بانکی','fail','۰۹:۳۰'],['GH-90408','کامپیوتر پارس','لیلا حیدری',3100000,'کیف پول','ok','۰۹:۱۲']];
+const GTX={ok:['موفق','a'],fail:['ناموفق','r'],wait:['در انتظار','p']};
+state.gt='ov';state.gset={wallet:1,bnpl:1,topup:1,timeout:15,fee:0.5,ret:'https://shop.example/return'};
+V.gate=()=>{const g=state.gt;const tabs=[['ov','نمای کلی'],['keys','کلیدها و پذیرنده‌ها'],['set','تنظیمات'],['api','مستندات API']].map(x=>`<button class="tab" data-b="gw:tab:${x[0]}" aria-selected="${g===x[0]}">${x[1]}</button>`).join('');
+ let body='';
+ if(g==='ov')body=tiles([['تراکنش امروز',fa(86)],['مبلغ موفق','۴۲ م.ت'],['نرخ موفقیت','۹۴٪','۲٪ بهتر','up'],['میانگین زمان پرداخت','۴۱ ثانیه']])+`<div class="cols"><div class="panel"><h3>تراکنش‌های امروز</h3>${tbl([['کد',t=>t[0],'n'],['پذیرنده',t=>t[1]],['پرداخت‌کننده',t=>t[2]],['مبلغ',t=>fa(t[3]),'n'],['روش',t=>t[4]],['وضعیت',t=>`<span class="pill ${GTX[t[5]][1]}">${GTX[t[5]][0]}</span>`],['ساعت',t=>t[6],'n']],GT)}</div><div class="panel"><h3>سهم روش‌های پرداخت</h3>${hbars([['اعتبار اقساطی',46],['کیف پول',31],['درگاه بانکی',9]],'var(--s1)')}</div></div>`;
+ if(g==='keys')body=`<div class="panel">${tbl([['پذیرنده',m=>esc(m.name)],['کلید عمومی',m=>`<code class="code">${m.key}</code>`],['کلید خصوصی',m=>'<span class="n">••••••••••</span>'],['',(m,i)=>`<button class="btn" data-b="gw:regen:${i}">ساخت کلید جدید</button> <button class="btn" data-cpk="${i}">کپی</button>`]],merchants.filter(m=>m.st==='approved'))}<p class="sub">کلید خصوصی فقط یک بار نمایش داده می‌شود و فقط روی سرور پذیرنده نگهداری شود.</p></div>`;
+ if(g==='set'){const s=state.gset;body=`<div class="panel"><h3>روش‌های پرداخت فعال</h3><div class="frow">${[['wallet','کیف پول'],['bnpl','اعتبار اقساطی'],['topup','شارژ کیف پول با درگاه بانکی']].map(x=>`<label class="chk"><input type="checkbox" data-b="gw:m:${x[0]}" ${s[x[0]]?'checked':''}> ${x[1]}</label>`).join('')}</div>
+  <div class="cols" style="margin-top:12px"><div><label for="gwT">مهلت پرداخت (دقیقه)</label><input id="gwT" data-b="gw:timeout" value="${fa(s.timeout)}" style="width:100%"></div><div><label for="gwF">کارمزد درگاه از پذیرنده (٪)</label><input id="gwF" data-b="gw:fee" value="${fa(s.fee)}" style="width:100%"></div></div>
+  <p class="sub">شارژ کیف پول از درگاه پیش‌فرض بانکی در «مرکز اتصال‌ها» انجام می‌شود.</p><p><button class="btn solid" data-b="gw:save">ذخیره</button></p></div>`}
+ if(g==='api')body=`<div class="panel"><p class="sub">طرح API درگاه داخلی. پیاده‌سازی در بک‌اند انجام می‌شود.</p><pre class="code">POST /api/v1/gateway/request
+{ "merchantKey": "pk_live_...", "amount": 2400000,
+  "orderId": "A-1024", "callbackUrl": "https://shop.example/return",
+  "mobile": "09121234567" }
+→ { "token": "tok_...", "paymentUrl": "https://ghestine.ir/pay/tok_..." }
+
+POST /api/v1/gateway/verify
+{ "token": "tok_...", "merchantKey": "pk_live_..." }
+→ { "status": "paid", "refId": "GH-90412", "amount": 2400000 }</pre></div>`;
+ return head('درگاه داخلی','پرداخت با کیف پول و اعتبار اقساطی، مثل یک درگاه برای فروشگاه‌ها')+`<div class="tabs">${tabs}</div>`+body};
+
+/* ===================== اسلایدر و بخش‌های صفحه اصلی ===================== */
+const SLBG={plum:['#3b1f6b','#17101f'],saffron:['#c9780a','#7a3a00'],ocean:['#1f5fbf','#0e2a52'],mint:['#16805a','#0b2f27']};
+const SL={opts:{auto:1,sec:5,fx:'slide',arrows:1,dots:1,loop:1,h:'md'},slides:[
+ {h:'کارمزد اقساط ۳ ماهه صفر شد',p:'تا پایان آبان روی همه‌ی خریدها',cta:'محاسبه قسط',bg:'saffron'},
+ {h:'خرید اقساطی بدون ضامن',p:'نتیجه‌ی اعتبارسنجی در ۵ دقیقه',cta:'ثبت‌نام',bg:'plum'},
+ {h:'فروشگاه دارید؟ پذیرنده شوید',p:'فروش اقساطی را بدون ریسک بازپرداخت شروع کنید',cta:'ثبت‌نام پذیرنده',bg:'ocean'}]};
+const HS={slider:1,trust:1,calc:1,features:1,steps:1,partners:1,faq:1};const HSN={slider:'اسلایدر',trust:'نوار اعتماد',calc:'محاسبه‌گر قسط',features:'مزیت‌ها',steps:'مراحل خرید',partners:'فروشگاه‌های طرف قرارداد',faq:'سؤالات متداول'};
+state.sli=0;
+function slHtml(){const o=SL.opts,s=SL.slides,n=s.length;if(!n)return '<div class="empty">اسلایدی وجود ندارد.</div>';const cur=state.sli%n;
+ return `<div class="sld ${o.fx}" style="--h:${{sm:170,md:230,lg:310}[o.h]}px"><div class="sld-track" style="${o.fx==='fade'?'':`transform:translateX(${cur*100}%)`}">${s.map((x,i)=>`<div class="sld-s ${i===cur?'on':''}" style="background:linear-gradient(135deg,${SLBG[x.bg][0]},${SLBG[x.bg][1]})"><h3>${esc(x.h)}</h3><p>${esc(x.p)}</p><span class="btn solid">${esc(x.cta)}</span></div>`).join('')}</div>
+ ${o.arrows?`<button class="sld-a r" data-b="sl:step:-1" aria-label="قبلی">›</button><button class="sld-a l" data-b="sl:step:1" aria-label="بعدی">‹</button>`:''}
+ ${o.dots?`<div class="sld-d">${s.map((_,i)=>`<button data-b="sl:go:${i}" aria-label="اسلاید ${fa(i+1)}" aria-current="${i===cur}"></button>`).join('')}</div>`:''}</div>`}
+function slStep(d){const n=SL.slides.length;if(!n)return;let c=state.sli+d;if(c>=n)c=SL.opts.loop?0:n-1;if(c<0)c=SL.opts.loop?n-1:0;state.sli=c;const e=$('#slPv');if(e)e.innerHTML=slHtml()}
+function slStart(){clearInterval(state.slT);if(SL.opts.auto&&state.view==='settings'&&state.sTab==='slider')state.slT=setInterval(()=>slStep(1),Math.max(2,SL.opts.sec)*1000)}
+function slList(){return SL.slides.map((s,i)=>`<div class="card" style="margin-bottom:8px"><div class="frow"><b>اسلاید ${fa(i+1)}</b><span style="flex:1"></span><button class="btn" data-b="sl:up:${i}">↑</button><button class="btn" data-b="sl:dn:${i}">↓</button><button class="btn bad" data-b="sl:del:${i}">حذف</button></div>
+ <label for="sh${i}">عنوان</label><input id="sh${i}" data-b="sl:h:${i}" value="${esc(s.h)}" style="width:100%"><label for="sp${i}">توضیح</label><input id="sp${i}" data-b="sl:p:${i}" value="${esc(s.p)}" style="width:100%">
+ <div class="frow"><div style="flex:1"><label for="sc${i}">متن دکمه</label><input id="sc${i}" data-b="sl:cta:${i}" value="${esc(s.cta)}" style="width:100%"></div><div><label for="sb${i}">پس‌زمینه</label><select id="sb${i}" data-b="sl:bg:${i}">${Object.keys(SLBG).map(k=>`<option value="${k}" ${k===s.bg?'selected':''}>${{plum:'بنفش',saffron:'زعفرانی',ocean:'آبی',mint:'سبز'}[k]}</option>`).join('')}</select></div></div></div>`).join('')}
+function sliderPane(){const o=SL.opts;return `<div class="cols"><div class="panel"><h3>اسلایدها</h3><div id="slList">${slList()}</div><button class="btn" data-b="sl:add">افزودن اسلاید</button></div>
+ <div><div class="panel"><h3>پیش‌نمایش زنده</h3><div id="slPv">${slHtml()}</div></div>
+ <div class="panel"><h3>تنظیمات اسلایدر</h3><div class="frow"><label class="chk"><input type="checkbox" data-b="opt:auto" ${o.auto?'checked':''}> پخش خودکار</label><label class="chk"><input type="checkbox" data-b="opt:arrows" ${o.arrows?'checked':''}> فلش‌ها</label><label class="chk"><input type="checkbox" data-b="opt:dots" ${o.dots?'checked':''}> نقطه‌ها</label><label class="chk"><input type="checkbox" data-b="opt:loop" ${o.loop?'checked':''}> تکرار حلقه‌ای</label></div>
+ <label for="osec">مدت نمایش هر اسلاید: <b class="n" id="osecv">${fa(o.sec)}</b> ثانیه</label><input id="osec" type="range" min="2" max="12" value="${o.sec}" data-b="opt:sec">
+ <div class="frow"><div><label for="ofx">افکت جابه‌جایی</label><select id="ofx" data-b="opt:fx"><option value="slide" ${o.fx==='slide'?'selected':''}>لغزش</option><option value="fade" ${o.fx==='fade'?'selected':''}>محو شدن</option></select></div><div><label for="oh">ارتفاع</label><select id="oh" data-b="opt:h"><option value="sm" ${o.h==='sm'?'selected':''}>کوتاه</option><option value="md" ${o.h==='md'?'selected':''}>متوسط</option><option value="lg" ${o.h==='lg'?'selected':''}>بلند</option></select></div></div>
+ <p><button class="btn solid" id="save">ذخیره و انتشار در صفحه اصلی</button></p></div></div></div>`}
+const _tp=tplPane;tplPane=function(){return _tp()+`<div class="panel"><h3>بخش‌های صفحه اصلی</h3><p class="sub">بخش‌هایی که خاموش شوند در صفحه اصلی دیده نمی‌شوند.</p><div class="frow">${Object.keys(HS).map(k=>`<label class="chk"><input type="checkbox" data-b="hs:${k}" ${HS[k]?'checked':''}> ${HSN[k]}</label>`).join('')}</div></div>`};
+function ctplPane(){return `<div class="panel"><h3>قالب قرارداد وام</h3><p class="sub">متغیرها: {کد} {نام} {موبایل} {پذیرنده} {مبلغ} {مدت} {قسط}. این متن نمونه است و قبل از استفاده باید مشاور حقوقی بازبینی کند.</p><textarea id="ctT" data-b="ctpl" rows="14" style="width:100%">${esc(state.ctpl)}</textarea><p><button class="btn solid" id="save">ذخیره قالب</button></p></div>`}
+const _render=render;render=function(){clearInterval(state.slT);_render();tbRefresh();slStart()};
+
+/* ===================== هدر: اعلان، پشتیبانی، کاربر، جستجو ===================== */
+function notes(){return [[`${fa(loans.filter(l=>l.st==='pending').length)} درخواست وام در انتظار بررسی`,'loans'],[`${fa(custs.filter(c=>c.kyc==='pending').length)} احراز هویت در صف`,'kyc'],[`${fa(fraud.filter(f=>f[4]==='review').length)} مورد تقلب نیازمند بررسی`,'fraud'],[`${fa(tickets.filter(t=>open_(t)&&t.sla<=4).length)} تیکت نزدیک به تأخیر`,'tickets'],[`${fa(overdue.length)} قسط معوق`,'collect']].filter(n=>!n[0].startsWith('۰'))}
+function tbRefresh(){const a=tickets.filter(open_).length,b=notes().length;const t=$('#bgT'),n=$('#bgN');if(t){t.textContent=a?fa(a):'';t.hidden=!a}if(n){n.textContent=b?fa(b):'';n.hidden=!b}themeBtn()}
+function openSupport(){const d=$('#drawer');d.hidden=false;d.innerHTML=`<div class="top"><h2>پشتیبانی سایت</h2><button class="btn" id="closeD">بستن</button></div><p class="sub">مشکل فنی یا درخواستی از تیم توسعه دارید؟ تیکت ثبت کنید تا در صف پشتیبانی بیفتد.</p>
+ <label for="spS">موضوع</label><input id="spS" style="width:100%"><div class="frow"><div><label for="spC">دسته</label><select id="spC"><option>فنی</option><option>مالی</option><option>درخواست قابلیت</option></select></div><div><label for="spP">اولویت</label><select id="spP"><option value="mid">متوسط</option><option value="high">فوری</option><option value="low">کم</option></select></div></div>
+ <label for="spM">شرح</label><textarea id="spM" rows="5" style="width:100%"></textarea><p><button class="btn solid" data-b="sup:send">ثبت تیکت</button></p>`}
+function openBell(){const d=$('#drawer');d.hidden=false;const n=notes();d.innerHTML=`<div class="top"><h2>اعلان‌ها</h2><button class="btn" id="closeD">بستن</button></div>${n.length?`<div class="list">${n.map(x=>`<div style="align-items:center"><span>${x[0]}</span><button class="btn" data-b="hdr:go:${x[1]}">مشاهده</button></div>`).join('')}</div>`:'<div class="empty">اعلان جدیدی نیست.</div>'}`}
+function openUser(){const d=$('#drawer');d.hidden=false;d.innerHTML=`<div class="top"><h2>حساب من</h2><button class="btn" id="closeD">بستن</button></div><div class="frow" style="margin-bottom:14px"><span class="av lg">م</span><div><b>مدیر سیستم</b><div class="sub">مدیر کل · آخرین ورود امروز</div></div></div>
+ <div class="list"><div><span>نقش</span><span>مدیر کل</span></div><div><span>احراز دومرحله‌ای</span><span>غیرفعال</span></div></div>
+ <p class="frow"><button class="btn" data-b="hdr:go:users">نقش‌ها و دسترسی‌ها</button><button class="btn" data-b="hdr:go:audit">فعالیت‌های من</button><button class="btn bad" data-b="hdr:out">خروج</button></p>`}
+function gsearch(q){const box=$('#gres');if(!q||q.length<2){box.hidden=true;return}
+ const r=[];loans.forEach((l,i)=>{if(l.name.includes(q)||fa(l.id).includes(q))r.push(['وام #'+fa(l.id)+' · '+l.name,'loan:'+i])});custs.forEach((c,i)=>{if(c.name.includes(q)||c.phone.includes(q))r.push(['مشتری · '+c.name,'cust:'+i])});merchants.forEach((m,i)=>{if(m.name.includes(q))r.push(['پذیرنده · '+m.name,'merch:'+i])});
+ box.hidden=false;box.innerHTML=r.slice(0,8).map(x=>`<button data-gs="${x[1]}">${esc(x[0])}</button>`).join('')||'<div class="empty">موردی پیدا نشد.</div>'}
+
+/* ===================== رویدادها (بخش دوم) ===================== */
+const _bAct=bAct;
+bAct=function(el,ev){const[k,a,x,y,z]=el.dataset.b.split(':');const v=el.type==='checkbox'?el.checked:el.value;
+ const own=['slide','sl','opt','hs','ctpl','gw','tk','ln','sup','hdr'];if(!own.includes(k))return _bAct(el,ev);
+ if(k==='sl'){const s=SL.slides;
+  if(['h','p','cta'].includes(a)){s[+x][a]=v;$('#slPv').innerHTML=slHtml();return}if(a==='bg'){s[+x].bg=v;$('#slPv').innerHTML=slHtml();return}if(ev==='input')return;
+  if(a==='step'){slStep(+x);slStart();return}if(a==='go'){state.sli=+x;slStep(0);slStart();return}
+  if(a==='up'&&+x>0){[s[+x-1],s[+x]]=[s[+x],s[+x-1]]}if(a==='dn'&&+x<s.length-1){[s[+x+1],s[+x]]=[s[+x],s[+x+1]]}if(a==='del')s.splice(+x,1);if(a==='add')s.push({h:'عنوان جدید',p:'توضیح کوتاه',cta:'بیشتر بدانید',bg:'plum'});
+  state.sli=0;$('#slList').innerHTML=slList();$('#slPv').innerHTML=slHtml();return}
+ if(k==='opt'){const o=SL.opts;if(a==='sec'){o.sec=+v;$('#osecv').textContent=fa(v);slStart();return}if(['auto','arrows','dots','loop'].includes(a))o[a]=v?1:0;else o[a]=v;$('#slPv').innerHTML=slHtml();slStart();return}
+ if(k==='hs'){HS[a]=v?1:0;return}
+ if(k==='ctpl'){state.ctpl=v;return}
+ if(k==='gw'){const g=state.gset;if(a==='tab'){state.gt=x;render();return}if(a==='m'){g[x]=v?1:0;return}if(a==='timeout'||a==='fee'){g[a]=parseFloat(toEn(v))||0;return}if(ev==='input')return;
+  if(a==='regen'){const m=merchants.filter(m=>m.st==='approved')[+x];m.key='pk_live_'+rk();render();toast('کلید جدید ساخته شد؛ کلید قبلی دیگر کار نمی‌کند')}if(a==='save')toast('تنظیمات درگاه ذخیره شد');return}
+ if(k==='tk'){const t=tickets[+(a==='st'?y:x)];
+  if(a==='pri'){t.pri=v;render();return}if(a==='as'){t.as=v;render();toast('ارجاع شد');return}
+  if(a==='send'){const txt=$('#tkR').value.trim();if(!txt){toast('متن پاسخ را بنویسید');return}const note=$('#tkN').checked;t.msgs.push([note?'n':'s',txt,'همین الان']);if(!note&&t.st==='new')t.st='wip';render();openTk(+x);toast(note?'یادداشت ثبت شد':'پاسخ ارسال شد');return}
+  if(a==='st'){t.st=x;const n=notify('Ticket',x,{name:t.cust},'تیکت #'+fa(t.id));render();openTk(+y);toast('وضعیت تغییر کرد'+(n?` · ${fa(n)} پیامک در صف`:''))}return}
+ if(k==='ln'){const l=loans[+(a==='tab'?y:a==='ct'?y:z)];
+  if(a==='tab'){state.lt=x;openLoan(+y);return}
+  if(a==='ct'){if(x==='create'){l.ct='draft';l.tl.push(['قرارداد ساخته شد','همین الان'])}if(x==='send'){l.ct='sent';l.sig={otpAt:'همین الان',ip:'نمونه',dev:'نمونه'};LOGS.unshift({time:'همین الان',to:'مشتری',ref:'وام #'+fa(l.id),msg:'کد امضای قرارداد: ۴۸۲۹۱۶',st:'در صف'});l.tl.push(['کد امضا ارسال شد','همین الان'])}
+   if(x==='sign'){l.ct='signed';l.sign='همین الان';l.sig=l.sig||{otpAt:'—',ip:'نمونه',dev:'نمونه'};l.sig.at='همین الان';l.sig.hash=rk().slice(0,12);l.tl.push(['قرارداد امضا شد','همین الان'])}openLoan(+y);render();toast('ثبت شد');return}
+  if(a==='doc'){const d=l.docs[+y];if(x==='ok'||x==='bad'||x==='undo'||x==='up'){d[1]={ok:'ok',bad:'bad',undo:'wait',up:'wait'}[x];l.tl.push([d[0]+': '+DST[d[1]][0],'همین الان'])}
+   if(x==='ask'){LOGS.unshift({time:'همین الان',to:'مشتری',ref:'وام #'+fa(l.id),msg:'لطفاً «'+d[0]+'» را بارگذاری کنید.',st:'در صف'});toast('درخواست پیامکی در صف قرار گرفت');return}
+   openLoan(+z);render();return}}
+ if(k==='sup'){const s=$('#spS').value.trim();if(!s){toast('موضوع را بنویسید');return}tickets.unshift({id:503+tickets.length,subject:s,cust:'مدیر سیستم',cat:$('#spC').value,pri:$('#spP').value,st:'new',as:'—',sla:8,msgs:[['c',$('#spM').value||s,'همین الان']]});$('#drawer').hidden=true;render();toast('تیکت ثبت شد');return}
+ if(k==='hdr'){if(a==='go'){state.view=x;$('#drawer').hidden=true;render();window.scrollTo(0,0)}if(a==='out')toast('در نسخه‌ی نمونه خروج وجود ندارد');return}}
+$('#drawer').addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.b&&e.target.type!=='checkbox'&&e.target.tagName!=='SELECT')bAct(e.target,'input')});
+$('#drawer').addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.b&&(e.target.type==='checkbox'||e.target.tagName==='SELECT'))bAct(e.target,'change')});
+function act3(e){const t=e.target,c=s=>t.closest(s);let x;
+ if(x=c('[data-tf]')){state.tf=x.dataset.tf;render();return}
+ if(c('#newTk')){openSupport();return}
+ if(c('#tbSupport')){openSupport();return}
+ if(c('#tbTickets')){state.view='tickets';$('#drawer').hidden=true;render();return}
+ if(c('#tbBell')){openBell();return}
+ if(c('#tbUser')||c('#tbUser *')){openUser();return}
+ if(c('#tbTheme')){setTheme(isDark()?'light':'dark');return}
+ if(x=c('[data-gs]')){const[k,i]=x.dataset.gs.split(':');$('#gres').hidden=true;$('#gq').value='';({loan:openLoan,cust:openCust,merch:openMerch}[k])(+i);return}
+ if(x=c('[data-cpk]')){const m=merchants.filter(m=>m.st==='approved')[+x.dataset.cpk];try{navigator.clipboard.writeText(m.key).then(()=>toast('کپی شد'),()=>toast(m.key))}catch(_){toast(m.key)}return}
+ if(!c('#gres')&&!c('#gq'))$('#gres').hidden=true}
+document.addEventListener('click',act3);
+$('#gq').addEventListener('input',e=>gsearch(e.target.value.trim()));
+
+/* ===================== OCR، زونکن دیجیتال، قراردادها، شرایط وام ===================== */
+CATS.push(['ocr','تشخیص متن (OCR)']);
+INT.push(
+ ['tesseract','ocr','Tesseract (فارسی)','OCR متن‌باز، میزبانی روی سرور خودتان','آدرس سرویس|url'],
+ ['gvision','ocr','Google Cloud Vision','تشخیص متن از تصویر','Service Account JSON|json'],
+ ['azuredoc','ocr','Azure AI Document Intelligence','خواندن اسناد و فرم‌ها','Endpoint|url,Key|key'],
+ ['textract','ocr','AWS Textract','خواندن اسناد و جدول‌ها','Access Key|key,Secret|secret,Region|region'],
+ ['customocr','ocr','OCR سفارشی (API)','هر سرویس OCR ایرانی یا داخلی با آدرس و کلید','آدرس|url,کلید|key']);
+DOCS.binder=['زونکن دیجیتال',`<p>همه‌ی مدارک و اسناد هر مشتری در یک پرونده جمع می‌شود: ثبت‌نام و احراز هویت، پوشه‌ی هر وام (هویتی، مالی، قرارداد، رسیدها). هر مدرک نسخه دارد و هر تغییر در گزارش فعالیت‌ها ثبت می‌شود.</p><ul><li>بارگذاری تصویر برای هر مدرک اجباری است و بدون تصویر مدرک تأیید نمی‌شود.</li><li>تصویر اصلی رمزنگاری‌شده نگهداری می‌شود و دسترسی به آن در لاگ ثبت می‌شود.</li><li>مدت نگهداری اسناد را طبق قوانین و قرارداد تعیین کنید.</li></ul>`];
+DOCS.ocr=['تبدیل تصویر به متن (OCR)',`<ol><li>مشتری عکس مدرک را بارگذاری می‌کند.</li><li>سرور تصویر را بهینه می‌کند (چرخش، برش، کاهش نویز).</li><li>سرویس OCR انتخاب‌شده در «مرکز اتصال‌ها» متن را می‌خواند.</li><li>فیلدها استخراج می‌شوند (نام، کد ملی، تاریخ تولد و غیره).</li><li>اعتبارسنجی خودکار: الگوریتم کد ملی، تطبیق نام با پروفایل، تاریخ انقضا.</li><li>متن و فیلدها کنار فایل در زونکن ذخیره می‌شوند و کارشناس می‌تواند ویرایش کند.</li></ol><p class="sub">در این پیش‌نمایش، استخراج متن شبیه‌سازی شده و مقدارها نمونه هستند. خواندن واقعی روی سرور انجام می‌شود.</p>`];
+
+/* ---- داده‌ی مدارک ---- */
+const REG=['سلفی همراه کارت ملی','کارت ملی (رو)','کارت ملی (پشت)'];
+custs.forEach(c=>{c.reg=REG.map((n,j)=>[n,c.kyc==='verified'?'ok':(j===0?'wait':'none')])});
+const DCAT={'کارت ملی':'هویتی','شناسنامه':'هویتی','فیش حقوقی':'مالی','گواهی اشتغال':'مالی'};
+const SPEC={'کارت ملی':['نام','نام خانوادگی','کد ملی','نام پدر','تاریخ تولد'],'کارت ملی (رو)':['نام','نام خانوادگی','کد ملی','نام پدر','تاریخ تولد'],'کارت ملی (پشت)':['شماره سریال','تاریخ انقضا'],'شناسنامه':['شماره شناسنامه','محل صدور','نام پدر','تاریخ تولد'],'فیش حقوقی':['نام کارفرما','ماه','خالص دریافتی (تومان)'],'گواهی اشتغال':['نام کارفرما','سمت','تاریخ شروع کار'],'سلفی همراه کارت ملی':['تطبیق چهره با کارت ملی']};
+const SAMPLE={'کد ملی':'0499370899','نام پدر':'نمونه','تاریخ تولد':'۱۳۷۰/۰۱/۰۱','شماره سریال':'XX0000000','تاریخ انقضا':'۱۴۱۰/۰۱/۰۱','شماره شناسنامه':'۱۲۳','محل صدور':'تهران','نام کارفرما':'شرکت نمونه','ماه':'مهر ۱۴۰۵','خالص دریافتی (تومان)':'12000000','سمت':'کارشناس','تاریخ شروع کار':'۱۴۰۱/۰۷/۰۱','تطبیق چهره با کارت ملی':'۹۲٪'};
+function runOcr(e,c){const x=e[2]||(e[2]={});const N=c.name.split(' ');const spec=SPEC[e[0]]||['متن سند'];
+ x.ocr={conf:0.9,sample:true,fields:spec.map(k=>[k,k==='نام'?N[0]:k==='نام خانوادگی'?N.slice(1).join(' '):(SAMPLE[k]||'')])};x.ocr.text=x.ocr.fields.map(f=>f[0]+': '+f[1]).join('\n')}
+function dget(ref){const p=ref.split('_');if(p[0]==='l'){const l=loans[+p[1]];return{e:l.docs[+p[2]],c:custs[+p[1]],l,where:'وام #'+fa(l.id)}}const c=custs[+p[1]];return{e:c.reg[+p[2]],c,l:null,where:'ثبت‌نام و احراز هویت'}}
+function checks(g){const x=g.e[2];if(!x||!x.ocr)return [];const out=[];const f=k=>(x.ocr.fields.find(a=>a[0]===k)||[])[1];
+ if(f('کد ملی')!==undefined)out.push(okNid(f('کد ملی'))?['کد ملی معتبر است','up']:['الگوریتم کد ملی تأیید نشد','dn']);
+ if(f('نام')!==undefined){const full=(f('نام')+' '+(f('نام خانوادگی')||'')).trim();out.push(full&&g.c.name.includes(f('نام'))?['نام با پروفایل مشتری هم‌خوان است','up']:['نام روی مدرک با پروفایل هم‌خوان نیست','dn'])}
+ return out}
+const RSN=['تصویر ناخوانا','مدرک ناقص','اطلاعات نامطابق','مدرک منقضی'];
+function openDoc(ref){const g=dget(ref),e=g.e,x=e[2]||(e[2]={});const d=$('#drawer');d.hidden=false;
+ d.innerHTML=`<div class="top"><h2>${esc(e[0])}</h2><button class="btn" id="closeD">بستن</button></div><div class="sub">${esc(g.c.name)} · ${g.where}</div><span class="pill ${DST[e[1]][1]}">${DST[e[1]][0]}</span>${x.reason?` <span class="sub">دلیل رد: ${esc(x.reason)}</span>`:''}
+ <div class="preview" style="margin:10px 0">${x.img?`<img src="${x.img}" alt="${esc(e[0])}">`:'تصویری بارگذاری نشده'}</div>
+ <label for="docFile">${x.img?'بارگذاری نسخه‌ی جدید':'بارگذاری تصویر مدرک (الزامی)'}</label><input type="file" id="docFile" accept="image/*" data-ref="${ref}" style="width:100%">
+ <h3 style="margin-top:14px">متن استخراج‌شده (OCR)</h3>
+ ${x.ocr?`<p class="sub">${x.ocr.sample?'مقدارهای این پیش‌نمایش نمونه هستند. ':''}دقت تشخیص: <b class="n">${fa(Math.round(x.ocr.conf*100))}٪</b>. هر فیلد را می‌توانید اصلاح کنید.</p>
+  ${x.ocr.fields.map((f,i)=>`<label for="of${i}">${esc(f[0])}</label><input id="of${i}" data-b="dc:f:${ref}:${i}" value="${esc(f[1])}" style="width:100%">`).join('')}
+  <div class="list" style="margin-top:8px">${checks(g).map(c=>`<div><span class="${c[1]}">${c[0]}</span></div>`).join('')}</div>
+  <label for="otx">متن کامل</label><textarea id="otx" rows="4" data-b="dc:t:${ref}" style="width:100%">${esc(x.ocr.text)}</textarea>
+  <p><button class="btn" data-b="dc:ocr:${ref}">خواندن دوباره</button></p>`:`<div class="empty">بعد از بارگذاری تصویر، متن به‌طور خودکار استخراج می‌شود.</div>`}
+ <h3>تصمیم کارشناس</h3><div class="frow"><button class="btn ok" data-b="dc:ok:${ref}">تأیید</button><select id="dcR" aria-label="دلیل رد">${RSN.map(r=>`<option>${r}</option>`).join('')}</select><button class="btn bad" data-b="dc:bad:${ref}">رد</button></div>
+ <h3 style="margin-top:14px">سابقه‌ی نسخه‌ها</h3><ul class="tl">${(x.hist||[]).slice().reverse().map(h=>`<li>${esc(h[0])}<small>${h[1]}</small></li>`).join('')||'<li>هنوز نسخه‌ای ثبت نشده<small>—</small></li>'}</ul>`}
+$('#drawer').addEventListener('change',ev=>{const t=ev.target;if(t.id!=='docFile'||!t.files[0])return;const g=dget(t.dataset.ref);const r=new FileReader();
+ r.onload=()=>{const x=g.e[2]||(g.e[2]={});x.img=r.result;x.reason='';g.e[1]='wait';runOcr(g.e,g.c);(x.hist=x.hist||[]).push(['نسخه '+fa((x.hist.length||0)+1)+' بارگذاری شد','همین الان']);if(g.l)g.l.tl.push([g.e[0]+': بارگذاری تصویر','همین الان']);openDoc(t.dataset.ref);render();toast('تصویر بارگذاری و متن استخراج شد (نمونه)')};r.readAsDataURL(t.files[0])});
+
+/* ---- زونکن ---- */
+state.bf={sel:'all',cat:'all',st:'all',q:''};
+function bItems(){const it=[];custs.forEach((c,ci)=>{c.reg.forEach((e,j)=>it.push({ci,li:null,cat:'ثبت‌نام',name:e[0],st:e[1],ref:`r_${ci}_${j}`,img:e[2]&&e[2].img,ocr:e[2]&&e[2].ocr}))});
+ loans.forEach((l,li)=>{l.docs.forEach((e,j)=>it.push({ci:li,li,cat:DCAT[e[0]]||'سایر',name:e[0],st:e[1],ref:`l_${li}_${j}`,img:e[2]&&e[2].img,ocr:e[2]&&e[2].ocr}));
+  it.push({ci:li,li,cat:'قرارداد',name:'قرارداد وام #'+fa(l.id),st:l.ct==='signed'?'ok':l.ct==='none'?'none':'wait',ref:`c_${li}`});
+  if(l.st==='issued'||l.st==='completed')it.push({ci:li,li,cat:'رسید پرداخت',name:'رسید قسط اول',st:'ok',ref:`p_${li}`})});return it}
+function bFilter(){const b=state.bf,s=b.sel.split('_');return bItems().filter(x=>(b.sel==='all'||(s[0]==='c'&&x.ci===+s[1])||(s[0]==='r'&&x.ci===+s[1]&&x.li===null)||(s[0]==='v'&&x.li===+s[1]))&&(b.cat==='all'||x.cat===b.cat)&&(b.st==='all'||x.st===b.st)&&(!b.q||(x.name+custs[x.ci].name).includes(b.q)))}
+function bCards(){const r=bFilter();return r.length?`<div class="dgrid">${r.map(x=>`<button class="dcard" data-od="${x.ref}"><div class="th">${x.img?`<img src="${x.img}" alt="">`:x.cat}</div><div class="bd"><b>${esc(x.name)}</b><div class="sub">${esc(custs[x.ci].name)}</div><div class="frow"><span class="pill ${DST[x.st][1]}">${DST[x.st][0]}</span>${x.ocr?'<span class="pill b">متن</span>':''}</div></div></button>`).join('')}</div>`:'<div class="empty">سندی با این فیلتر نیست.</div>'}
+function compl(i){const all=custs[i].reg.concat(loans[i].docs);return Math.round(all.filter(e=>e[1]==='ok').length/all.length*100)}
+V.binder=()=>{const b=state.bf,all=bItems(),cats=['ثبت‌نام','هویتی','مالی','قرارداد','رسید پرداخت','سایر'];
+ return head('زونکن دیجیتال','همه‌ی مدارک و اسناد، مرتب و تفکیک‌شده بر اساس مشتری و وام')+tiles([['کل اسناد',fa(all.length)],['در انتظار بررسی',fa(all.filter(x=>x.st==='wait').length),'','dn'],['آپلود نشده',fa(all.filter(x=>x.st==='none').length)],['دارای متن استخراج‌شده',fa(all.filter(x=>x.ocr).length)]])+
+ `<div class="bn"><div class="panel tree2" style="margin:0"><button class="tab" data-b="bf:sel:all" aria-selected="${b.sel==='all'}" style="margin-bottom:8px">همه‌ی پرونده‌ها</button>${custs.map((c,i)=>`<details ${b.sel.endsWith('_'+i)?'open':''}><summary><span>${esc(c.name)}</span><span class="prog" title="کامل بودن پرونده"><i style="width:${compl(i)}%"></i></span></summary>
+  <button data-b="bf:sel:r_${i}" aria-current="${b.sel==='r_'+i}"><span>ثبت‌نام و احراز هویت</span><span class="n">${fa(c.reg.length)}</span></button><button data-b="bf:sel:v_${i}" aria-current="${b.sel==='v_'+i}"><span>وام #${fa(loans[i].id)}</span><span class="n">${fa(loans[i].docs.length+1)}</span></button><button data-b="bf:sel:c_${i}" aria-current="${b.sel==='c_'+i}"><span>همه‌ی اسناد مشتری</span></button></details>`).join('')}</div>
+ <div><div class="bar"><input id="bq" type="search" data-b="bf:q" placeholder="جستجوی سند یا مشتری" value="${esc(b.q)}" aria-label="جستجو"><select data-b="bf:cat" aria-label="دسته"><option value="all">همه‌ی دسته‌ها</option>${cats.map(c=>`<option ${c===b.cat?'selected':''}>${c}</option>`).join('')}</select><select data-b="bf:st" aria-label="وضعیت"><option value="all">همه‌ی وضعیت‌ها</option>${Object.keys(DST).map(k=>`<option value="${k}" ${k===b.st?'selected':''}>${DST[k][0]}</option>`).join('')}</select></div><div id="bnCards">${bCards()}</div></div></div>`};
+
+/* ---- قراردادها ---- */
+CTS.cancelled=['لغو شده','r'];state.ctab='list';state.cti='t1';
+const CT=[{id:'t1',name:'قرارداد خرید اقساطی استاندارد',ver:3,hist:[['۱۴۰۵/۰۶/۰۱','نسخه ۳: افزودن ماده‌ی تسریع در بازپرداخت'],['۱۴۰۵/۰۴/۱۰','نسخه ۲: اصلاح جریمه‌ی دیرکرد']],clauses:[['موضوع','خرید کالا از {پذیرنده} به مبلغ {مبلغ} تومان.'],['بازپرداخت','{مدت} قسط ماهانه به مبلغ {قسط} تومان، شامل کارمزد. سررسید هر قسط روز ۱۰ ماه است.'],['دیرکرد','برای هر روز تأخیر، ۰٫۱٪ مبلغ قسط معوق به‌عنوان جریمه محاسبه می‌شود.'],['تسریع در بازپرداخت','در صورت معوق شدن دو قسط پیاپی، کل مانده بدهی حال می‌شود.'],['امضای دیجیتال','تأیید قرارداد با کد یک‌بار مصرف پیامکی به منزله‌ی امضای خریدار است.'],['حل اختلاف','اختلاف‌ها ابتدا از راه مذاکره و در صورت نرسیدن به نتیجه از مراجع قانونی پیگیری می‌شود.']]},
+ {id:'t2',name:'قرارداد اعتبار سازمانی',ver:1,hist:[['۱۴۰۵/۰۷/۰۱','نسخه ۱']],clauses:[['موضوع','اعتبار گروهی برای کارکنان {نام} به مبلغ {مبلغ} تومان.'],['بازپرداخت','{مدت} قسط از طریق کسر از حقوق به مبلغ {قسط} تومان.'],['تعهد سازمان','سازمان کسر اقساط را در موعد انجام می‌دهد.']]}];
+products.forEach(p=>{p.cond=p.cond||{minAge:22,maxAge:60,minIncome:6,kyc:1,maxActive:3,minScore:50};p.docs=p.docs||[['کارت ملی',1,1],['شناسنامه',1,1],['فیش حقوقی',p.m>=6?1:0,1],['گواهی اشتغال',0,1]];p.tiers=p.tiers||[{m:p.m,fee:p.fee,down:p.down,iv:30}];p.tpl=p.tpl||'t1'});
+const normP=p=>{p.cond=p.cond||{minAge:22,maxAge:60,minIncome:6,kyc:1,maxActive:3,minScore:50};p.docs=p.docs||[['کارت ملی',1,1],['شناسنامه',1,1]];p.tiers=p.tiers||[{m:p.m,fee:p.fee,down:p.down,iv:30}];p.tpl=p.tpl||'t1';return p};
+const prodOf=l=>products.find(p=>normP(p).tiers.some(t=>t.m===l.months))||normP(products[0]);
+const tplOf=p=>CT.find(t=>t.id===p.tpl)||CT[0];
+function buildText(t,l){const p=pay(l);const f=s=>s.replace('{نام}',l.name).replace('{موبایل}',l.phone).replace('{پذیرنده}',l.merchant).replace('{مبلغ}',fa(l.amount)).replace('{مدت}',fa(l.months)).replace('{قسط}',fa(Math.round(p.monthly)));
+ return `${t.name} · شماره ${fa(l.id)} · نسخه ${fa(t.ver)}\n\nطرفین: شرکت دیجی‌بایل پی و ${l.name} (خریدار، موبایل ${l.phone}).\n\n`+t.clauses.map((c,i)=>`ماده ${fa(i+1)}. ${c[0]}: ${f(c[1])}`).join('\n')+(l.amend&&l.amend.length?'\n\nالحاقیه‌ها:\n'+l.amend.map((a,i)=>`${fa(i+1)}. ${a}`).join('\n'):'')}
+ctText=function(l){return buildText(tplOf(prodOf(l)),l)};
+ctplPane=function(){return `<div class="panel"><p>قالب‌های قرارداد حالا در بخش «قراردادها» مدیریت می‌شوند و هر محصول وام قالب خودش را دارد.</p><button class="btn solid" data-b="hdr:go:contracts">باز کردن قراردادها</button></div>`};
+V.contracts=()=>{const tabs=[['list','قراردادهای وام'],['tpl','قالب‌ها']].map(x=>`<button class="tab" data-b="cs:tab:${x[0]}" aria-selected="${state.ctab===x[0]}">${x[1]}</button>`).join('');let body='';
+ if(state.ctab==='list')body=tiles([['امضا شده',fa(loans.filter(l=>l.ct==='signed').length)],['در انتظار امضا',fa(loans.filter(l=>l.ct==='sent').length)],['پیش‌نویس',fa(loans.filter(l=>l.ct==='draft').length)],['لغو شده',fa(loans.filter(l=>l.ct==='cancelled').length)]])+`<div class="panel"><div class="bar">${search('جستجوی مشتری یا کد')}</div>`+tbl([['وام',l=>fa(l.id),'n'],['مشتری',l=>esc(l.name)],['محصول',l=>prodOf(l).n],['قالب',l=>tplOf(prodOf(l)).name+' · نسخه '+fa(tplOf(prodOf(l)).ver)],['وضعیت',l=>`<span class="pill ${CTS[l.ct][1]}">${CTS[l.ct][0]}</span>`],['',(l,i)=>`<button class="btn" data-b="lx:ct:${i}">مشاهده</button>`]],loans)+'</div>';
+ else{const t=CT.find(x=>x.id===state.cti);const smp=loans[0];
+  body=`<div class="bar">${CT.map(x=>`<button class="tab" data-b="cs:sel:${x.id}" aria-selected="${state.cti===x.id}">${esc(x.name)}</button>`).join('')}<button class="btn" data-b="cs:new">قالب جدید</button></div>
+  <div class="cols"><div class="panel"><label for="ctn">نام قالب</label><input id="ctn" data-b="cs:name" value="${esc(t.name)}" style="width:100%"><p class="sub">متغیرها: {نام} {موبایل} {پذیرنده} {مبلغ} {مدت} {قسط}. این متن‌ها نمونه‌اند و باید حقوقدان بازبینی کند.</p>
+  <div id="clauses">${clauseList(t)}</div><div class="frow"><button class="btn" data-b="cs:add">افزودن ماده</button><button class="btn solid" data-b="cs:save">ذخیره به‌عنوان نسخه‌ی ${fa(t.ver+1)}</button></div>
+  <h3 style="margin-top:14px">محصولاتی که از این قالب استفاده می‌کنند</h3><div class="frow">${products.map((p,i)=>`<label class="chk"><input type="checkbox" data-b="cs:prod:${i}" ${p.tpl===t.id?'checked':''}> ${esc(p.n)}</label>`).join('')}</div>
+  <h3 style="margin-top:14px">سابقه‌ی نسخه‌ها</h3><ul class="tl">${t.hist.map(h=>`<li>${esc(h[1])}<small>${h[0]}</small></li>`).join('')}</ul></div>
+  <div class="panel"><h3>پیش‌نمایش با وام #${fa(smp.id)}</h3><pre class="contract" id="ctPv">${esc(buildText(t,smp))}</pre></div></div>`}
+ return head('قراردادها','قالب هر محصول، امضای دیجیتال، الحاقیه و لغو')+`<div class="tabs">${tabs}</div>`+body};
+function clauseList(t){return t.clauses.map((c,i)=>`<div class="card" style="margin-bottom:8px"><div class="frow"><input data-b="cs:ct:${i}" value="${esc(c[0])}" aria-label="عنوان ماده"><button class="btn" data-b="cs:up:${i}">↑</button><button class="btn" data-b="cs:dn:${i}">↓</button><button class="btn bad" data-b="cs:del:${i}">حذف</button></div><textarea data-b="cs:cx:${i}" rows="2" style="width:100%;margin-top:6px" aria-label="متن ماده">${esc(c[1])}</textarea></div>`).join('')}
+function ctRefresh(list){const t=CT.find(x=>x.id===state.cti);if(list)$('#clauses').innerHTML=clauseList(t);$('#ctPv').textContent=buildText(t,loans[0])}
+
+/* ---- پنل وام: ویرایش، امضا، الحاقیه ---- */
+const _ol=openLoan;
+openLoan=function(i){_ol(i);const l=loans[i],t=state.lt,d=$('#drawer');
+ if(t==='info')d.insertAdjacentHTML('beforeend',`<p class="frow" style="margin-top:14px"><button class="btn" data-b="lx:edit:${i}">ویرایش وام</button></p>`);
+ if(t==='ct'&&l.ct!=='none'){let h='';
+  if(l.sig)h+=`<h3 style="margin-top:14px">گزارش امضا</h3><div class="kv"><span>ارسال کد</span><b class="n">${l.sig.otpAt}</b><span>زمان امضا</span><b class="n">${l.sig.at||'—'}</b><span>آی‌پی</span><b class="n">${l.sig.ip}</b><span>دستگاه</span><b>${l.sig.dev}</b><span>اثر انگشت سند</span><b class="n">${l.sig.hash||'—'}</b></div><p class="sub">آی‌پی و دستگاه در نسخه‌ی اصلی از سرور خوانده می‌شوند.</p>`;
+  if(l.ct==='signed'||l.amend&&l.amend.length)h+=`<h3 style="margin-top:14px">الحاقیه‌ها</h3>${(l.amend||[]).map((a,k)=>`<div class="sub">${fa(k+1)}. ${esc(a)}</div>`).join('')}<div class="frow"><input id="amT" placeholder="متن الحاقیه" style="flex:1"><button class="btn" data-b="lx:amend:${i}">ثبت الحاقیه</button></div>`;
+  if(l.ct!=='cancelled')h+=`<p class="frow" style="margin-top:14px"><select id="cnR" aria-label="دلیل لغو"><option>درخواست مشتری</option><option>عدم امضا در مهلت</option><option>اشتباه در اطلاعات</option></select><button class="btn bad" data-b="lx:cancel:${i}">لغو قرارداد</button></p>`;
+  d.insertAdjacentHTML('beforeend',h)}
+ if(t==='docs'){d.querySelectorAll('[data-b^="ln:doc:up"]').forEach(b=>{const p=b.dataset.b.split(':');b.dataset.b='lx:view:'+p[3]+':'+p[4];b.textContent='مشاهده و بارگذاری'});
+  const ds=d.querySelector('.list');if(ds)ds.querySelectorAll(':scope > div').forEach((row,j)=>{const sp=row.querySelector('.frow');if(sp&&!sp.querySelector('[data-b^="lx:view"]'))sp.insertAdjacentHTML('afterbegin',`<button class="btn" data-b="lx:view:${j}:${i}">تصویر و متن</button>`)})}};
+
+/* ---- محصولات: شرایط، مدارک، کارمزد و فاصله ---- */
+state.pt='base';
+V.products=()=>head('محصولات وام','شرایط ثبت‌نام، مدارک لازم، کارمزد و فاصله‌ی اقساط برای هر محصول','<button class="btn solid" id="addProd">محصول جدید</button>')+
+ `<div class="cards">${products.map((p,i)=>{normP(p);return `<div class="card"><h3>${esc(p.n)}<span class="frow"><button class="btn" data-pe="${i}">ویرایش</button><button class="btn ${p.on?'ok':''}" data-prod="${i}">${p.on?'فعال':'غیرفعال'}</button></span></h3>
+ <div class="kv"><span>بازه‌ی مبلغ</span><b class="n">${fa(p.min)} تا ${fa(p.max)} م.ت</b><span>شرایط ثبت‌نام</span><b>سن ${fa(p.cond.minAge)} تا ${fa(p.cond.maxAge)} · درآمد از ${fa(p.cond.minIncome)} م.ت</b><span>مدارک لازم</span><b>${fa(p.docs.filter(d=>d[1]).length)} الزامی از ${fa(p.docs.length)}</b><span>کارمزد و فاصله</span><b class="n">${p.tiers.map(t=>fa(t.m)+'م ٪'+fa(t.fee)).join(' · ')}</b><span>قالب قرارداد</span><b>${esc(tplOf(p).name)}</b></div></div>`}).join('')}</div>`;
+openProd=function(i){const p=normP(products[i]),d=$('#drawer');d.hidden=false;const t=state.pt;
+ const tabs=[['base','کلیات'],['cond','شرایط ثبت‌نام'],['docs','مدارک'],['tiers','کارمزد و فاصله'],['ct','قرارداد']].map(x=>`<button class="tab" data-b="pr:tab:${x[0]}:${i}" aria-selected="${t===x[0]}">${x[1]}</button>`).join('');let b='';
+ const inp=(k,l,v,ty)=>`<label for="pf_${k}">${l}</label><input id="pf_${k}" data-b="pr:f:${k}:${i}" value="${esc(v)}" style="width:100%" ${ty||''}>`;
+ if(t==='base')b=inp('n','عنوان محصول',p.n)+inp('min','حداقل مبلغ (م.ت)',p.min,'inputmode="numeric"')+inp('max','حداکثر مبلغ (م.ت)',p.max,'inputmode="numeric"');
+ if(t==='cond')b=['minAge|حداقل سن','maxAge|حداکثر سن','minIncome|حداقل درآمد ماهانه (م.ت)','maxActive|حداکثر وام فعال هم‌زمان','minScore|حداقل امتیاز اعتباری'].map(s=>{const[k,l]=s.split('|');return `<label for="pc_${k}">${l}</label><input id="pc_${k}" data-b="pr:c:${k}:${i}" value="${p.cond[k]}" inputmode="numeric" style="width:100%">`}).join('')+`<label class="chk" style="margin-top:10px"><input type="checkbox" data-b="pr:c:kyc:${i}" ${p.cond.kyc?'checked':''}> احراز هویت تأییدشده الزامی است</label>`;
+ if(t==='docs')b=`<p class="sub">مشتری برای هر مدرک باید تصویر بارگذاری کند و متن آن خودکار استخراج می‌شود.</p>${p.docs.map((x,j)=>`<div class="frow" style="margin-bottom:6px"><input data-b="pr:dn:${i}:${j}" value="${esc(x[0])}" aria-label="نام مدرک"><label class="chk"><input type="checkbox" data-b="pr:dq:${i}:${j}" ${x[1]?'checked':''}> الزامی</label><label class="chk"><input type="checkbox" data-b="pr:do:${i}:${j}" ${x[2]?'checked':''}> OCR</label><button class="btn bad" data-b="pr:dd:${i}:${j}">حذف</button></div>`).join('')}<button class="btn" data-b="pr:da:${i}">افزودن مدرک</button>`;
+ if(t==='tiers')b=`<p class="sub">برای هر تعداد قسط، کارمزد، پیش‌پرداخت و فاصله‌ی بین اقساط را جدا تعیین کنید.</p><div class="scroll"><table style="min-width:420px"><thead><tr><th>تعداد قسط</th><th>کارمزد ماهانه ٪</th><th>پیش‌پرداخت ٪</th><th>فاصله (روز)</th><th></th></tr></thead><tbody>${p.tiers.map((x,j)=>`<tr>${['m','fee','down','iv'].map(k=>`<td><input data-b="pr:t:${k}:${i}:${j}" value="${x[k]}" inputmode="decimal" style="width:76px" aria-label="${k}"></td>`).join('')}<td><button class="btn bad" data-b="pr:td:${i}:${j}">حذف</button></td></tr>`).join('')}</tbody></table></div><p><button class="btn" data-b="pr:ta:${i}">افزودن ردیف</button></p>`;
+ if(t==='ct')b=`<label for="pTpl">قالب قرارداد این محصول</label><select id="pTpl" data-b="pr:tpl:${i}">${CT.map(c=>`<option value="${c.id}" ${c.id===p.tpl?'selected':''}>${esc(c.name)}</option>`).join('')}</select>`;
+ d.innerHTML=`<div class="top"><h2>${esc(p.n)}</h2><button class="btn" id="closeD">بستن</button></div><div class="tabs">${tabs}</div>${b}<p style="margin-top:14px"><button class="btn solid" data-b="pr:save:${i}">ذخیره تغییرات</button> <button class="btn bad" data-sv="proddel:${i}">حذف محصول</button></p>`};
+
+/* ---- ویرایش وام، نماینده، سازمان ---- */
+const ORGS=[{n:'شرکت پارس‌نو',m:120,c:400,st:'approved'},{n:'دانشگاه صنعتی نمونه',m:860,c:2500,st:'approved'},{n:'بیمارستان مهر',m:45,c:150,st:'pending'}];
+V.orgs=()=>head('سازمان‌ها','اعتبار گروهی برای کارکنان شرکت‌ها و دانشگاه‌ها')+`<div class="panel">`+tbl([['سازمان',o=>esc(o.n)],['اعضا',o=>fa(o.m),'n'],['سقف اعتبار گروهی',o=>M(o.c),'n'],['وضعیت',o=>pill('Merchant',o.st)],['',(o,i)=>`<button class="btn" data-b="lx:org:${i}">ویرایش</button>`]],ORGS)+'</div>';
+const findAg=(n,c)=>n.code===c?n:n.sub.reduce((a,s)=>a||findAg(s,c),null);
+const _tree=treeHtml;treeHtml=function(n){return _tree(n).replace(`data-cp="${n.code}">کپی لینک</button>`,`data-cp="${n.code}">کپی لینک</button><button class="btn" data-b="lx:ag:${n.code}">ویرایش</button>`)};
+const aud=t=>audit.unshift(['مدیر سیستم',t,'همین الان']);
+function formDrawer(title,fields,save){const d=$('#drawer');d.hidden=false;d.innerHTML=`<div class="top"><h2>${title}</h2><button class="btn" id="closeD">بستن</button></div>${fields}<p style="margin-top:14px"><button class="btn solid" data-sv2="${save}">ذخیره تغییرات</button></p>`}
+const fld=(id,l,v,extra)=>`<label for="${id}">${l}</label><input id="${id}" value="${esc(v)}" style="width:100%" ${extra||''}>`;
+const selO=(id,l,opts,cur)=>`<label for="${id}">${l}</label><select id="${id}" style="width:100%">${opts.map(o=>`<option value="${o[0]}" ${o[0]===cur?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`;
+
+/* ---- فوتر و اطلاعات تماس ---- */
+function footPane(){return `<div class="panel"><div class="cols" style="margin:0">${[['نشانی','نشانی دفتر را وارد کنید'],['تلفن پشتیبانی',''],['ایمیل پشتیبانی',''],['ساعت کاری','شنبه تا چهارشنبه، ۹ تا ۱۸'],['تلگرام',''],['اینستاگرام',''],['بله',''],['ایتا',''],['روبیکا','']].map((f,i)=>`<div><label for="ft${i}">${f[0]}</label><input id="ft${i}" placeholder="${f[1]}" style="width:100%"></div>`).join('')}</div>
+ <label for="ftE">کد نماد اعتماد الکترونیکی</label><textarea id="ftE" rows="2" style="width:100%;direction:ltr" placeholder="کد HTML نماد را اینجا بگذارید"></textarea><label for="ftC">متن حق نشر</label><input id="ftC" value="تمامی حقوق برای دیجی‌بایل پی محفوظ است." style="width:100%"><p><button class="btn solid" id="save">ذخیره و انتشار در فوتر</button></p></div>`}
+
+/* ---- رویدادها ---- */
+const _bAct3=bAct;
+bAct=function(el,ev){const[k,a,x,y,z]=el.dataset.b.split(':');const v=el.type==='checkbox'?el.checked:el.value;
+ if(!['pr','dc','cs','lx','bf'].includes(k))return _bAct3(el,ev);
+ if(k==='bf'){const b=state.bf;if(a==='q'){b.q=v;$('#bnCards').innerHTML=bCards();return}if(a==='cat'){b.cat=v;$('#bnCards').innerHTML=bCards();return}if(a==='st'){b.st=v;$('#bnCards').innerHTML=bCards();return}if(a==='sel'){b.sel=x;render()}return}
+ if(k==='dc'){const ref=x;const g=dget(ref),e=g.e;e[2]=e[2]||{};
+  if(a==='f'){e[2].ocr.fields[+y][1]=v;e[2].ocr.text=e[2].ocr.fields.map(f=>f[0]+': '+f[1]).join('\n');return}if(a==='t'){e[2].ocr.text=v;return}
+  if(ev==='input')return;
+  if(a==='ocr'){if(!e[2].img){toast('ابتدا تصویر را بارگذاری کنید');return}runOcr(e,g.c);openDoc(ref);toast('متن دوباره استخراج شد (نمونه)');return}
+  if(a==='ok'){if(!e[2].img){toast('بدون تصویر مدرک تأیید نمی‌شود');return}e[1]='ok';e[2].reason='';(e[2].hist=e[2].hist||[]).push(['تأیید شد','همین الان']);aud('تأیید مدرک «'+e[0]+'» '+g.c.name)}
+  if(a==='bad'){e[1]='bad';e[2].reason=$('#dcR').value;(e[2].hist=e[2].hist||[]).push(['رد شد: '+e[2].reason,'همین الان']);aud('رد مدرک «'+e[0]+'» '+g.c.name);LOGS.unshift({time:'همین الان',to:'مشتری',ref:g.c.name,msg:'مدرک «'+e[0]+'» رد شد: '+e[2].reason+'. لطفاً دوباره بارگذاری کنید.',st:'در صف'})}
+  openDoc(ref);render();toast('ثبت شد');return}
+ if(k==='cs'){const t=CT.find(q=>q.id===state.cti);
+  if(a==='name'){t.name=v;return}if(a==='ct'){t.clauses[+x][0]=v;ctRefresh();return}if(a==='cx'){t.clauses[+x][1]=v;ctRefresh();return}if(ev==='input')return;
+  if(a==='tab'){state.ctab=x;render();return}if(a==='sel'){state.cti=x;render();return}
+  if(a==='new'){const id='t'+(CT.length+1);CT.push({id,name:'قالب جدید',ver:1,hist:[['همین الان','نسخه ۱']],clauses:[['موضوع','خرید کالا به مبلغ {مبلغ} تومان.']]});state.cti=id;render();return}
+  if(a==='up'&&+x>0){[t.clauses[+x-1],t.clauses[+x]]=[t.clauses[+x],t.clauses[+x-1]];ctRefresh(1)}if(a==='dn'&&+x<t.clauses.length-1){[t.clauses[+x+1],t.clauses[+x]]=[t.clauses[+x],t.clauses[+x+1]];ctRefresh(1)}
+  if(a==='del'){t.clauses.splice(+x,1);ctRefresh(1)}if(a==='add'){t.clauses.push(['ماده‌ی جدید','متن ماده']);ctRefresh(1)}
+  if(a==='prod'){products[+x].tpl=v?t.id:products[+x].tpl;render();return}
+  if(a==='save'){t.ver++;t.hist.unshift(['همین الان','نسخه '+fa(t.ver)+': ذخیره توسط مدیر']);aud('ذخیره‌ی نسخه‌ی '+fa(t.ver)+' قالب «'+t.name+'»');render();toast('نسخه‌ی جدید ذخیره شد')}return}
+ if(k==='lx'){
+  if(a==='ct'){state.view='contracts';state.lt='ct';openLoan(+x);return}
+  if(a==='view'){openDoc(`l_${y}_${x}`);return}
+  if(a==='edit'){const l=loans[+x];formDrawer('ویرایش وام #'+fa(l.id),fld('el_a','مبلغ (تومان)',l.amount,'inputmode="numeric"')+fld('el_m','مدت (ماه)',l.months,'inputmode="numeric"')+selO('el_mr','پذیرنده',MERCH.map(m=>[m,m]),l.merchant)+`<label for="el_n">یادداشت داخلی</label><textarea id="el_n" rows="3" style="width:100%">${esc(l.note||'')}</textarea>`,'loan:'+x);return}
+  if(a==='amend'){const l=loans[+x],tx=$('#amT').value.trim();if(!tx){toast('متن الحاقیه را بنویسید');return}(l.amend=l.amend||[]).push(tx);l.tl.push(['الحاقیه ثبت شد','همین الان']);aud('الحاقیه‌ی قرارداد وام #'+fa(l.id));openLoan(+x);toast('الحاقیه ثبت شد');return}
+  if(a==='cancel'){const l=loans[+x];l.ct='cancelled';l.tl.push(['قرارداد لغو شد: '+$('#cnR').value,'همین الان']);aud('لغو قرارداد وام #'+fa(l.id));openLoan(+x);render();toast('قرارداد لغو شد');return}
+  if(a==='org'){const o=ORGS[+x];formDrawer('ویرایش '+esc(o.n),fld('eo_n','نام سازمان',o.n)+fld('eo_m','تعداد اعضا',o.m,'inputmode="numeric"')+fld('eo_c','سقف اعتبار گروهی (م.ت)',o.c,'inputmode="numeric"')+selO('eo_s','وضعیت',S.Merchant.map(s=>[s[0],s[1]]),o.st),'org:'+x);return}
+  if(a==='ag'){const n=findAg(agentTree,x);formDrawer('ویرایش نماینده '+esc(n.name),fld('ea_n','نام',n.name)+fld('ea_p','درصد کمیسیون',n.pct,'inputmode="decimal"')+`<label>کد و لینک</label><input readonly value="ghestine.ir/register.html?ref=${n.code}" style="width:100%;direction:ltr">`+fld('ea_s','افزودن زیرمجموعه (نام)',''),'agent:'+x);return}}
+ if(k==='pr'){  if(a==='tab'){state.pt=x;openProd(+y);return}
+  if(a==='f'){const pi=products[+y];const n=x==='n'?v:parseFloat(toEn(v));pi[x]=x==='n'?v:(n||0);return}
+  if(a==='c'){const pc=products[+y];pc.cond[x]=el.type==='checkbox'?(v?1:0):(parseFloat(toEn(v))||0);return}
+  const pi=products[+x];
+  if(a==='dn'){pi.docs[+y][0]=v;return}if(a==='dq'){pi.docs[+y][1]=v?1:0;return}if(a==='do'){pi.docs[+y][2]=v?1:0;return}
+  if(a==='t'){products[+y].tiers[+z][x]=parseFloat(toEn(v))||0;return}
+  if(ev==='input')return;
+  if(a==='tpl'){pi.tpl=v;return}
+  if(a==='dd'){pi.docs.splice(+y,1);openProd(+x)}if(a==='da'){pi.docs.push(['مدرک جدید',0,1]);openProd(+x)}
+  if(a==='td'){pi.tiers.splice(+y,1);openProd(+x)}if(a==='ta'){pi.tiers.push({m:6,fee:2.5,down:10,iv:30});openProd(+x)}
+  if(a==='save'){aud('ویرایش محصول «'+pi.n+'»');$('#drawer').hidden=true;render();toast('محصول ذخیره شد')}}}
+function act4(e){const t=e.target,c=s=>t.closest(s);let x;
+ if(x=c('[data-od]')){const r=x.dataset.od;if(r[0]==='c'){state.view='loans';state.lt='ct';openLoan(+r.split('_')[1])}else if(r[0]==='p')toast('رسید نمونه');else openDoc(r);return}
+ if(x=c('[data-sv2]')){const[k,i]=x.dataset.sv2.split(':');
+  if(k==='loan'){const l=loans[+i];l.amount=parseInt(toEn($('#el_a').value))||l.amount;l.months=parseInt(toEn($('#el_m').value))||l.months;l.merchant=$('#el_mr').value;l.note=$('#el_n').value;l.tl.push(['وام ویرایش شد','همین الان']);aud('ویرایش وام #'+fa(l.id))}
+  if(k==='org'){const o=ORGS[+i];o.n=$('#eo_n').value;o.m=parseInt(toEn($('#eo_m').value))||o.m;o.c=parseInt(toEn($('#eo_c').value))||o.c;o.st=$('#eo_s').value;aud('ویرایش سازمان «'+o.n+'»')}
+  if(k==='agent'){const n=findAg(agentTree,i);n.name=$('#ea_n').value;n.pct=parseFloat(toEn($('#ea_p').value))||n.pct;const sn=$('#ea_s').value.trim();if(sn)n.sub.push({code:'AG-'+rk().slice(0,4).toUpperCase(),name:sn,pct:.8,cust:0,sub:[]});aud('ویرایش نماینده «'+n.name+'»')}
+  $('#drawer').hidden=true;render();toast('ذخیره شد');return}}
+document.addEventListener('click',act4);
+
+/* ===================== کارت مجازی وام ===================== */
+state.gset.autoCard=1;state.gset.cardDays=30;state.gset.cardMonths=36;state.vcSel=null;
+const VCS={active:['فعال','a'],frozen:['مسدود موقت','p'],closed:['بسته‌شده','m']};
+const vcNum=()=>'۹۱۰۱'+Array.from({length:3},()=>fa(1000+Math.floor(Math.random()*9000)).replace(/٬/g,'')).join('');
+const vcSpent=(l)=>Math.round(l.amount*[0.2,0.45,0.1,0.7,0.35][l.id%5]/1000)*1000;
+const VC=[];
+function vcIssue(l,quiet){if(VC.some(c=>c.loan===l.id))return;const c={loan:l.id,name:l.name,num:vcNum(),cvv:fa(100+Math.floor(Math.random()*900)).replace(/٬/g,''),exp:'۱۴۰۸/۰۸',limit:l.amount,spent:l.st==='issued'?vcSpent(l):0,st:l.st==='completed'?'closed':'active',per:Math.round(l.amount/2000000)*1000000||1000000,date:'همین الان',log:[['صدور کارت',l.amount,'همین الان']]};
+ if(c.spent)c.log.unshift(['خرید از '+l.merchant,c.spent,'دیروز']);VC.push(c);if(!quiet){aud('صدور کارت مجازی برای وام #'+fa(l.id));LOGS.push({time:'همین الان',to:l.name,ref:'وام #'+fa(l.id),msg:'کارت مجازی شما با سقف '+fa(l.amount)+' تومان صادر شد.',st:'در صف'})}}
+loans.forEach(l=>{if(l.st==='issued'||l.st==='completed')vcIssue(l,1)});
+const vcMask=n=>n.slice(0,4)+' •••• •••• '+n.slice(-4);
+const vcFmt=n=>n.replace(/(.{4})/g,'$1 ').trim();
+function vcView(c,reveal){const r=c.st!=='active';return `<div class="vcx ${r?'off':''}"><div class="vt"><span>دیجی‌بایل پی</span><span class="vchip"></span></div><div class="vn n">${reveal?vcFmt(c.num):vcMask(c.num)}</div><div class="vbm"><div><small>صاحب کارت</small><b>${esc(c.name)}</b></div><div><small>انقضا</small><b class="n">${c.exp}</b></div><div><small>CVV2</small><b class="n">${reveal?c.cvv:'•••'}</b></div></div></div>`}
+const _vg=V.gate;
+V.gate=()=>{if(state.gt!=='cards')return _vg().replace(/(<button class="tab" data-b="gw:tab:ov"[^>]*>[^<]*<\/button>)/,'$1<button class="tab" data-b="gw:tab:cards" aria-selected="false">کارت‌های مجازی</button>');
+ const base=_vg();const tabs=base.match(/<div class="tabs">[\s\S]*?<\/div>/)[0].replace(/aria-selected="true"/g,'aria-selected="false"').replace(/(data-b="gw:tab:ov"[^>]*>[^<]*<\/button>)/,'$1<button class="tab" data-b="gw:tab:cards" aria-selected="true">کارت‌های مجازی</button>');
+ const noCard=loans.filter(l=>['approved','issued'].includes(l.st)&&!VC.some(c=>c.loan===l.id));
+ const tot=VC.reduce((s,c)=>s+c.limit,0),sp=VC.reduce((s,c)=>s+c.spent,0);
+ const body=tiles([['کارت‌های فعال',fa(VC.filter(c=>c.st==='active').length)],['مجموع سقف کارت‌ها',fa(Math.round(tot/1e6))+' م.ت'],['مصرف‌شده',fa(Math.round(sp/1e6))+' م.ت'],['منتظر صدور',fa(noCard.length)]])+
+ `<div class="cols"><div class="panel"><h3>کارت‌های صادرشده</h3>${tbl([['وام',c=>'#'+fa(c.loan),'n'],['مشتری',c=>esc(c.name)],['شماره کارت',c=>`<span class="n" style="white-space:nowrap">${vcMask(c.num)}</span>`],['سقف',c=>fa(c.limit),'n'],['مصرف',c=>fa(c.spent),'n'],['وضعیت',c=>`<span class="pill ${VCS[c.st][1]}">${VCS[c.st][0]}</span>`],['',c=>`<button class="btn" data-b="vc:open:${c.loan}">مشاهده</button>`]],VC)}</div>
+ <div class="panel"><h3>وام‌های بدون کارت</h3>${noCard.length?noCard.map(l=>`<div class="frow" style="justify-content:space-between;margin-bottom:8px"><span>#${fa(l.id)} ${esc(l.name)} <small class="sub">${fa(l.amount)}</small></span><button class="btn solid" data-b="vc:issue:${l.id}">صدور کارت</button></div>`).join(''):'<div class="empty">همه‌ی وام‌های تأییدشده کارت دارند.</div>'}
+ <h3 style="margin-top:16px">قانون صدور</h3><div class="frow"><label class="chk"><input type="checkbox" data-b="vc:auto" ${state.gset.autoCard?'checked':''}> صدور خودکار کارت بعد از تأیید و امضای قرارداد</label></div>
+ <div class="cols" style="margin-top:8px"><div><label for="vcM">اعتبار کارت (ماه)</label><input id="vcM" data-b="vc:mon" value="${fa(state.gset.cardMonths)}" style="width:100%"></div><div><label for="vcD">مهلت فعال‌سازی (روز)</label><input id="vcD" data-b="vc:day" value="${fa(state.gset.cardDays)}" style="width:100%"></div></div>
+ <p class="sub">سقف کارت برابر مبلغ وام است. با هر خرید از سقف کم می‌شود و با تسویه‌ی وام کارت بسته می‌شود.</p></div></div>`;
+ return head('درگاه داخلی','پرداخت با کیف پول و اعتبار اقساطی، مثل یک درگاه برای فروشگاه‌ها')+tabs+body};
+function vcOpen(id){const c=VC.find(x=>x.loan===id);if(!c)return;state.vcSel=id;const d=$('#drawer');d.hidden=false;const rev=state.vcRev===id;
+ d.innerHTML=`<div class="dh"><h3>کارت مجازی وام #${fa(id)}</h3><button class="btn" data-x="1" aria-label="بستن">×</button></div>${vcView(c,rev)}
+ <div class="kv" style="margin-top:12px"><span>وضعیت</span><b><span class="pill ${VCS[c.st][1]}">${VCS[c.st][0]}</span></b><span>سقف کارت</span><b class="n">${fa(c.limit)}</b><span>مصرف‌شده</span><b class="n">${fa(c.spent)}</b><span>باقی‌مانده</span><b class="n">${fa(c.limit-c.spent)}</b><span>سقف هر خرید</span><b class="n">${fa(c.per)}</b></div>
+ <p class="frow" style="margin-top:12px"><button class="btn" data-b="vc:rev:${id}">${rev?'پنهان کردن':'نمایش شماره و CVV'}</button>${c.st==='active'?`<button class="btn" data-b="vc:frz:${id}">مسدودسازی موقت</button>`:c.st==='frozen'?`<button class="btn solid" data-b="vc:frz:${id}">رفع انسداد</button>`:''}${c.st!=='closed'?`<button class="btn" data-b="vc:cls:${id}">بستن کارت</button>`:''}</p>
+ <div class="cols"><div><label for="vcP">سقف هر خرید (تومان)</label><input id="vcP" data-b="vc:per:${id}" value="${fa(c.per)}" style="width:100%"></div><div><label for="vcL">سقف کارت (تومان)</label><input id="vcL" data-b="vc:lim:${id}" value="${fa(c.limit)}" style="width:100%"></div></div>
+ <h3 style="margin-top:14px">گردش کارت</h3>${tbl([['شرح',x=>esc(x[0])],['مبلغ',x=>fa(x[1]),'n'],['زمان',x=>x[2]]],c.log)}<p class="sub">در نسخه‌ی واقعی شماره‌ی کامل و CVV نگهداری نمی‌شود و با توکن‌سازی (PCI) ذخیره می‌شود. هر نمایش در گزارش دسترسی ثبت می‌شود.</p>`}
+const _bAct4=bAct;
+bAct=function(el,ev){const[k,a,x,y]=el.dataset.b.split(':');const v=el.type==='checkbox'?el.checked:el.value;
+ if(k!=='vc')return _bAct4(el,ev);
+ const id=+x,c=VC.find(q=>q.loan===id);
+ if(a==='open'){vcOpen(id);return}
+ if(a==='issue'){const l=loans.find(q=>q.id===id);vcIssue(l);render();toast('کارت مجازی صادر شد');return}
+ if(a==='auto'){state.gset.autoCard=v?1:0;toast(v?'صدور خودکار روشن شد':'صدور خودکار خاموش شد');return}
+ if(a==='mon'){state.gset.cardMonths=+toEn(v)||36;return}
+ if(a==='day'){state.gset.cardDays=+toEn(v)||30;return}
+ if(!c)return;
+ if(a==='rev'){state.vcRev=state.vcRev===id?null:id;if(state.vcRev===id)aud('نمایش شماره‌ی کارت وام #'+fa(id));vcOpen(id);return}
+ if(a==='frz'){c.st=c.st==='active'?'frozen':'active';c.log.unshift([c.st==='frozen'?'مسدودسازی موقت':'رفع انسداد',0,'همین الان']);aud((c.st==='frozen'?'مسدودسازی':'رفع انسداد')+' کارت وام #'+fa(id));vcOpen(id);render();return}
+ if(a==='cls'){c.st='closed';c.log.unshift(['بستن کارت',0,'همین الان']);aud('بستن کارت وام #'+fa(id));vcOpen(id);render();return}
+ if(a==='per'){c.per=+toEn(v).replace(/\D/g,'')||c.per;return}
+ if(a==='lim'){const n=+toEn(v).replace(/\D/g,'');if(n>=c.spent)c.limit=n;return}};
+/* وام تأیید/صادر شد: کارت خودکار صادر شود */
+const _ol4=openLoan;
+openLoan=function(i){_ol4(i);const l=loans[i],t=state.lt,d=$('#drawer');
+ if(t==='info'){const c=VC.find(q=>q.loan===l.id);d.insertAdjacentHTML('beforeend',`<h3 style="margin-top:14px">کارت مجازی</h3>${c?`<p class="frow"><span class="pill ${VCS[c.st][1]}">${VCS[c.st][0]}</span><span class="n">${vcMask(c.num)}</span><button class="btn" data-b="vc:open:${l.id}">مشاهده‌ی کارت</button></p>`:(['approved','issued'].includes(l.st)?`<p class="frow"><button class="btn solid" data-b="vc:issue:${l.id}">صدور کارت مجازی</button></p>`:'<p class="sub">بعد از تأیید وام صادر می‌شود.</p>')}`)}};
+const _sty=document.createElement('style');_sty.textContent='.vcx{border-radius:18px;padding:18px;color:#fff;aspect-ratio:1.586;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,#5a33a8,#2b1259 60%,#160a30);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}.vcx.off{filter:grayscale(.85);opacity:.7}.vcx .vt{display:flex;justify-content:space-between;align-items:center;font-weight:700}.vcx .vchip{width:38px;height:28px;border-radius:6px;background:linear-gradient(135deg,#ffd978,#c98a14)}.vcx .vn{direction:ltr;text-align:left;font-size:1.25rem;letter-spacing:.1em}.vcx .vbm{display:flex;justify-content:space-between;gap:8px}.vcx small{display:block;opacity:.7;font-size:.68rem}';document.head.appendChild(_sty);
+
+function setNav(o){document.body.classList.toggle('navopen',!!o);const m=$('#tbMenu');if(m)m.setAttribute('aria-expanded',!!o)}
+$('#tbMenu').onclick=()=>setNav(!document.body.classList.contains('navopen'));$('#navBd').onclick=()=>setNav(0);
+addEventListener('keydown',e=>{if(e.key==='Escape')setNav(0)});addEventListener('resize',()=>{if(innerWidth>900)setNav(0)});
+try{if(localStorage.getItem('gcoll')==='1')document.querySelector('.app').classList.add('coll')}catch(_){}
+
+/* ===================== طرح بتا بانک رفاه (یک طرح وام خارجی) ===================== */
+state.betaRules='draft';
+V.beta=()=>{const p=products.find(x=>x.kind==='beta')||{on:false};
+ return head('طرح بتا بانک رفاه','طرح وامِ متصل به API بانک. مبلغ و اقساط از بانک می‌آید و ماژول مالی جدا دارد.','<span class="pill '+(p.on?'a':'m')+'">'+(p.on?'فعال در سایت':'غیرفعال')+'</span>')+
+ tiles([['پرونده‌های باز','۶'],['استعلام‌های موفق','۳'],['تعهدات باز به لیزینگ','۳'],['قواعد مالی',state.betaRules==='draft'?'پیش‌نویس':'تأییدشده','']])+
+ `<div class="cols"><div class="panel"><h3>اتصال و وضعیت</h3><div class="kv"><span>API بانک رفاه</span><b>مستندات دریافت نشده</b><span>امضای ۱۲ فرم</span><b>سازوکار حقوقی تعیین نشده</b><span>فایل بانکی پرداخت گروهی</span><b>قالب رسمی لازم است</b><span>مهلت لیزینگ</span><b>۵ روز، تقویمی یا کاری هنوز تعیین نشده</b></div>
+ <p class="sub">تا تأیید قواعد مالی توسط کارشناس طرح، همه‌ی تعهدات در حالت پیش‌نویس می‌مانند.</p></div>
+ <div class="panel"><h3>در سایت اصلی</h3><p class="sub">این طرح در محاسبه‌گر و فهرست طرح‌ها به‌صورت «استعلام از بانک» نشان داده می‌شود و صفحه‌ی مستقل و دکمه‌ی عضویت دارد. محصول را از منوی «محصولات وام» فعال یا غیرفعال کنید.</p></div></div>
+ <div class="panel"><h3>بخش‌های ماژول</h3><div class="frow">${['پرونده‌ها و ۱۲ فرم','دفتر اقساط','ثبت دریافت','تعهدات لیزینگ','پرداخت تجمیعی','قواعد مالی','ممیزی'].map(x=>`<span class="pill m">${x}</span>`).join('')}</div><p class="sub">پیش‌نمایش کامل ماژول جداگانه منتشر شده است. ادغام آن با این پنل بعد از دیدن ساختار واقعی پروژه انجام می‌شود.</p></div>`};
+LOGS.push({time:'دیروز ۱۸:۴۰',to:'مشتری',ref:'وام #۱۲۴۰',msg:'وام شما صادر و به کیف پول واریز شد.',st:'در صف'});
+/* ===== منوهای پنل قبلی (وام‌سیتی/دیجی‌بایل): اعلام واریزها، استعلام‌ها، طرف‌حساب‌ها، بازاریاب‌ها، سفارش‌ها، تنظیمات اپلیکیشن، پشتیبان‌گیری، فرم کامل نماینده ===== */
+(()=>{
+const add=(g,item,at)=>{const grp=NAV.find(x=>x[0]===g);if(grp&&!grp[1].some(i=>i[0]===item[0]))at==null?grp[1].push(item):grp[1].splice(at,0,item)};
+const ren=(k,t)=>NAV.forEach(g=>g[1].forEach(i=>{if(i[0]===k)i[1]=t}));
+ren('products','تعریف انواع وام');ren('customers','لیست مشتریان');ren('loans','درخواست‌های وام');ren('comm','مدیریت پیامک و ایمیل');
+add('مشتریان',['deposits','اعلام واریزها'],1);
+add('ارتباطات',['inquiries','مدیریت استعلام‌ها'],1);
+add('شبکه‌ی فروش',['counter','طرف حساب‌ها']);add('شبکه‌ی فروش',['marketers','بازاریاب‌ها']);add('شبکه‌ی فروش',['orders','سفارش خریدها']);
+add('سیستم',['appset','تنظیمات اپلیکیشن']);add('سیستم',['backup','تهیه و بازگردانی پشتیبان']);
+const O={dep:[['۱۴۰۵/۰۵/۱۲','علی رضایی','قسط ۳ وام #۱۲۴۰',2400000,'کارت‌به‌کارت','pending'],['۱۴۰۵/۰۵/۱۱','مریم احمدی','قسط ۱ وام #۱۲۳۸',1800000,'واریز بانکی','approved'],['۱۴۰۵/۰۵/۱۰','رضا کریمی','پیش‌پرداخت وام #۱۲۳۵',900000,'کارت‌به‌کارت','rejected']],
+ inq:[['علی رضایی','اعتبارسنجی','در صف','—'],['مریم احمدی','احراز هویت','انجام شد','تأیید'],['رضا کریمی','اعتبارسنجی','انجام شد','عدم تأیید']],
+ cp:[['لوازم خانگی رضوی','IR۰۶۰۱۷۰۰۰۰۰۰۰۰۰۰۰۱۲۳۴۵۶','فعال'],['موبایل آسمان','IR۱۲۰۱۸۰۰۰۰۰۰۰۰۰۰۰۶۵۴۳۲۱','فعال']],
+ mk:[['سارا محمدی','MK۱۰۲','۴۵','۱۲٪','فعال'],['حسین نوری','MK۱۰۷','۱۸','۱۰٪','فعال']],
+ od:[['#۵۰۱','علی رضایی','لوازم خانگی رضوی',8500000,'در انتظار تحویل'],['#۴۹۸','مریم احمدی','موبایل آسمان',14200000,'تحویل شد']]};
+const st=(t,c)=>`<span class="pill ${c}">${t}</span>`;
+const DS={pending:st('در انتظار','p'),approved:st('تأیید','a'),rejected:st('رد','r')};
+V.deposits=()=>head('اعلام واریزها','واریزهایی که مشتریان اعلام کرده‌اند؛ پس از بررسی رسید، تأیید یا رد کنید')+`<div class="panel">`+tbl([['تاریخ',r=>r[0]],['مشتری',r=>esc(r[1])],['بابت',r=>esc(r[2])],['مبلغ',r=>`<span class="n">${fa(r[3])}</span>`],['روش',r=>r[4]],['وضعیت',r=>DS[r[5]]],['',(r,i)=>r[5]==='pending'?`<button class="btn solid" data-o="dep:approved:${i}">تأیید</button> <button class="btn" data-o="dep:rejected:${i}">رد</button>`:'']],O.dep)+`</div>`;
+V.inquiries=()=>head('مدیریت استعلام‌ها','درخواست‌های استعلام اعتبار و هویت مشتریان؛ فهرست سرویس‌دهنده‌ها از «اتصال‌ها» تنظیم می‌شود')+tiles([['در صف',fa(1)],['انجام‌شده',fa(2)],['ناموفق',fa(0)]])+`<div class="panel">`+tbl([['مشتری',r=>esc(r[0])],['نوع',r=>r[1]],['وضعیت',r=>r[2]==='در صف'?st(r[2],'p'):st(r[2],'a')],['نتیجه',r=>r[3]]],O.inq)+`</div>`;
+V.counter=()=>head('طرف حساب‌ها','حساب‌های بانکی پذیرنده‌ها و طرف‌های تسویه','<button class="btn solid" data-o="cpadd">طرف حساب جدید</button>')+`<div class="panel">`+tbl([['نام',r=>esc(r[0])],['شبا',r=>`<span class="n" style="direction:ltr;display:inline-block">${esc(r[1])}</span>`],['وضعیت',r=>st(r[2],'a')]],O.cp)+`</div>`;
+V.marketers=()=>head('بازاریاب‌ها','بازاریاب‌ها با کد معرفی مشتری جذب می‌کنند و پورسانت می‌گیرند','<button class="btn solid" data-o="mkadd">بازاریاب جدید</button>')+`<div class="panel">`+tbl([['نام',r=>esc(r[0])],['کد معرفی',r=>`<code>${r[1]}</code>`],['مشتریان جذب‌شده',r=>fa(r[2]),'n'],['پورسانت',r=>r[3]],['وضعیت',r=>st(r[4],'a')]],O.mk)+`</div>`;
+V.orders=()=>head('سفارش خریدها','خریدهایی که مشتریان از پذیرنده‌ها با وام ثبت کرده‌اند')+`<div class="panel">`+tbl([['کد',r=>r[0]],['مشتری',r=>esc(r[1])],['پذیرنده',r=>esc(r[2])],['مبلغ',r=>`<span class="n">${fa(r[3])}</span>`],['وضعیت',r=>st(r[4],r[4]==='تحویل شد'?'a':'p')]],O.od)+`</div>`;
+V.appset=()=>head('تنظیمات اپلیکیشن','نسخه، به‌روزرسانی اجباری و حالت تعمیر اپ موبایل')+`<div class="panel"><div class="cols"><div><label>آخرین نسخه‌ی اپ</label><input value="۱٫۰٫۰" style="width:100%"></div><div><label>حداقل نسخه‌ی مجاز</label><input value="۱٫۰٫۰" style="width:100%"></div><div><label>لینک دانلود مستقیم (APK)</label><input style="width:100%;direction:ltr"></div><div><label>تلفن پشتیبانی</label><input style="width:100%;direction:ltr"></div></div>
+<p><label style="display:inline-block"><input type="checkbox"> به‌روزرسانی اجباری</label> &nbsp; <label style="display:inline-block"><input type="checkbox"> حالت تعمیر و نگهداری</label></p><p><button class="btn solid" data-o="appsave">ذخیره</button></p></div>`;
+V.backup=()=>head('تهیه و بازگردانی پشتیبان','پشتیبان کامل پایگاه داده و فایل‌های رمزنگاری‌شده','<button class="btn solid" data-o="bkmake">تهیه پشتیبان جدید</button>')+`<div class="panel"><p class="sub">پیش از هر مایگریشن یا به‌روزرسانی بزرگ، پشتیبان بگیرید. پوشه‌ی کلیدهای رمزنگاری (dpkeys) را جداگانه نگه دارید؛ بدون آن اطلاعات کارت و مدارک بازیابی نمی‌شود.</p>`+tbl([['زمان',r=>r[0]],['حجم',r=>r[1]],['',r=>`<button class="btn" data-o="bkdl">دانلود</button> <button class="btn" data-o="bkrs">بازگردانی</button>`]],[['۱۴۰۵/۰۵/۱۲ ۰۳:۰۰','۴۸ مگابایت']])+`</div>`;
+/* فرم کامل نماینده (سه تب مثل پنل قبلی) */
+const F=(l,id,ph='',req=0)=>`<div><label>${l}${req?' *':''}</label><input id="ag_${id}" placeholder="${ph}" style="width:100%"></div>`;
+function agentForm(){const d=document.getElementById('odr')||document.body.appendChild(Object.assign(document.createElement('div'),{id:'odr',className:'drawer',hidden:true}));d.hidden=false;
+ d.innerHTML=`<p><button class="btn" data-o="odrx">بستن ×</button></p><h2>مشخصات نماینده</h2>
+ <div class="tabs" role="tablist"><button class="tab" data-o="agtab:1" aria-selected="true">اطلاعات نماینده</button><button class="tab" data-o="agtab:2" aria-selected="false">اطلاعات تکمیلی</button><button class="tab" data-o="agtab:3" aria-selected="false">تنظیمات وام‌های نماینده</button></div>
+ <div id="agp1"><p><label style="display:inline-block"><input type="checkbox" checked> اکانت فعال</label></p><div class="cols">${F('نام کاربری','un','به‌صورت خودکار پر می‌شود')}${F('نام نماینده','nm','',1)}${F('نام تجاری','br','',1)}${F('کد ملی','nid','',1)}${F('شماره شناسنامه','sh','',1)}${F('نام پدر','fa')}${F('موبایل','mob','',1)}${F('تلفن ثابت','tel')}${F('ایمیل','em')}${F('شهر','city','',1)}${F('کد پستی','zip','',1)}</div>
+ <label>آدرس *</label><input id="ag_ad" style="width:100%"><div class="cols"><div><label>رمز عبور *</label><input id="ag_pw" type="password" style="width:100%"></div><div><label>تکرار رمز عبور *</label><input id="ag_pw2" type="password" style="width:100%"></div></div>
+ <h3>شماره حساب‌ها</h3><p><button class="btn">+ شماره حساب جدید</button></p><p><label style="display:inline-block"><input type="checkbox"> پیامک‌ها و ایمیل‌های یادآوری به مشتریان و کد تأییدیه موبایل فعال باشد</label></p></div>
+ <div id="agp2" hidden><p>نوع شخص: <label style="display:inline-block"><input type="radio" name="agt" checked> حقیقی</label> <label style="display:inline-block"><input type="radio" name="agt"> حقوقی</label></p><p>نحوه فعالیت: <label style="display:inline-block"><input type="checkbox"> حضوری</label> <label style="display:inline-block"><input type="checkbox"> آنلاین</label></p>
+ <label>آدرس وب‌سایت (با http شروع شود)</label><input style="width:100%;direction:ltr"><h3>نوع محصولات کسب و کار</h3><p>${['موبایل و کالای دیجیتال','لوازم خانگی و دکوراسیون','خودرو و موتور سیکلت','طلا و جواهرات','ارائه خدمات'].map(x=>`<label style="display:inline-block;margin-inline-end:12px"><input type="checkbox"> ${x}</label>`).join('')}</p>
+ <h3>مدارک پیوستی</h3><div class="cols">${['لوگو','کارت ملی','اجاره‌نامه یا سند','جواز کسب','تصویر چک ضمانت'].map(x=>`<div><label>${x}</label><input type="file" accept="image/*" style="width:100%"></div>`).join('')}</div><p><label style="display:inline-block"><input type="checkbox"> استفاده از درصد کارمزد صورتحساب الکترونیکی پیش‌فرض</label></p></div>
+ <div id="agp3" hidden><p class="sub">وام‌های قابل درخواست توسط نماینده را اضافه کنید:</p><p><button class="btn solid">+ افزودن وام</button></p><p class="sub">مدیریت تعطیلی‌های تقویم</p></div>
+ <p style="margin-top:16px"><button class="btn solid" data-o="agsave">ذخیره</button> <button class="btn" data-o="odrx">بستن</button></p>`}
+const _ag=V.agents;
+V.agents=()=>head('نمایندگان و زیرمجموعه‌ها','هر نماینده لینک ثبت‌نام اختصاصی دارد و می‌تواند زیرمجموعه بگیرد','<button class="btn solid" data-o="agadd">افزودن نماینده</button>')+`<div class="panel">`+tbl([['نام نماینده',r=>esc(r[0])+`<div class="sub">نام تجاری: ${esc(r[1])}</div>`],['موبایل',r=>r[2]],['زیرمجموعه‌ها',r=>fa(r[3]),'n'],['وضعیت',r=>st('فعال','a')],['',()=>`<button class="btn" data-o="agadd">ویرایش</button>`]],[['اکبر پور','فروشگاه کیمیا','۰۹۱۲۰۰۰۰۰۰۱',8],['شکوه صادقی','توسعه پاسارگاد','۰۹۱۲۰۰۰۰۰۰۲',0]])+`</div>`+_ag().replace(/^<div class="top">[\s\S]*?<\/div><div><\/div><\/div>/,'');
+document.addEventListener('click',e=>{const b=e.target.closest('[data-o]');if(!b)return;const [a,x,y]=b.dataset.o.split(':');
+ if(a==='dep'){O.dep[+y][5]=x;render();toast(x==='approved'?'واریز تأیید شد (نمونه)':'واریز رد شد (نمونه)')}
+ else if(a==='agadd')agentForm();else if(a==='odrx'){const d=document.getElementById('odr');if(d)d.hidden=true}
+ else if(a==='agtab'){[1,2,3].forEach(i=>{document.getElementById('agp'+i).hidden=i!=x});document.querySelectorAll('[data-o^="agtab"]').forEach(t=>t.setAttribute('aria-selected',t.dataset.o.endsWith(':'+x)))}
+ else if(a==='agsave'||a==='appsave'||a==='cpadd'||a==='mkadd'||a==='bkmake'||a==='bkdl')toast('در این نسخه نمونه است و ذخیره نمی‌شود');
+ else if(a==='bkrs')toast('بازگردانی فقط روی سرور و با تأیید دوباره انجام می‌شود (نمونه)')});
+})();
+
+render();
+
+/* ===== بخش‌های واقعی (فقط نسخه‌ی سرور): به API وصل‌اند ===== */
+(()=>{
+const TK=()=>{for(const k of ['token','accessToken','jwt']){try{const v=localStorage.getItem(k);if(v)return v}catch(_){}}return null};
+const toLogin=()=>location.replace('/login.html?next='+encodeURIComponent(location.pathname));
+function jwt(){try{const p=TK().split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(decodeURIComponent(escape(atob(p))))}catch(_){return null}}
+const J=jwt();
+if(!J||(J.exp&&J.exp*1000<Date.now())){toLogin();return}
+const nm=J['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']||J.name||'مدیر';
+const roles=[].concat(J['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']||J.role||[]);
+if(!roles.some(r=>r==='Admin'||r==='SuperAdmin')){document.body.innerHTML='<div style="max-width:420px;margin:15vh auto;text-align:center;font-family:inherit"><h2>دسترسی ندارید</h2><p>این پنل فقط برای مدیران است.</p><a href="/">بازگشت به سایت</a></div>';return}
+const SUPER=roles.includes('SuperAdmin');
+async function api(m,u,b,raw){const h={Authorization:'Bearer '+TK()};if(b&&!(b instanceof FormData))h['Content-Type']='application/json';
+ const r=await fetch(u,{method:m,headers:h,body:b?JSON.stringify(b):undefined});
+ if(r.status===401){toLogin();throw new Error('نشست منقضی شد')}if(r.status===403)throw new Error('دسترسی این بخش را ندارید');
+ if(raw)return r;const j=await r.json().catch(()=>null);if(!r.ok)throw new Error((j&&(j.message||j.title))||'خطا '+r.status);return j}
+const toEn=s=>String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+const ok=f=>async(...a)=>{try{await f(...a)}catch(e){toast(e.message||'خطا')}};
+const D=h=>{const d=document.getElementById('ldr');d.hidden=false;d.innerHTML='<p><button class="btn" data-l="close">بستن ×</button></p>'+h};
+if(!document.getElementById('ldr')){const d=document.createElement('div');d.id='ldr';d.className='drawer';d.hidden=true;document.body.appendChild(d)}
+const CS={Active:['فعال','a'],Frozen:['مسدود','p'],Closed:['بسته','m']},DS={Pending:['در انتظار','p'],Verified:['تأیید','a'],Rejected:['رد','r']};
+const pill=(m,k)=>`<span class="pill ${(m[k]||['?','m'])[1]}">${(m[k]||[k])[0]}</span>`;
+const S={pr:[],cd:[],dc:[],tn:[]};
+function view(name,build){return()=>{const tag=name+Date.now();window.__lv=tag;setTimeout(async()=>{try{const h=await build();if(window.__lv===tag&&document.getElementById('lv'))document.getElementById('lv').innerHTML=h}catch(e){const el=document.getElementById('lv');if(el)el.innerHTML=`<div class="panel"><h3>خطا</h3><p class="sub">${esc(e.message||'خطا')}</p></div>`}});return '<div id="lv"><div class="panel sub">در حال بارگذاری…</div></div>'}}
+const reload=()=>{render()};
+
+V.products=view('p',async()=>{S.pr=await api('GET','/api/v1/admin/loan-products');
+ return head('محصولات وام','طرح‌های واقعی؛ هر تغییر همین‌جا روی سایت اعمال می‌شود','<button class="btn" data-l="seed">ساخت طرح‌های نمونه</button> <button class="btn solid" data-l="padd">طرح جدید</button>')+`<div class="panel">`+
+ tbl([['نام',p=>esc(p.shape.name)],['شناسه',p=>`<code>${esc(p.shape.id)}</code>`],['بازه‌ی مبلغ',p=>`<span class="n">${fa(p.shape.minAmount)} تا ${fa(p.shape.maxAmount)}</span>`],['پله‌ها',p=>(p.shape.tiers||[]).map(t=>fa(t.months)+' ماه').join('، ')||'—'],['وضعیت',p=>`<span class="pill ${p.isActive?'a':'m'}">${p.isActive?'فعال':'غیرفعال'}</span>`],['',p=>`<button class="btn" data-l="pedit" data-i="${p.id}">ویرایش</button> <button class="btn" data-l="ptog" data-i="${p.id}">${p.isActive?'غیرفعال':'فعال'}</button>`]],S.pr)+`</div>`});
+const NEW={name:'',slug:'',description:'',badge:'',minAmount:1000000,maxAmount:20000000,intervalDays:30,tiers:[{months:6,feePercent:2.5,downPaymentPercent:10}],conditions:{minAge:22,maxAge:60,minIncome:6,kyc:1,minScore:50,maxActive:3},documents:[{name:'کارت ملی',required:true}],isActive:true};
+function pform(id){const x=id?S.pr.find(z=>z.id===id):null,p=x?x.shape:NEW,so=x?x.sortOrder:9;
+ D(`<h2>${id?'ویرایش':'طرح'} وام</h2><div class="cols"><div><label>نام</label><input id="f_name" value="${esc(p.name)}"></div><div><label>شناسه‌ی انگلیسی</label><input id="f_slug" value="${esc(p.id||p.slug||'')}" style="direction:ltr"></div></div>
+ <label>توضیح کوتاه</label><input id="f_desc" value="${esc(p.description)}" style="width:100%"><div class="cols"><div><label>برچسب</label><input id="f_badge" value="${esc(p.badge)}"></div><div><label>ترتیب</label><input id="f_so" value="${so}"></div>
+ <div><label>حداقل مبلغ (تومان)</label><input id="f_min" value="${p.minAmount}"></div><div><label>حداکثر مبلغ (تومان)</label><input id="f_max" value="${p.maxAmount}"></div><div><label>فاصله‌ی اقساط (روز)</label><input id="f_iv" value="${p.intervalDays}"></div></div>
+ <label>پله‌ها (JSON): months, feePercent, downPaymentPercent</label><textarea id="f_t" style="width:100%;min-height:90px">${esc(JSON.stringify(p.tiers,null,1))}</textarea>
+ <label>شرایط (JSON)</label><textarea id="f_c" style="width:100%;min-height:90px">${esc(JSON.stringify(p.conditions,null,1))}</textarea>
+ <label>مدارک لازم (JSON)</label><textarea id="f_d" style="width:100%;min-height:70px">${esc(JSON.stringify(p.documents,null,1))}</textarea>
+ <p><label style="display:inline-block"><input type="checkbox" id="f_on" ${p.isActive?'checked':''}> فعال</label> <button class="btn solid" data-l="psave" data-i="${id||''}">ذخیره</button></p>`)}
+async function psave(id){let t,c,d;try{t=JSON.parse($('#f_t').value);c=JSON.parse($('#f_c').value);d=JSON.parse($('#f_d').value)}catch(e){throw new Error('JSON نامعتبر است')}
+ const b={name:$('#f_name').value,slug:$('#f_slug').value.trim(),description:$('#f_desc').value,badge:$('#f_badge').value,minAmount:+toEn($('#f_min').value),maxAmount:+toEn($('#f_max').value),intervalDays:+toEn($('#f_iv').value),tiers:t,conditions:c,documents:d,isActive:$('#f_on').checked,sortOrder:+toEn($('#f_so').value)||0};
+ await api(id?'PUT':'POST','/api/v1/admin/loan-products'+(id?'/'+id:''),b);toast('ذخیره شد');$('#ldr').hidden=true;reload()}
+
+V.cards=view('c',async()=>{S.cd=await api('GET','/api/v1/admin/virtual-cards');
+ return head('کارت‌های مجازی','کارت هر وام در درگاه داخلی','<button class="btn solid" data-l="cissue">صدور کارت</button>')+`<div class="panel">`+
+ tbl([['دارنده',c=>esc(c.holderName)],['کارت',c=>`<span class="n" style="direction:ltr;display:inline-block">${esc(c.number)}</span>`],['سقف',c=>`<span class="n">${fa(c.limit)}</span>`],['مصرف',c=>`<span class="n">${fa(c.spent)}</span>`],['وضعیت',c=>pill(CS,c.status)],['',c=>`<button class="btn" data-l="cview" data-i="${c.id}">مدیریت</button>`]],S.cd)+`</div>`});
+async function cview(id){const c=S.cd.find(x=>x.id===id),tx=await api('GET','/api/v1/admin/virtual-cards/'+id+'/transactions');
+ D(`<h2>کارت ${esc(c.number)}</h2><p>${esc(c.holderName)} · ${pill(CS,c.status)}</p><p class="n">سقف ${fa(c.limit)} · مصرف ${fa(c.spent)} · باقی‌مانده ${fa(c.remaining)}</p>
+ <p>${c.status==='Active'?`<button class="btn" data-l="cact" data-i="${id}" data-k="freeze">مسدودسازی</button> `:''}${c.status==='Frozen'?`<button class="btn solid" data-l="cact" data-i="${id}" data-k="unfreeze">رفع انسداد</button> `:''}${c.status!=='Closed'?`<button class="btn" data-l="cact" data-i="${id}" data-k="close">بستن کارت</button>`:''}</p>
+ <div class="cols"><div><label>سقف کارت</label><input id="c_lim" value="${c.limit}"></div><div><label>سقف هر خرید</label><input id="c_per" value="${c.perTxnLimit}"></div></div><p><button class="btn" data-l="clim" data-i="${id}">ثبت سقف</button></p>
+ <h3>گردش</h3>`+tbl([['نوع',t=>esc(t.type)],['مبلغ',t=>fa(t.amount)],['پذیرنده',t=>esc(t.merchant||'')],['زمان',t=>new Date(t.createdOn).toLocaleString('fa-IR')]],tx))}
+const cissue=()=>D(`<h2>صدور کارت مجازی</h2><label>شناسه‌ی وام</label><input id="i_l" style="width:100%;direction:ltr"><label>شناسه‌ی کاربر</label><input id="i_u" style="width:100%;direction:ltr"><label>نام دارنده</label><input id="i_h" style="width:100%"><label>سقف (تومان)</label><input id="i_s" style="width:100%"><p><button class="btn solid" data-l="cdo">صدور</button></p>`);
+
+V.binder=view('d',async()=>{S.dc=await api('GET','/api/v1/admin/documents');
+ return head('زونکن دیجیتال','مدارک بارگذاری‌شده‌ی مشتریان؛ فایل‌ها رمزنگاری‌شده نگهداری می‌شوند')+`<div class="panel">`+
+ tbl([['نوع',d=>esc(d.kind)],['فایل',d=>esc(d.fileName)],['متن OCR',d=>d.ocrText?'دارد':'—'],['وضعیت',d=>pill(DS,d.status)],['تاریخ',d=>new Date(d.createdOn).toLocaleDateString('fa-IR')],['',d=>`<button class="btn" data-l="dview" data-i="${d.id}">بررسی</button>`]],S.dc)+`</div>`});
+async function dview(id){const d=S.dc.find(x=>x.id===id);D(`<h2>${esc(d.kind)}</h2><p class="sub">${esc(d.fileName)}</p><div id="dimg" class="sub">در حال بارگذاری عکس…</div>
+ <label>متن استخراج‌شده (قابل ویرایش)</label><textarea id="d_t" style="width:100%;min-height:90px">${esc(d.ocrText||'')}</textarea><label>یادداشت بررسی</label><input id="d_n" value="${esc(d.reviewNote||'')}" style="width:100%">
+ <p><button class="btn solid" data-l="drev" data-i="${id}" data-k="Verified">تأیید مدرک</button> <button class="btn" data-l="drev" data-i="${id}" data-k="Rejected">رد مدرک</button></p>`);
+ try{const r=await api('GET','/api/v1/admin/documents/'+id+'/file',null,true);if(!r.ok)throw 0;const u=URL.createObjectURL(await r.blob());$('#dimg').innerHTML=`<img src="${u}" alt="${esc(d.kind)}" style="max-width:100%;border-radius:10px">`}catch(e){$('#dimg').textContent='عکس در دسترس نیست'}}
+
+V.tenants=view('t',async()=>{if(!SUPER)return head('مستأجرها و دامنه‌ها','')+'<div class="panel">این بخش فقط برای سوپرادمین است.</div>';
+ S.tn=await api('GET','/api/v1/admin/tenants');
+ return head('مستأجرها و دامنه‌ها','هر دامنه یک برند جدا دارد؛ بعد از افزودن، DNS و SSL را طبق راهنما تنظیم کنید','<button class="btn solid" data-l="tadd">مستأجر جدید</button>')+`<div class="panel">`+
+ tbl([['نام',t=>esc(t.name)+(t.isDefault?' <span class="pill b">پیش‌فرض</span>':'')],['شناسه',t=>`<code>${esc(t.slug)}</code>`],['دامنه‌ها',t=>t.domains.map(d=>`<code>${esc(d.host)}</code> <button class="btn" data-l="ddel" data-i="${t.id}" data-k="${d.id}" aria-label="حذف دامنه">×</button>`).join('<br>')||'—'],['وضعیت',t=>`<span class="pill ${t.isActive?'a':'m'}">${t.isActive?'فعال':'غیرفعال'}</span>`],['',t=>`<button class="btn" data-l="dadd" data-i="${t.id}">افزودن دامنه</button>`]],S.tn)+`</div>`});
+
+function sheet(t,fields,act){D(`<h2>${t}</h2>`+fields.map(f=>`<label>${f[1]}</label><input id="s_${f[0]}" style="width:100%;direction:ltr" value="${f[2]||''}">`).join('')+`<p><button class="btn solid" data-l="${act[0]}" data-i="${act[1]||''}">ثبت</button></p>`)}
+
+document.addEventListener('click',ok(async e=>{const b=e.target.closest('[data-l]');if(!b)return;const a=b.dataset.l,i=b.dataset.i,k=b.dataset.k;
+ if(a==='close'){$('#ldr').hidden=true}
+ else if(a==='padd')pform();else if(a==='pedit')pform(i);else if(a==='psave')await psave(i);
+ else if(a==='ptog'){await api('POST','/api/v1/admin/loan-products/'+i+'/toggle');reload()}
+ else if(a==='seed'){await api('POST','/api/v1/admin/loan-products/seed');toast('ساخته شد');reload()}
+ else if(a==='cview')await cview(i);else if(a==='cissue')cissue();
+ else if(a==='cdo'){await api('POST','/api/v1/admin/virtual-cards/issue',{loanId:$('#i_l').value.trim(),userId:$('#i_u').value.trim(),holderName:$('#i_h').value,limit:+toEn($('#i_s').value)});toast('کارت صادر شد');$('#ldr').hidden=true;reload()}
+ else if(a==='cact'){await api('POST','/api/v1/admin/virtual-cards/'+i+'/'+k);S.cd=await api('GET','/api/v1/admin/virtual-cards');await cview(i);reload()}
+ else if(a==='clim'){await api('PUT','/api/v1/admin/virtual-cards/'+i+'/limit',{limit:+toEn($('#c_lim').value),perTxnLimit:+toEn($('#c_per').value)});toast('ثبت شد');S.cd=await api('GET','/api/v1/admin/virtual-cards');await cview(i)}
+ else if(a==='dview')await dview(i);
+ else if(a==='drev'){await api('PUT','/api/v1/admin/documents/'+i+'/review',{status:k,note:$('#d_n').value,ocrText:$('#d_t').value});toast('ثبت شد');$('#ldr').hidden=true;reload()}
+ else if(a==='tadd')sheet('مستأجر جدید',[['name','نام برند','' ],['slug','شناسه‌ی انگلیسی','']],['tdo']);
+ else if(a==='tdo'){await api('POST','/api/v1/admin/tenants',{name:$('#s_name').value,slug:$('#s_slug').value.trim(),brand:{logoText:($('#s_name').value||'د').charAt(0)},isActive:true});toast('ساخته شد');$('#ldr').hidden=true;reload()}
+ else if(a==='dadd')sheet('افزودن دامنه',[['host','نام دامنه (مثال: pay.example.ir)','']],['ddo',i]);
+ else if(a==='ddo'){const r=await api('POST','/api/v1/admin/tenants/'+i+'/domains',{host:$('#s_host').value,isPrimary:false});toast(r.nextSteps||'افزوده شد');$('#ldr').hidden=true;reload()}
+ else if(a==='ddel'){if(confirm('این دامنه حذف شود؟')){await api('DELETE','/api/v1/admin/tenants/'+i+'/domains/'+k);reload()}}}));
+addEventListener('keydown',e=>{if(e.key==='Escape'){const d=$('#ldr');if(d)d.hidden=true}});
+
+
+/* ===== عملیات: اعلام واریز، طرف‌حساب‌ها، بازاریاب‌ها، تنظیمات اپ (واقعی) ===== */
+const PS={Pending:['در انتظار','p'],Approved:['تأیید','a'],Rejected:['رد','r']};
+const MN={CardToCard:'کارت‌به‌کارت',BankTransfer:'واریز بانکی'};
+V.deposits=view('dep',async()=>{S.dp=await api('GET','/api/v1/admin/payment-declarations');
+ return head('اعلام واریزها','واریزهایی که مشتریان اعلام کرده‌اند؛ پس از بررسی رسید تأیید یا رد کنید. تأیید فقط وضعیت را عوض می‌کند و در اقساط ثبت نمی‌شود.')+`<div class="panel">`+
+ tbl([['تاریخ پرداخت',d=>new Date(d.paidAt).toLocaleDateString('fa-IR')],['مشتری',d=>`<code>${esc(String(d.userId).slice(0,8))}</code>`],['مبلغ',d=>`<span class="n">${fa(d.amount)}</span>`],['روش',d=>MN[d.method]||esc(d.method)],['شماره پیگیری',d=>`<span class="n">${esc(d.reference)}</span>`],['وضعیت',d=>pill(PS,d.status)+(d.reviewNote?`<div class="sub">${esc(d.reviewNote)}</div>`:'')],['',d=>d.status==='Pending'?`<button class="btn solid" data-l="dstat" data-i="${d.id}" data-k="Approved">تأیید</button> <button class="btn" data-l="dstat" data-i="${d.id}" data-k="Rejected">رد</button>`:'']],S.dp)+`</div>`});
+V.counter=view('cp',async()=>{S.cp=await api('GET','/api/v1/admin/counterparties');
+ return head('طرف حساب‌ها','حساب‌های بانکی پذیرنده‌ها و طرف‌های تسویه','<button class="btn solid" data-l="cpadd">طرف حساب جدید</button>')+`<div class="panel">`+
+ tbl([['نام',c=>esc(c.name)],['شبا',c=>`<span class="n" style="direction:ltr;display:inline-block">${esc(c.iban)}</span>`],['وضعیت',c=>`<span class="pill ${c.isActive?'a':'m'}">${c.isActive?'فعال':'غیرفعال'}</span>`],['',c=>`<button class="btn" data-l="cpadd" data-i="${c.id}">ویرایش</button>`]],S.cp)+`</div>`});
+V.marketers=view('mk',async()=>{S.mk=await api('GET','/api/v1/admin/marketers');
+ return head('بازاریاب‌ها','بازاریاب‌ها با کد معرفی مشتری جذب می‌کنند','<button class="btn solid" data-l="mkadd">بازاریاب جدید</button>')+`<div class="panel">`+
+ tbl([['نام',m=>esc(m.name)],['موبایل',m=>`<span class="n">${esc(m.phone)}</span>`],['کد معرفی',m=>`<code>${esc(m.code)}</code>`],['پورسانت',m=>fa(m.commissionPercent)+'٪','n'],['وضعیت',m=>`<span class="pill ${m.isActive?'a':'m'}">${m.isActive?'فعال':'غیرفعال'}</span>`],['',m=>`<button class="btn" data-l="mkadd" data-i="${m.id}">ویرایش</button>`]],S.mk)+`</div>`});
+const APPF=[['latestVersion','آخرین نسخه‌ی اپ'],['minVersion','حداقل نسخه‌ی مجاز'],['apkUrl','لینک دانلود مستقیم (https)'],['supportPhone','تلفن پشتیبانی']];
+V.appset=view('as',async()=>{S.as=await api('GET','/api/v1/admin/app-settings');
+ return head('تنظیمات اپلیکیشن','اپ موبایل این مقادیر را از /api/v1/app/config می‌خواند')+`<div class="panel"><div class="cols">${APPF.map(f=>`<div><label>${f[1]}</label><input id="as_${f[0]}" value="${esc(S.as[f[0]]||'')}" style="width:100%;direction:ltr"></div>`).join('')}</div>
+ <p><label style="display:inline-block"><input type="checkbox" id="as_forceUpdate" ${S.as.forceUpdate==='1'?'checked':''}> به‌روزرسانی اجباری</label> &nbsp; <label style="display:inline-block"><input type="checkbox" id="as_maintenance" ${S.as.maintenance==='1'?'checked':''}> حالت تعمیر و نگهداری</label></p><p><button class="btn solid" data-l="appsave">ذخیره</button></p></div>`});
+document.addEventListener('click',ok(async e=>{const b=e.target.closest('[data-l]');if(!b)return;const a=b.dataset.l,i=b.dataset.i,k=b.dataset.k;
+ if(a==='dstat'){let note=null;if(k==='Rejected'){note=prompt('دلیل رد را بنویسید:');if(!note)return}
+  await api('POST','/api/v1/admin/payment-declarations/'+i+'/review',{status:k,note});toast(k==='Approved'?'واریز تأیید شد':'واریز رد شد');reload()}
+ else if(a==='cpadd'){const c=i?S.cp.find(x=>x.id===i):{name:'',iban:'',isActive:true};sheet(i?'ویرایش طرف حساب':'طرف حساب جدید',[['name','نام',esc(c.name)],['iban','شماره شبا (IR…)',esc(c.iban)]],['cpdo',i])}
+ else if(a==='cpdo'){const body={name:$('#s_name').value,iban:$('#s_iban').value,isActive:true};await api(i?'PUT':'POST','/api/v1/admin/counterparties'+(i?'/'+i:''),body);toast('ثبت شد');$('#ldr').hidden=true;reload()}
+ else if(a==='mkadd'){const m=i?S.mk.find(x=>x.id===i):{name:'',phone:'',commissionPercent:10};sheet(i?'ویرایش بازاریاب':'بازاریاب جدید',[['name','نام',esc(m.name)],['phone','موبایل (09…)',esc(m.phone)],['pct','درصد پورسانت',m.commissionPercent]],['mkdo',i])}
+ else if(a==='mkdo'){const body={name:$('#s_name').value,phone:toEn($('#s_phone').value),commissionPercent:+toEn($('#s_pct').value),isActive:true};await api(i?'PUT':'POST','/api/v1/admin/marketers'+(i?'/'+i:''),body);toast('ثبت شد');$('#ldr').hidden=true;reload()}
+ else if(a==='appsave'){const body={};APPF.forEach(f=>body[f[0]]=$('#as_'+f[0]).value.trim());body.forceUpdate=$('#as_forceUpdate').checked?'1':'0';body.maintenance=$('#as_maintenance').checked?'1':'0';await api('PUT','/api/v1/admin/app-settings',body);toast('ذخیره شد')}}));
+
+/* ===== استعلام‌ها، سفارش‌ها، پشتیبان (واقعی) ===== */
+const IQS={Queued:['در صف','p'],Done:['انجام شد','a'],Failed:['ناموفق','r']},IQT={Credit:'اعتبارسنجی',Identity:'هویت',Other:'سایر'};
+V.inquiries=view('iq',async()=>{S.iq=await api('GET','/api/v1/admin/inquiries');
+ return head('مدیریت استعلام‌ها','درخواست استعلام برای مشتری ثبت کنید و نتیجه را وارد کنید. اتصال خودکار به سرویس‌دهنده‌ی استعلام هنوز وجود ندارد.','<button class="btn solid" data-l="iqadd">استعلام جدید</button>')+`<div class="panel">`+
+ tbl([['تاریخ',x=>new Date(x.createdOn).toLocaleDateString('fa-IR')],['مشتری',x=>`<code>${esc(String(x.userId).slice(0,8))}</code>`],['نوع',x=>IQT[x.type]||esc(x.type)],['وضعیت',x=>pill(IQS,x.status)],['نتیجه',x=>esc(x.result||x.note||'—')],['',x=>x.status==='Queued'?`<button class="btn" data-l="iqres" data-i="${x.id}" data-k="Done">ثبت نتیجه</button> <button class="btn" data-l="iqres" data-i="${x.id}" data-k="Failed">ناموفق</button>`:'']],S.iq)+`</div>`});
+const ORS={Pending:['در انتظار','p'],Delivered:['تحویل شد','a'],Cancelled:['لغو','r']};
+V.orders=view('od',async()=>{S.od=await api('GET','/api/v1/admin/orders');
+ return head('سفارش خریدها','سفارش‌های خرید اقساطی مشتریان از پذیرنده‌ها','<button class="btn solid" data-l="odadd">سفارش جدید</button>')+`<div class="panel">`+
+ tbl([['کد',o=>`<code>${esc(o.code)}</code>`],['تاریخ',o=>new Date(o.createdOn).toLocaleDateString('fa-IR')],['پذیرنده',o=>esc(o.merchantName)],['مبلغ',o=>`<span class="n">${fa(o.amount)}</span>`],['وضعیت',o=>pill(ORS,o.status)],['',o=>o.status==='Pending'?`<button class="btn" data-l="odst" data-i="${o.id}" data-k="Delivered">تحویل</button> <button class="btn" data-l="odst" data-i="${o.id}" data-k="Cancelled">لغو</button>`:'']],S.od)+`</div>`});
+V.backup=view('bk',async()=>{if(!SUPER)return head('پشتیبان','')+'<div class="panel">این بخش فقط برای سوپرادمین است.</div>';
+ S.bk=await api('GET','/api/v1/admin/backups');
+ return head('تهیه‌ی پشتیبان','پشتیبان کامل دیتابیس را روی سرور بسازید و دانلود کنید. بازگردانی از طریق پنل ممکن نیست؛ برای امنیت باید دستی و با توقف سرویس انجام شود.','<button class="btn solid" data-l="bkmk">پشتیبان جدید</button>')+`<div class="panel">`+
+ tbl([['فایل',b=>`<code>${esc(b.name)}</code>`],['حجم',b=>`<span class="n">${fa(Math.round(b.size/1048576))}</span> MB`],['تاریخ',b=>new Date(b.createdOn).toLocaleString('fa-IR')],['',b=>`<button class="btn" data-l="bkdl" data-i="${esc(b.name)}">دانلود</button>`]],S.bk)+`</div>`});
+document.addEventListener('click',ok(async e=>{const b=e.target.closest('[data-l]');if(!b)return;const a=b.dataset.l,i=b.dataset.i,k=b.dataset.k;
+ if(a==='iqadd')sheet('استعلام جدید',[['u','شناسه‌ی مشتری (GUID)',''],['t','نوع: Credit / Identity / Other','Credit'],['n','توضیح','']],['iqdo']);
+ else if(a==='iqdo'){await api('POST','/api/v1/admin/inquiries',{userId:$('#s_u').value.trim(),type:$('#s_t').value.trim(),note:$('#s_n').value});toast('ثبت شد');$('#ldr').hidden=true;reload()}
+ else if(a==='iqres'){const r=prompt(k==='Done'?'نتیجه‌ی استعلام را بنویسید:':'دلیل ناموفق بودن:');if(r===null)return;await api('POST','/api/v1/admin/inquiries/'+i+'/result',{status:k,result:r});toast('ثبت شد');reload()}
+ else if(a==='odadd')sheet('سفارش جدید',[['u','شناسه‌ی مشتری (GUID)',''],['m','نام پذیرنده',''],['a','مبلغ (ریال)','']],['oddo']);
+ else if(a==='oddo'){const r=await api('POST','/api/v1/admin/orders',{userId:$('#s_u').value.trim(),merchantName:$('#s_m').value,amount:+toEn($('#s_a').value)});toast('سفارش '+r.code+' ثبت شد');$('#ldr').hidden=true;reload()}
+ else if(a==='odst'){await api('POST','/api/v1/admin/orders/'+i+'/status',{status:k});reload()}
+ else if(a==='bkmk'){toast('در حال تهیه‌ی پشتیبان… ممکن است چند دقیقه طول بکشد');const r=await api('POST','/api/v1/admin/backups');toast('ساخته شد: '+r.name);reload()}
+ else if(a==='bkdl'){const r=await fetch('/api/v1/admin/backups/'+encodeURIComponent(i),{headers:{Authorization:'Bearer '+TK()}});if(!r.ok){toast('دانلود ناموفق بود');return}const u=URL.createObjectURL(await r.blob());const l=document.createElement('a');l.href=u;l.download=i;l.click();setTimeout(()=>URL.revokeObjectURL(u),5000)}}));
+
+/* ===== حسابرسی و دفتر کل (واقعی) ===== */
+V.audit=view('au',async()=>{S.au=await api('GET','/api/v1/admin/audit?take=200');
+ return head('گزارش فعالیت‌ها','هر تغییر مدیریتی با نام کاربر، زمان و IP ثبت می‌شود. رکوردها زنجیره‌ی هش دارند و دست‌کاری قابل تشخیص است.',SUPER?'<button class="btn solid" data-l="auverify">بررسی صحت زنجیره</button>':'')+`<div class="panel">`+
+ tbl([['#',a=>`<span class="n">${fa(a.seq)}</span>`],['زمان',a=>new Date(a.at).toLocaleString('fa-IR')],['کاربر',a=>esc(a.userName||'—')],['عملیات',a=>`<code>${esc(a.method)} ${esc(a.path)}</code>`],['نتیجه',a=>`<span class="n">${fa(a.statusCode)}</span>`],['IP',a=>`<code>${esc(a.ip)}</code>`]],S.au)+`</div>`});
+const LT={Asset:'دارایی',Liability:'بدهی',Equity:'حقوق صاحبان سهام',Income:'درآمد',Expense:'هزینه'};
+V.ledger=view('lg',async()=>{[S.la,S.lt,S.le]=await Promise.all([api('GET','/api/v1/admin/ledger/accounts'),api('GET','/api/v1/admin/ledger/trial-balance'),api('GET','/api/v1/admin/ledger/entries')]);
+ return head('دفتر کل','حسابداری دوطرفه؛ سند ثبت‌شده ویرایش نمی‌شود و فقط با سند معکوس اصلاح می‌شود','<button class="btn" data-l="lgacc">حساب جدید</button> <button class="btn solid" data-l="lgent">سند جدید</button>')+
+ `<div class="panel"><h3>تراز آزمایشی ${S.lt.balanced?'<span class="pill a">متوازن</span>':'<span class="pill r">نامتوازن</span>'}</h3>`+tbl([['کد',r=>`<code>${esc(r.code)}</code>`],['حساب',r=>esc(r.name)],['نوع',r=>LT[r.type]||esc(r.type)],['بدهکار',r=>`<span class="n">${fa(r.debit)}</span>`],['بستانکار',r=>`<span class="n">${fa(r.credit)}</span>`]],S.lt.rows)+`<p class="sub">جمع بدهکار <b class="n">${fa(S.lt.totalDebit)}</b> — جمع بستانکار <b class="n">${fa(S.lt.totalCredit)}</b></p></div>`+
+ `<div class="panel"><h3>اسناد اخیر</h3>`+tbl([['شماره',e=>`<span class="n">${fa(e.number)}</span>`],['تاریخ',e=>new Date(e.createdOn).toLocaleDateString('fa-IR')],['شرح',e=>esc(e.memo)+(e.reversalOf?' <span class="pill m">معکوس</span>':'')],['مبلغ',e=>`<span class="n">${fa(e.debit)}</span>`],['',e=>e.reversalOf?'':`<button class="btn" data-l="lgrev" data-i="${e.id}">معکوس</button>`]],S.le)+`</div>`});
+document.addEventListener('click',ok(async e=>{const b=e.target.closest('[data-l]');if(!b)return;const a=b.dataset.l,i=b.dataset.i;
+ if(a==='auverify'){const r=await api('GET','/api/v1/admin/audit/verify');toast(r.ok?'زنجیره سالم است ('+fa(r.checkedCount)+' رکورد)':'زنجیره در رکورد '+fa(r.brokenAt)+' شکسته است!')}
+ else if(a==='lgacc')sheet('حساب جدید',[['c','کد',''],['n','نام حساب',''],['t','نوع: Asset / Liability / Equity / Income / Expense','Asset']],['lgaccdo']);
+ else if(a==='lgaccdo'){await api('POST','/api/v1/admin/ledger/accounts',{code:toEn($('#s_c').value),name:$('#s_n').value,type:$('#s_t').value.trim()});toast('ثبت شد');$('#ldr').hidden=true;reload()}
+ else if(a==='lgent')sheet('سند جدید (دو سطری)',[['d','کد حساب بدهکار',''],['c','کد حساب بستانکار',''],['a','مبلغ (ریال)',''],['m','شرح','']],['lgentdo']);
+ else if(a==='lgentdo'){const f=c=>(S.la.find(x=>x.code===toEn(c).trim())||{}).id;const d=f($('#s_d').value),c=f($('#s_c').value),amt=+toEn($('#s_a').value);if(!d||!c){toast('کد حساب پیدا نشد');return}
+  const r=await api('POST','/api/v1/admin/ledger/entries',{memo:$('#s_m').value,lines:[{accountId:d,debit:amt,credit:0},{accountId:c,debit:0,credit:amt}]});toast('سند '+fa(r.number)+' ثبت شد');$('#ldr').hidden=true;reload()}
+ else if(a==='lgrev'){if(confirm('برای این سند، سند معکوس صادر شود؟')){await api('POST','/api/v1/admin/ledger/entries/'+i+'/reverse');reload()}}}));
+/* منو: بخش‌های واقعی اضافه می‌شوند، بقیه‌ی بخش‌ها با برچسب «نمونه» می‌مانند */
+const fin=NAV.find(g=>g[0]==='مالی');if(fin&&!fin[1].some(x=>x[0]==='cards'))fin[1].splice(1,0,['cards','کارت‌های مجازی']);
+if(fin&&!fin[1].some(x=>x[0]==='ledger'))fin[1].push(['ledger','دفتر کل']);
+const sys=NAV.find(g=>g[0]==='سیستم');if(sys&&SUPER&&!sys[1].some(x=>x[0]==='tenants'))sys[1].push(['tenants','مستأجرها و دامنه‌ها']);
+const LIVEV=new Set(['products','cards','binder','tenants','deposits','counter','marketers','appset','inquiries','orders','backup','audit','ledger','tplx']);
+V.tplx=()=>head('قالب صفحه اصلی','انتخاب نسخه‌ی صفحه‌ی اصلی سایت')+'<div class="panel"><p>انتخاب قالب صفحه‌ی اصلی (نسخه‌ی اول، دوم و ...) در صفحه‌ی قبلی مدیریت انجام می‌شود و دست‌نخورده مانده است.</p><p><a class=\"btn solid\" href=\"/admin.html\" style=\"text-decoration:none\">باز کردن مدیریت قالب (admin.html)</a></p></div>';
+const sy=NAV.find(g=>g[0]==='سیستم');if(sy&&!sy[1].some(x=>x[0]==='tplx'))sy[1].unshift(['tplx','قالب صفحه اصلی']);
+Object.keys(V).forEach(k=>{if(LIVEV.has(k))return;const f=V[k];V[k]=(...a)=>`<div class="panel" style="border-color:var(--warn)"><b>نمونه</b> <span class="sub">این بخش هنوز به API واقعی وصل نیست؛ اعداد و فهرست‌ها نمونه‌اند و چیزی ذخیره نمی‌شود.</span></div>`+f(...a)});
+Object.keys(BADGE).forEach(k=>delete BADGE[k]);
+const u=document.getElementById('tbUser');if(u)u.innerHTML=`<span class="av">${esc(nm.charAt(0))}</span><span><b>${esc(nm)}</b><small>${SUPER?'سوپرادمین':'مدیر'}</small></span>`;
+openUser=function(){if(confirm('از پنل خارج می‌شوید؟')){['token','accessToken','jwt'].forEach(k=>{try{localStorage.removeItem(k)}catch(_){}});location.replace('/login.html')}};
+const sl=document.querySelector('.tb-actions a[href^="https://ghestine.ir"]');if(sl)sl.href='/';
+render();
+})();
+
+</script>
+</body></html>
