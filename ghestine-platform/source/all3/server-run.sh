@@ -27,16 +27,28 @@ if ask "مایگریشن ساخته و اعمال شود؟"; then
 fi
 
 log "۴) استقرار"
-if ask "deploy.sh اجرا شود (سرویس چند ثانیه قطع می‌شود)؟"; then run bash /home/ghestine/deploy.sh; sleep 3; fi
+if ask "استقرار اجرا شود (سرویس ممکن است چند ثانیه قطع شود)؟"; then
+  DEPLOY_SCRIPT="${DIGIBAIL_DEPLOY_SCRIPT:-}"
+  if [ -n "$DEPLOY_SCRIPT" ] && [ -x "$DEPLOY_SCRIPT" ]; then
+    run bash "$DEPLOY_SCRIPT" || { echo "استقرار خطا داد؛ گزارش را بررسی کنید." | tee -a "$R"; exit 1; }
+    sleep 3
+  else
+    echo "استقرار اجرا نشد: مسیر اسکریپت واقعی را در متغیر DIGIBAIL_DEPLOY_SCRIPT تنظیم کنید؛ مسیر قدیمی /home/ghestine/deploy.sh حذف شده است." | tee -a "$R"
+  fi
+fi
 
 log "۵) تشخیص ورود (بدون رمز)"
-run bash "$H/backend/security/run-tool.sh" --auth-doctor
+if [ -n "${DIGIBAIL_SERVICE_NAME:-}" ]; then
+  run bash "$H/backend/security/run-tool.sh" --auth-doctor "$DIGIBAIL_SERVICE_NAME"
+else
+  echo "تشخیص ورود اجرا نشد: نام واقعی systemd service را در DIGIBAIL_SERVICE_NAME تنظیم کنید." | tee -a "$R"
+fi
 
 log "۶) آزمون خودکار امنیت"
 run bash "$H/backend/security/smoke-test.sh"
 
 log "۷) سوپرادمین"
-if ask "همین الان سوپرادمین ساخته شود؟ (مشخصات را همین‌جا وارد می‌کنید و در گزارش نمی‌آید)"; then bash "$H/backend/security/run-tool.sh" --create-superadmin; echo "سوپرادمین: اجرا شد؛ نتیجه‌ی بررسی روی صفحه چاپ شد. ورود واقعی را در مرورگر تست کنید." >> "$R"; fi
+if [ -n "${DIGIBAIL_SERVICE_NAME:-}" ] && ask "همین الان سوپرادمین ساخته شود؟ (مشخصات را همین‌جا وارد می‌کنید و در گزارش نمی‌آید)"; then bash "$H/backend/security/run-tool.sh" --create-superadmin "$DIGIBAIL_SERVICE_NAME"; echo "سوپرادمین: اجرا شد؛ نتیجه‌ی بررسی روی صفحه چاپ شد. ورود واقعی را در مرورگر تست کنید." >> "$R"; fi
 
 log "۸) تم قدیمی"
 run bash "$H/backend/security/find-old-theme.sh" "$ROOT"
