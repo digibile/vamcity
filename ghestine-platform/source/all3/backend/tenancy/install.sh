@@ -1,7 +1,7 @@
 #!/bin/bash
 # نصب هسته‌ی چندمستاجری (تشخیص مستأجر از روی دامنه + برند + مدیریت دامنه‌ها)
 set -e
-ROOT="${1:-/home/ghestine/domains/ghestine.ir/Ghestine}"
+ROOT="${1:?مسیر واقعی پروژه را به‌عنوان آرگومان اول بدهید؛ مثال: bash "$0" /home/USER/domains/DOMAIN/PROJECT}"
 HERE="$(cd "$(dirname "$0")" && pwd)"; SRC="$ROOT/src"
 [ -d "$SRC" ] || { echo "پوشه src پیدا نشد: $SRC"; exit 1; }
 B="$ROOT/.tenancy-backup-$(date +%Y%m%d%H%M%S)"; mkdir -p "$B"
