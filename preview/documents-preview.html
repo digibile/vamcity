@@ -1,0 +1,82 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>مدارک من</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap">
+<style>
+
+/* Layout: centered auth card on a dark plum ground; segmented switch between password and OTP, captcha row, countdown. Palette: plum ink neutrals + saffron accent. All radii 14px, fields 48px high. */
+:root{--bg:#130c1f;--surface:#1d1330;--surface2:#271a3e;--line:#3a2c52;--fg:#f3edfb;--muted:#a99bc0;--brand:#4a2a86;--accent:#ffb629;--accent-ink:#2a1a00;--ok:#5fd6a0;--bad:#ff8a9a;--r:14px;--f-body:'Vazirmatn',Tahoma,sans-serif;--f-num:'JetBrains Mono','Vazirmatn',monospace;color-scheme:dark}
+:root[data-theme="light"]{--bg:#f6f2fc;--surface:#ffffff;--surface2:#efe8f9;--line:#dccff0;--fg:#1c1230;--muted:#645878;--brand:#3b1f6b;--accent:#e29a00;--ok:#12805a;--bad:#c43a52;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);line-height:1.8;direction:rtl;min-height:100vh;display:grid;place-items:center;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.card{width:min(440px,100%);background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:28px 24px;box-shadow:0 30px 80px -30px rgba(0,0,0,.6)}
+.logo{display:flex;gap:10px;align-items:center;font-weight:900;font-size:1.4rem;margin-bottom:4px}.logo i{width:38px;height:38px;border-radius:12px;background:var(--brand);display:grid;place-items:center;color:var(--accent);font-style:normal}
+h1{font-size:1.2rem;margin:10px 0 2px}.sub{color:var(--muted);font-size:.88rem;margin:0 0 16px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface2);border-radius:999px;padding:4px;margin-bottom:16px}.seg button{font:inherit;font-weight:700;font-size:.9rem;border:0;border-radius:999px;padding:8px;background:none;color:var(--muted);cursor:pointer;min-height:40px}.seg button[aria-selected=true]{background:var(--brand);color:#fff}
+.fld{margin-bottom:12px}.fld label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:4px}
+.in{position:relative}.in input{width:100%;font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:var(--r);padding:0 14px;min-height:48px}
+.in input.ltr{direction:ltr;text-align:left}.in .eye{position:absolute;inset-block:0;left:6px;width:40px;border:0;background:none;color:var(--muted);cursor:pointer;display:grid;place-items:center;border-radius:12px}.in .eye:hover{color:var(--fg)}
+.in input.pw{padding-left:48px}
+.h{font-size:.78rem;min-height:1.2em;margin-top:3px}.h.bad{color:var(--bad)}.h.ok{color:var(--ok)}
+.cap{display:flex;gap:8px;align-items:center}.cap img{height:48px;border-radius:12px;border:1px solid var(--line);flex:none;max-width:48%}.cap .in{flex:1;min-width:0}
+.rf{width:48px;height:48px;flex:none;border:1px solid var(--line);border-radius:var(--r);background:none;color:var(--muted);cursor:pointer;font-size:1.1rem}
+.btn{width:100%;font:inherit;font-weight:700;border:0;border-radius:var(--r);min-height:50px;background:var(--accent);color:var(--accent-ink);cursor:pointer;font-size:1rem}.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--fg);min-height:44px;font-size:.9rem;margin-top:8px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.otp{display:flex;gap:8px;direction:ltr;justify-content:center;margin:6px 0}.otp input{width:100%;max-width:52px;height:56px;text-align:center;font-family:var(--f-num);font-size:1.4rem;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:var(--r)}
+.timer{text-align:center;font-family:var(--f-num);color:var(--muted);margin:8px 0;font-size:.95rem}
+.msg{border-radius:var(--r);padding:8px 12px;font-size:.88rem;margin-bottom:12px;border:1px solid var(--line)}.msg.bad{color:var(--bad);border-color:var(--bad)}.msg.ok{color:var(--ok);border-color:var(--ok)}
+.foot{display:flex;justify-content:space-between;margin-top:16px;font-size:.86rem}.foot a{color:var(--accent);text-decoration:none}
+.pv{position:fixed;inset-inline:0;top:env(safe-area-inset-top,0px);background:var(--surface2);color:var(--muted);text-align:center;font-size:.78rem;padding:4px}
+[hidden]{display:none!important}
+.authtabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:rgba(127,127,127,.16);padding:4px;border-radius:12px;margin-bottom:16px}.authtabs a{text-align:center;padding:9px;border-radius:9px;text-decoration:none;color:inherit;font-weight:700}.authtabs a[aria-current=page]{background:var(--accent,#f5a400);color:#2a1a00}
+body{display:block;place-items:unset}.wrap{width:min(720px,100%);margin:0 auto}.card{width:100%;margin-bottom:16px;padding:20px}
+select,input[type=text],textarea{width:100%;font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:var(--r);padding:8px 12px;min-height:48px}
+.doc{border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-top:10px}.doc h3{margin:0 0 4px;font-size:1rem}
+.pill{display:inline-block;border-radius:999px;padding:0 10px;font-size:.78rem;border:1px solid var(--line)}.pill.a{color:var(--ok);border-color:var(--ok)}.pill.r{color:var(--bad);border-color:var(--bad)}.pill.p{color:var(--accent);border-color:var(--accent)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.row .btn{width:auto;min-height:40px;padding:0 16px;font-size:.88rem}
+.pre{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px;font-size:.82rem;max-height:140px;overflow:auto;direction:rtl}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:520px){.fgrid{grid-template-columns:1fr}}
+img.prev{max-width:100%;max-height:220px;border-radius:12px;margin-top:8px}
+</style></head><body><div style="background:var(--surface2);color:var(--muted);text-align:center;font-size:.78rem;padding:4px;margin:-24px -16px 12px">پیش‌نمایش با داده‌ی نمونه؛ هیچ چیزی ذخیره نمی‌شود.</div>
+<div class="wrap">
+ <div class="card"><h1 style="margin-top:0">مدارک من</h1><p class="sub">عکس واضح مدرک را بارگذاری کنید. متن عکس خوانده می‌شود و می‌توانید آن را اصلاح کنید؛ سپس کارشناس مدرک را بررسی می‌کند.</p>
+  <div id="msg" class="msg" hidden></div>
+  <div class="fld"><label for="kind">نوع مدرک</label><select id="kind"><option>کارت ملی</option><option>شناسنامه</option><option>فیش حقوقی</option><option>سایر</option></select></div>
+  <div class="fld"><label for="file">عکس مدرک (JPG، PNG، WEBP — حداکثر ۶ مگابایت)</label><input id="file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" style="width:100%;font:inherit"></div>
+  <button class="btn" id="up">بارگذاری و خواندن متن</button></div>
+ <div id="list"></div>
+</div>
+<script>
+const MOCK=true;
+const $=s=>document.querySelector(s),toEn=s=>String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const TK=()=>{for(const k of ['token','accessToken','jwt']){try{const v=localStorage.getItem(k);if(v)return v}catch(_){}}return null};
+const ST={Pending:['در انتظار بررسی','p'],Verified:['تأیید شد','a'],Rejected:['رد شد','r']};
+const LBL={fullName:'نام و نام خانوادگی',nationalCode:'کد ملی',fatherName:'نام پدر',birthDate:'تاریخ تولد'};
+function msg(t,k){const m=$('#msg');if(!t){m.hidden=true;return}m.hidden=false;m.className='msg '+(k||'bad');m.textContent=t}
+let DB=[{id:'d1',kind:'کارت ملی',status:'Pending',createdOn:new Date().toISOString(),ocrText:'نام: علی رضایی\nکد ملی: 0499370899',fields:{fields:{fullName:'علی رضایی',nationalCode:'0499370899'}}}];
+async function api(m,u,body,form){if(MOCK){await new Promise(r=>setTimeout(r,350));
+  if(m==='GET'&&u.endsWith('/documents'))return DB.map(d=>({...d,fieldsJson:JSON.stringify(d.fields)}));
+  if(m==='POST'){DB.unshift({id:'d'+Date.now(),kind:form.get('kind'),status:'Pending',createdOn:new Date().toISOString(),ocrText:'نام: مریم احمدی\nکد ملی: 0499370899',fields:{fields:{fullName:'مریم احمدی',nationalCode:'0499370899'}}});return{ocr:true}}
+  if(m==='PUT'){const d=DB.find(x=>u.includes(x.id));d.fields={fields:body.fields,editedByUser:true};return{}}
+  if(m==='DELETE'){DB=DB.filter(x=>!u.includes(x.id));return{}}return{}}
+ const t=TK();if(!t){location.href='/login.html?next='+encodeURIComponent(location.pathname);throw new Error('auth')}
+ const r=await fetch(u,{method:m,headers:Object.assign({Authorization:'Bearer '+t},form?{}:{'Content-Type':'application/json'}),body:form||(body?JSON.stringify(body):undefined),credentials:'same-origin'});
+ if(r.status===401){location.href='/login.html?next='+encodeURIComponent(location.pathname);throw new Error('auth')}
+ const j=r.status===204?{}:await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||'خطا در انجام عملیات');return j}
+function parseF(d){try{const j=typeof d.fieldsJson==='string'?JSON.parse(d.fieldsJson):d.fields;return(j&&(j.fields||j))||{}}catch(_){return{}}}
+async function load(){let L;try{L=await api('GET','/api/v1/me/documents')}catch(e){if(e.message!=='auth')msg(e.message);return}
+ $('#list').innerHTML=L.length?L.map(d=>{const f=parseF(d),st=ST[d.status]||[d.status,'p'];
+  return `<div class="card doc" data-id="${esc(d.id)}"><h3>${esc(d.kind)} <span class="pill ${st[1]}">${st[0]}</span></h3><div class="sub">${new Date(d.createdOn).toLocaleDateString('fa-IR')}${d.reviewNote?' — '+esc(d.reviewNote):''}</div>
+  ${Object.keys(LBL).some(k=>f[k]!==undefined)||d.ocrText?`<div class="fgrid">${Object.keys(LBL).filter(k=>f[k]!==undefined||k==='fullName'||k==='nationalCode').map(k=>`<div class="fld"><label>${LBL[k]}</label><input type="text" data-f="${k}" value="${esc(f[k]||'')}" ${d.status==='Verified'?'disabled':''} style="${k==='nationalCode'?'direction:ltr;text-align:left':''}"></div>`).join('')}</div>`:'<p class="sub">متنی از عکس خوانده نشد؛ می‌توانید اطلاعات را دستی بنویسید.</p>'}
+  ${d.ocrText?`<details><summary class="sub">متن خام خوانده‌شده</summary><div class="pre">${esc(d.ocrText)}</div></details>`:''}
+  <div class="row"><button class="btn ghost" data-a="img">نمایش عکس</button>${d.status!=='Verified'?'<button class="btn" data-a="save">ذخیره‌ی اصلاحات</button>':''}${d.status==='Pending'?'<button class="btn ghost" data-a="del">حذف</button>':''}</div><div class="imgbox"></div></div>`}).join(''):'<div class="card"><p class="sub">هنوز مدرکی بارگذاری نکرده‌اید.</p></div>'}
+$('#up').onclick=async()=>{msg('');const f=$('#file').files[0];if(!f){msg('ابتدا عکس مدرک را انتخاب کنید.');return}if(f.size>6000000){msg('حجم عکس حداکثر ۶ مگابایت است.');return}
+ const fd=new FormData();fd.append('kind',$('#kind').value);fd.append('file',f);$('#up').disabled=true;$('#up').textContent='در حال بارگذاری…';
+ try{const r=await api('POST','/api/v1/me/documents',null,fd);$('#file').value='';msg(r.ocr?'مدرک ثبت شد و متن آن خوانده شد. اطلاعات را بررسی کنید.':'مدرک ثبت شد، اما متن عکس خوانده نشد. اطلاعات را دستی بنویسید.','ok');await load()}catch(e){if(e.message!=='auth')msg(e.message)}$('#up').disabled=false;$('#up').textContent='بارگذاری و خواندن متن'};
+$('#list').onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const box=b.closest('.doc'),id=box.dataset.id;msg('');
+ try{if(b.dataset.a==='save'){const fields={};box.querySelectorAll('[data-f]').forEach(i=>{let v=i.value.trim();if(i.dataset.f==='nationalCode')v=toEn(v).replace(/\D/g,'');if(v)fields[i.dataset.f]=v});await api('PUT','/api/v1/me/documents/'+id+'/fields',{fields});msg('ذخیره شد.','ok')}
+  else if(b.dataset.a==='del'){if(!confirm('این مدرک حذف شود؟'))return;await api('DELETE','/api/v1/me/documents/'+id);await load()}
+  else if(b.dataset.a==='img'){const ib=box.querySelector('.imgbox');if(ib.firstChild){ib.innerHTML='';return}if(MOCK){ib.innerHTML='<p class="sub">در پیش‌نمایش، عکس نمایش داده نمی‌شود.</p>';return}
+   const r=await fetch('/api/v1/me/documents/'+id+'/file',{headers:{Authorization:'Bearer '+TK()}});if(!r.ok){msg('عکس پیدا نشد.');return}const im=new Image();im.className='prev';im.alt='عکس مدرک';im.src=URL.createObjectURL(await r.blob());ib.appendChild(im)}}catch(x){if(x.message!=='auth')msg(x.message)}};
+load();
+</script></body></html>
