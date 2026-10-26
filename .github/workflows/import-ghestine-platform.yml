@@ -29,6 +29,23 @@ jobs:
             --output "$DEST/ghestine-all3.zip"
           unzip -t "$DEST/ghestine-all3.zip"
           unzip -oq "$DEST/ghestine-all3.zip" -d "$DEST/source"
+          mkdir -p "$DEST/related-archives" "$DEST/source/related-archives" "$DEST/source/live-pages"
+          for item in "ghestine-core _1_.zip" "ghestine-beta-full.zip" "ghestine-full _1_.zip"; do
+            encoded="${item// /%20}"
+            if curl --fail --location --silent --show-error --retry 2 "https://digibail.ir/$encoded" --output "$DEST/related-archives/$item"; then
+              unzip -t "$DEST/related-archives/$item"
+              folder="${item%.zip}"
+              mkdir -p "$DEST/source/related-archives/$folder"
+              unzip -oq "$DEST/related-archives/$item" -d "$DEST/source/related-archives/$folder"
+            else
+              echo "Could not download related archive: $item"
+              exit 1
+            fi
+          done
+          for page in "index.html" "admin-preview/index.html" "beta/index.html"; do
+            mkdir -p "$DEST/source/live-pages/$(dirname "$page")"
+            curl --fail --location --silent --show-error --retry 2 "https://digibail.ir/$page" --output "$DEST/source/live-pages/$page"
+          done
           if grep -RIlE --binary-files=without-match \
             '(BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY|gh[pousr]_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|client_secret[[:space:]]*[:=]|password[[:space:]]*=[[:space:]]*["'"'"'][^"'"'"']{6,})' \
             "$DEST/source" --exclude='inspect-auth.sh' --exclude='*.md' >/tmp/ghestine-sensitive-files.txt; then
