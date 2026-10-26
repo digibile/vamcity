@@ -114,8 +114,8 @@ jobs:
           grep -q 'دیجی‌بایل پی' ghestine-platform/source/all3/web/template-v3.html
           grep -q '/login.html' ghestine-platform/source/all3/web/template-v3.html
           grep -q '/register.html' ghestine-platform/source/all3/web/template-v3.html
-          grep -q '/api/v1/Auth/login' ghestine-platform/source/all3/web/template-v3.html
-          grep -q '/api/v1/Auth/verify-otp' ghestine-platform/source/all3/web/register.html
+          grep -q '/api/v1/security/login' ghestine-platform/source/all3/web/template-v3.html
+          grep -q '/api/v1/security/otp/verify' ghestine-platform/source/all3/web/register.html
           echo "Branding and required route targets found."
 
       - name: Probe production website (read-only)
@@ -132,11 +132,11 @@ jobs:
           print("Production HTTP response received.")
           print("Current live title:", re.sub(r"\s+", " ", title.group(1)).strip() if title else "(no title tag)")
           PY
-          for route in /login.html /register.html /profile.html /admin.html /api/v1/loan-products /api/v1/tenant/config /api/v1/Auth/me; do
+          for route in /login.html /register.html /profile.html /admin.html /api/v1/loan-products /api/v1/tenant/config /api/v1/Auth/me /api/v1/security/captcha; do
             code="$(curl --location --silent --show-error --max-time 15 -o /dev/null -w '%{http_code}' "https://digibail.ir$route" || true)"
             printf '%-34s HTTP %s\n' "$route" "${code:-000}"
           done
-          for endpoint in /api/v1/Auth/login /api/v1/Auth/register /api/v1/Auth/verify-otp; do
+          for endpoint in /api/v1/security/login /api/v1/security/register /api/v1/security/otp/request /api/v1/security/otp/verify; do
             code="$(curl --location --silent --show-error --max-time 15 -X POST -H 'Content-Type: application/json' -d '{}' -o /dev/null -w '%{http_code}' "https://digibail.ir$endpoint" || true)"
             printf 'POST %-29s HTTP %s\n' "$endpoint" "${code:-000}"
           done
