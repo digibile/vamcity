@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - import/ghestine-platform-2026-10-26
-    paths:
-      - .github/workflows/import-ghestine-platform.yml
 
 permissions:
   contents: write
