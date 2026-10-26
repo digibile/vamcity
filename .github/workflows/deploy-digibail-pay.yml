@@ -1,0 +1,156 @@
+name: Deploy DigiBail Pay to production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_production_deploy:
+        description: "I have verified the API and approve updating digibail.ir"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digibail-pay-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: inputs.confirm_production_deploy == true
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in template-v3.html login.html register.html profile.html admin.html; do
+            test -s "ghestine-platform/source/all3/web/$f"
+          done
+
+      - name: Preflight production auth API before touching files
+        shell: bash
+        run: |
+          set -euo pipefail
+          code="$(curl --location --silent --show-error --max-time 15 -o /dev/null -w '%{http_code}' https://digibail.ir/api/v1/Auth/me || true)"
+          echo "GET /api/v1/Auth/me -> HTTP ${code:-000}"
+          case "$code" in
+            200|401|403) echo "Auth API route exists; deployment may proceed." ;;
+            *) echo "::error::Auth API preflight failed. Production files were not changed."; exit 1 ;;
+          esac
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DIGIBAIL_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DIGIBAIL_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_PRIVATE_KEY" || { echo "::error::Missing DIGIBAIL_SSH_PRIVATE_KEY repository/environment secret."; exit 1; }
+          test -n "$SSH_KNOWN_HOSTS" || { echo "::error::Missing DIGIBAIL_SSH_KNOWN_HOSTS secret; host key verification is mandatory."; exit 1; }
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Check deployment settings
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.DIGIBAIL_SSH_HOST }}
+          SSH_USER: ${{ secrets.DIGIBAIL_SSH_USER }}
+          WEB_ROOT: ${{ secrets.DIGIBAIL_WEB_ROOT }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_HOST" || { echo "::error::Missing DIGIBAIL_SSH_HOST secret."; exit 1; }
+          test -n "$SSH_USER" || { echo "::error::Missing DIGIBAIL_SSH_USER secret."; exit 1; }
+          test -n "$WEB_ROOT" || { echo "::error::Missing DIGIBAIL_WEB_ROOT secret."; exit 1; }
+          [[ "$WEB_ROOT" == /* ]] || { echo "::error::DIGIBAIL_WEB_ROOT must be an absolute path."; exit 1; }
+          [[ "$WEB_ROOT" != *" "* ]] || { echo "::error::WEB_ROOT cannot contain spaces."; exit 1; }
+          printf 'host=%s\nuser=%s\nroot=%s\n' "$SSH_HOST" "$SSH_USER" "$WEB_ROOT"
+
+      - name: Stage release on server
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.DIGIBAIL_SSH_HOST }}
+          SSH_USER: ${{ secrets.DIGIBAIL_SSH_USER }}
+          WEB_ROOT: ${{ secrets.DIGIBAIL_WEB_ROOT }}
+        run: |
+          set -euo pipefail
+          stage="/tmp/digibail-pay-${GITHUB_SHA}"
+          ssh "$SSH_USER@$SSH_HOST" "mkdir -p '$stage'"
+          rsync -av -e "ssh -o StrictHostKeyChecking=yes" \
+            ghestine-platform/source/all3/web/template-v3.html \
+            ghestine-platform/source/all3/web/login.html \
+            ghestine-platform/source/all3/web/register.html \
+            ghestine-platform/source/all3/web/profile.html \
+            ghestine-platform/source/all3/web/admin.html \
+            "$SSH_USER@$SSH_HOST:$stage/"
+
+      - name: Backup and atomically install static routes
+        id: install
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.DIGIBAIL_SSH_HOST }}
+          SSH_USER: ${{ secrets.DIGIBAIL_SSH_USER }}
+          WEB_ROOT: ${{ secrets.DIGIBAIL_WEB_ROOT }}
+        run: |
+          set -euo pipefail
+          ssh "$SSH_USER@$SSH_HOST" "bash -s -- '$WEB_ROOT' '$GITHUB_SHA'" <<'REMOTE'
+          set -euo pipefail
+          root="$1"
+          sha="$2"
+          stage="/tmp/digibail-pay-$sha"
+          backup="$root/.digibail-backups/$sha"
+          mkdir -p "$backup" "$root"
+          files=(index.html login.html register.html profile.html admin.html)
+          for name in "${files[@]}"; do
+            if [ -f "$root/$name" ]; then cp -p "$root/$name" "$backup/$name"; else touch "$backup/$name.missing"; fi
+          done
+          touch "$stage/DEPLOY_STARTED"
+          install -m 0644 "$stage/template-v3.html" "$root/index.html"
+          for name in login.html register.html profile.html admin.html; do
+            install -m 0644 "$stage/$name" "$root/$name"
+          done
+          printf 'backup=%s\n' "$backup"
+          REMOTE
+
+      - name: Verify public routes
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          for route in / /login.html /register.html /profile.html /admin.html; do
+            code="$(curl --location --silent --show-error --max-time 20 -o /dev/null -w '%{http_code}' "https://digibail.ir$route" || true)"
+            printf '%-20s HTTP %s\n' "$route" "${code:-000}"
+            test "$code" = "200" || { echo "::error::Route $route did not return HTTP 200."; exit 1; }
+          done
+
+      - name: Roll back on failed deployment
+        if: failure() && steps.install.outcome == 'success'
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.DIGIBAIL_SSH_HOST }}
+          SSH_USER: ${{ secrets.DIGIBAIL_SSH_USER }}
+        run: |
+          set -euo pipefail
+          ssh "$SSH_USER@$SSH_HOST" "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
+          set -euo pipefail
+          sha="$1"
+          root="${DIGIBAIL_WEB_ROOT:-/home/digibail/domains/digibail.ir/public_html}"
+          stage="/tmp/digibail-pay-$sha"
+          [ -f "$stage/DEPLOY_STARTED" ] || exit 0
+          backup="$root/.digibail-backups/$sha"
+          for name in index.html login.html register.html profile.html admin.html; do
+            if [ -f "$backup/$name.missing" ]; then rm -f "$root/$name"
+            elif [ -f "$backup/$name" ]; then cp -p "$backup/$name" "$root/$name"
+            fi
+          done
+          echo "Previous files restored from $backup"
+          REMOTE
