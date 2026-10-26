@@ -165,7 +165,7 @@ details{border-bottom:1px solid var(--line);padding:14px 2px}summary{cursor:poin
 <script>
 document.documentElement.dir='rtl';document.documentElement.lang='fa';
 /* ---------- config ---------- */
-const CFG={mock:false,endpoints:{login:'/api/v1/Auth/login',register:'/api/v1/Auth/register',verifyOtp:'/api/v1/Auth/verify-otp',me:'/api/v1/Auth/me',plans:'/api/v1/loan-products',betaInquiry:'/api/v1/beta/inquiry'},routes:{account:'/profile.html',admin:'/admin.html'}};
+const CFG={mock:false,endpoints:{login:'/api/v1/security/login',register:'/api/v1/security/register',verifyOtp:'/api/v1/security/otp/verify',me:'/api/v1/Auth/me',plans:'/api/v1/loan-products',betaInquiry:'/api/v1/beta/inquiry'},routes:{account:'/profile.html',admin:'/admin.html'}};
 /* ---------- helpers ---------- */
 const $=s=>document.querySelector(s);
 const fa=n=>Number(n).toLocaleString('fa-IR').replace(/,/g,'٬');
