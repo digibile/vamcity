@@ -2,7 +2,7 @@
 # نصب ماژول امنیت ورود: کپچای سمت سرور، OTP با کاوه‌نگار، محدودکننده‌ی درخواست
 # به سیستم احراز هویت موجود دست نمی‌زند. صدور توکن بعد از بررسی کد فعلی به IAuthTokenIssuer وصل می‌شود.
 set -e
-ROOT="${1:-/home/ghestine/domains/ghestine.ir/Ghestine}"
+ROOT="${1:?مسیر واقعی پروژه را به‌عنوان آرگومان اول بدهید؛ مثال: bash "$0" /home/USER/domains/DOMAIN/PROJECT}"
 HERE="$(cd "$(dirname "$0")" && pwd)"; SRC="$ROOT/src"
 [ -d "$SRC" ] || { echo "پوشه src پیدا نشد: $SRC"; exit 1; }
 B="$ROOT/.sec-backup-$(date +%Y%m%d%H%M%S)"; mkdir -p "$B"
