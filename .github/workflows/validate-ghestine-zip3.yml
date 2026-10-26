@@ -140,6 +140,14 @@ jobs:
             code="$(curl --location --silent --show-error --max-time 15 -X POST -H 'Content-Type: application/json' -d '{}' -o /dev/null -w '%{http_code}' "https://digibail.ir$endpoint" || true)"
             printf 'POST %-29s HTTP %s\n' "$endpoint" "${code:-000}"
           done
+          for endpoint in /api/v1/Auth/login /api/v1/Auth/register /api/v1/auth/login /api/v1/auth/register /api/Auth/login /api/Auth/register; do
+            code="$(curl --location --silent --show-error --max-time 15 -X POST -H 'Content-Type: application/json' -d '{}' -o /dev/null -w '%{http_code}' "https://digibail.ir$endpoint" || true)"
+            printf 'POST existing-auth %-22s HTTP %s\n' "$endpoint" "${code:-000}"
+          done
+          for route in /swagger/v1/swagger.json /swagger/index.html /openapi/v1.json; do
+            code="$(curl --location --silent --show-error --max-time 10 -o /dev/null -w '%{http_code}' "https://digibail.ir$route" || true)"
+            printf 'API schema %-34s HTTP %s\n' "$route" "${code:-000}"
+          done
 
       - name: Report .NET build availability
         shell: bash
