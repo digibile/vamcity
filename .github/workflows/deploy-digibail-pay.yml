@@ -133,17 +133,17 @@ jobs:
           done
 
       - name: Roll back on failed deployment
-        if: failure() && steps.install.outcome == 'success'
+        if: failure() && steps.install.outcome != 'skipped'
         shell: bash
         env:
           SSH_HOST: ${{ secrets.DIGIBAIL_SSH_HOST }}
           SSH_USER: ${{ secrets.DIGIBAIL_SSH_USER }}
         run: |
           set -euo pipefail
-          ssh "$SSH_USER@$SSH_HOST" "bash -s -- '$GITHUB_SHA'" <<'REMOTE'
+          ssh "$SSH_USER@$SSH_HOST" "bash -s -- '$WEB_ROOT' '$GITHUB_SHA'" <<'REMOTE'
           set -euo pipefail
-          sha="$1"
-          root="${DIGIBAIL_WEB_ROOT:-/home/digibail/domains/digibail.ir/public_html}"
+          root="$1"
+          sha="$2"
           stage="/tmp/digibail-pay-$sha"
           [ -f "$stage/DEPLOY_STARTED" ] || exit 0
           backup="$root/.digibail-backups/$sha"
