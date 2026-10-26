@@ -39,24 +39,20 @@ jobs:
             test -s "ghestine-platform/source/all3/web/$f"
           done
 
-      - name: Preflight production auth API before touching files
+      - name: Preflight production security API before touching files
         shell: bash
         run: |
           set -euo pipefail
-          code="$(curl --location --silent --show-error --max-time 15 -o /dev/null -w '%{http_code}' https://digibail.ir/api/v1/Auth/me || true)"
-          echo "GET /api/v1/Auth/me -> HTTP ${code:-000}"
-          case "$code" in
-            200|401|403) echo "Auth API route exists; deployment may proceed." ;;
-            *) echo "::error::Auth API preflight failed. Production files were not changed."; exit 1 ;;
-          esac
-          for endpoint in /api/v1/Auth/login /api/v1/Auth/register /api/v1/Auth/verify-otp; do
+          code="$(curl --location --silent --show-error --max-time 15 -o /dev/null -w '%{http_code}' https://digibail.ir/api/v1/security/captcha || true)"
+          echo "GET /api/v1/security/captcha -> HTTP ${code:-000}"
+          test "$code" = "200" || { echo "::error::Security/captcha API is not installed. Production files were not changed."; exit 1; }
+          for endpoint in /api/v1/security/login /api/v1/security/register /api/v1/security/otp/request /api/v1/security/otp/verify; do
             code="$(curl --location --silent --show-error --max-time 15 -X POST -H 'Content-Type: application/json' -d '{}' -o /dev/null -w '%{http_code}' "https://digibail.ir$endpoint" || true)"
-            printf 'POST %-29s HTTP %s\n' "$endpoint" "${code:-000}"
+            printf 'POST %-38s HTTP %s\n' "$endpoint" "${code:-000}"
             case "$code" in
-              404|405|500|502|503|000) echo "::error::Auth endpoint $endpoint is not ready. Production files were not changed."; exit 1 ;;
+              404|405|500|502|503|000) echo "::error::Security endpoint $endpoint is not ready. Production files were not changed."; exit 1 ;;
             esac
           done
-
       - name: Configure SSH
         shell: bash
         env:
