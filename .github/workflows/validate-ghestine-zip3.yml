@@ -148,6 +148,12 @@ jobs:
             code="$(curl --location --silent --show-error --max-time 10 -o /dev/null -w '%{http_code}' "https://digibail.ir$route" || true)"
             printf 'API schema %-34s HTTP %s\n' "$route" "${code:-000}"
           done
+          echo "=== Existing login contract probe (deliberately invalid credentials) ==="
+          curl --location --silent --show-error --max-time 15 -X POST -H 'Content-Type: application/json' -d '{"username":"__invalid_probe__","password":"__invalid_probe__"}' -w '\nHTTP %{http_code}\n' https://digibail.ir/api/v1/Auth/login | head -c 1800 || true
+          echo
+          echo "=== Existing registration contract probe (deliberately invalid data) ==="
+          curl --location --silent --show-error --max-time 15 -X POST -H 'Content-Type: application/json' -d '{"fullName":"X","phone":"invalid","password":"x","nationalCode":"invalid"}' -w '\nHTTP %{http_code}\n' https://digibail.ir/api/v1/Auth/register | head -c 1800 || true
+          echo
 
       - name: Report .NET build availability
         shell: bash
