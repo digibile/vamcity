@@ -19,89 +19,120 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate archive
+      - name: Validate original ZIP
         shell: bash
         run: |
           set -euo pipefail
           test -s ghestine-platform/ghestine-all3.zip
           unzip -t ghestine-platform/ghestine-all3.zip
 
-      - name: Validate extracted structure
+      - name: Validate required production route pages
         shell: bash
         run: |
           set -euo pipefail
           for path in \
             ghestine-platform/source/all3/README.txt \
             ghestine-platform/source/all3/web/template-v3.html \
+            ghestine-platform/source/all3/web/login.html \
+            ghestine-platform/source/all3/web/register.html \
+            ghestine-platform/source/all3/web/profile.html \
+            ghestine-platform/source/all3/web/admin.html \
             ghestine-platform/source/all3/install-all.sh \
             ghestine-platform/source/all3/server-run.sh \
             ghestine-platform/source/all3/backend/security/smoke-test.sh \
             ghestine-platform/source/all3/backend/core/panel.html; do
             test -s "$path" || { echo "Missing or empty: $path"; exit 1; }
           done
-          echo "Extracted files present."
+          echo "Required pages and source files are present."
 
       - name: Bash syntax checks
         shell: bash
         run: |
           set -euo pipefail
-          find ghestine-platform/source/all3 -type f -name '*.sh' -print0 |
-            while IFS= read -r -d '' file; do
-              echo "Checking $file"
-              bash -n "$file"
-            done
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            bash -n "$file"
+          done < <(find ghestine-platform/source/all3 -type f -name '*.sh' -print0)
 
-      - name: HTML readability check
+      - name: Validate HTML and inline JavaScript
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from html.parser import HTMLParser
           from pathlib import Path
+          import subprocess
+          import tempfile
 
           class Checker(HTMLParser):
-              pass
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.scripts = []
+                  self.in_script = False
+                  self.current = []
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower() == "script":
+                      self.in_script = True
+                      self.current = []
+              def handle_data(self, data):
+                  if self.in_script:
+                      self.current.append(data)
+              def handle_endtag(self, tag):
+                  if tag.lower() == "script" and self.in_script:
+                      self.scripts.append("".join(self.current))
+                      self.in_script = False
 
           files = list(Path("ghestine-platform/source/all3").rglob("*.html"))
           if not files:
               raise SystemExit("No HTML files found")
+          checked_scripts = 0
           for path in files:
-              parser = Checker(convert_charrefs=True)
-              parser.feed(path.read_text(encoding="utf-8", errors="replace"))
+              parser = Checker()
+              parser.feed(path.read_text(encoding="utf-8"))
               parser.close()
+              for script in parser.scripts:
+                  if not script.strip():
+                      continue
+                  with tempfile.NamedTemporaryFile("w", suffix=".js", encoding="utf-8") as f:
+                      f.write(script)
+                      f.flush()
+                      result = subprocess.run(["node", "--check", f.name], capture_output=True, text=True)
+                      if result.returncode:
+                          print(f"JavaScript syntax error in {path}:")
+                          print(result.stderr)
+                          raise SystemExit(result.returncode)
+                  checked_scripts += 1
               print(f"Readable HTML: {path}")
-          print(f"Checked {len(files)} HTML files.")
+          print(f"Checked {len(files)} HTML files and {checked_scripts} inline JavaScript blocks.")
           PY
 
-      - name: Verify DigiBail Pay branding
+      - name: Verify DigiBail Pay branding and route targets
         shell: bash
         run: |
           set -euo pipefail
           grep -q 'دیجی‌بایل پی' ghestine-platform/source/all3/web/template-v3.html
-          echo "The packaged homepage is branded DigiBail Pay."
+          grep -q '/login.html' ghestine-platform/source/all3/web/template-v3.html
+          grep -q '/register.html' ghestine-platform/source/all3/web/template-v3.html
+          grep -q '/api/v1/Auth/login' ghestine-platform/source/all3/web/template-v3.html
+          grep -q '/api/v1/Auth/verify-otp' ghestine-platform/source/all3/web/register.html
+          echo "Branding and required route targets found."
 
-      - name: Probe production website
+      - name: Probe production website (read-only)
         shell: bash
         run: |
           set -euo pipefail
           curl --fail --location --silent --show-error --max-time 30 \
-            https://digibail.ir/ --output /tmp/digibail-live.html
-          test -s /tmp/digibail-live.html
-          python3 - <<'PY'
+            https://digibail.ir/ --output "$RUNNER_TEMP/digibail-live.html"
+          python3 - "$RUNNER_TEMP/digibail-live.html" <<'PY'
           from pathlib import Path
-          import re
-          html = Path("/tmp/digibail-live.html").read_text(encoding="utf-8", errors="replace")
+          import re, sys
+          html = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
           title = re.search(r"<title[^>]*>(.*?)</title>", html, re.I | re.S)
           print("Production HTTP response received.")
-          print("Current live title:", re.sub(r"\\s+", " ", title.group(1)).strip() if title else "(no title tag)")
+          print("Current live title:", re.sub(r"\s+", " ", title.group(1)).strip() if title else "(no title tag)")
           PY
-
-      - name: Probe existing frontend and API routes
-        shell: bash
-        run: |
-          set -euo pipefail
-          for route in /login.html /register.html /profile.html /admin.html /panel.html /api/v1/loan-products /api/v1/tenant/config; do
-            code="$(curl --location --silent --show-error --max-time 15 -o /tmp/route-probe -w '%{http_code}' "https://digibail.ir$route" || true)"
+          for route in /login.html /register.html /profile.html /admin.html /api/v1/loan-products /api/v1/tenant/config /api/v1/Auth/me; do
+            code="$(curl --location --silent --show-error --max-time 15 -o /dev/null -w '%{http_code}' "https://digibail.ir$route" || true)"
             printf '%-34s HTTP %s\n' "$route" "${code:-000}"
           done
 
@@ -113,3 +144,23 @@ jobs:
           else
             echo "::warning::No .sln or .csproj exists in this imported ZIP snapshot. This workflow cannot claim the C# backend builds."
           fi
+
+      - name: Build distributable web/source package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/digibail-pay-release"
+          cp -a ghestine-platform/source/all3 "$RUNNER_TEMP/digibail-pay-release/source"
+          cp ghestine-platform/README.md "$RUNNER_TEMP/digibail-pay-release/README.md"
+          cd "$RUNNER_TEMP/digibail-pay-release"
+          zip -qr "$RUNNER_TEMP/digibail-pay-release.zip" .
+          unzip -t "$RUNNER_TEMP/digibail-pay-release.zip"
+          sha256sum "$RUNNER_TEMP/digibail-pay-release.zip"
+
+      - name: Upload validated release package
+        uses: actions/upload-artifact@v4
+        with:
+          name: digibail-pay-release
+          path: ${{ runner.temp }}/digibail-pay-release.zip
+          if-no-files-found: error
+          retention-days: 14
