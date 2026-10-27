@@ -1,4 +1,4 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>ورود به دیجی‌بایل پی</title>
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>ورود به دیجی بال پی</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap">
 <style>
@@ -31,7 +31,7 @@ h1{font-size:1.2rem;margin:10px 0 2px}.sub{color:var(--muted);font-size:.88rem;m
 
 <main class="card">
  <nav class="authtabs" aria-label="ورود یا عضویت"><a href="/login.html" aria-current="page">ورود</a><a href="/register.html">عضویت</a></nav>
- <div class="logo"><i>د</i>دیجی‌بایل پی</div><h1>ورود به حساب</h1><p class="sub">روش ورود را انتخاب کنید.</p>
+ <div class="logo"><i>د</i>دیجی بال پی</div><h1>ورود به حساب</h1><p class="sub">روش ورود را انتخاب کنید.</p>
  <div class="seg" role="tablist"><button id="tP" role="tab" aria-selected="true">رمز ثابت</button><button id="tO" role="tab" aria-selected="false">رمز یک‌بارمصرف</button></div>
  <div id="msg" class="msg" hidden role="alert"></div>
  <form id="fP" novalidate>
@@ -110,7 +110,7 @@ $('#om').addEventListener('change',async()=>{const m=toEn($('#om').value);if(!ok
 mode('P');
 
 /* ---------- برند مستأجر (از دامنه‌ی فعلی) ---------- */
-(function(){const DEF='دیجی‌بایل پی';let cur=DEF;
+(function(){const DEF='دیجی بال پی';let cur=DEF;
  function sw(root){const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode())){if(cur!==DEF&&n.nodeValue.indexOf(DEF)>-1)n.nodeValue=n.nodeValue.split(DEF).join(cur)}}
  function apply(b){if(!b||!b.name)return;cur=b.name;const br=b.brand||{};document.title=document.title.split(DEF).join(cur);
   const s=document.documentElement.style;if(br.primary)s.setProperty('--brand',br.primary);if(br.accent)s.setProperty('--accent',br.accent);
