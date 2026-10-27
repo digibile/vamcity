@@ -1,4 +1,4 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>دیجی‌بایل پی | خرید اقساطی</title>
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>دیجی بال پی | خرید اقساطی</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Vazirmatn:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap">
 <style>
@@ -137,7 +137,7 @@ details{border-bottom:1px solid var(--line);padding:14px 2px}summary{cursor:poin
 </style></head><body>
 
 <div class="hd" id="hd"><div class="hd-in">
-  <a class="logo" href="#home"><i>د</i>دیجی‌بایل پی</a>
+  <a class="logo" href="#home"><i>د</i>دیجی بال پی</a>
   <button class="btn burger" id="burger" aria-expanded="false" aria-controls="nv">منو</button>
   <nav class="nv" id="nv" aria-label="منوی اصلی">
     <div class="pm"><button class="l" id="pmBtn" aria-expanded="false" aria-haspopup="true">طرح‌های اقساط ▾</button><div class="pm-pop" id="pmPop" hidden></div></div>
@@ -149,14 +149,14 @@ details{border-bottom:1px solid var(--line);padding:14px 2px}summary{cursor:poin
     <main id="app"></main>
   <footer class="ft">
     <div class="ft-top">
-      <div class="ft-brand"><a class="logo" href="#home"><i>د</i>دیجی‌بایل پی</a><p>پلتفرم خرید اقساطی. اعتبار، قرارداد و کارت مجازی در یک حساب.</p><div class="soc"><a href="#">تلگرام</a><a href="#">اینستاگرام</a><a href="#">بله</a><a href="#">ایتا</a><a href="#">روبیکا</a></div></div>
+      <div class="ft-brand"><a class="logo" href="#home"><i>د</i>دیجی بال پی</a><p>پلتفرم خرید اقساطی. اعتبار، قرارداد و کارت مجازی در یک حساب.</p><div class="soc"><a href="#">تلگرام</a><a href="#">اینستاگرام</a><a href="#">بله</a><a href="#">ایتا</a><a href="#">روبیکا</a></div></div>
       <div><b>طرح‌ها</b><span id="ftPlans"></span></div>
       <div><b>همکاری</b><a href="#">پذیرنده شوید</a><a href="#">نماینده شوید</a><a href="#">سازمان‌ها</a></div>
       <div><b>پشتیبانی</b><a href="#">تیکت پشتیبانی</a><a href="#">قوانین و مقررات</a><a href="#">حریم خصوصی</a></div>
       <div><b>تماس با ما</b><span class="ph">نشانی، تلفن و ایمیل از تنظیمات سایت خوانده می‌شود</span><span>ساعت کاری: شنبه تا چهارشنبه، ۹ تا ۱۸</span></div>
     </div>
     <div class="ft-badges"><div class="badge-box">محل نماد اعتماد الکترونیکی</div><div class="badge-box">محل نماد ساماندهی</div></div>
-    <div class="ft-bot"><span>تمامی حقوق برای دیجی‌بایل پی محفوظ است.</span><span id="ftHost"></span></div>
+    <div class="ft-bot"><span>تمامی حقوق برای دیجی بال پی محفوظ است.</span><span id="ftHost"></span></div>
   </footer>
 </div>
 <div class="mbar"><a class="btn" href="#calc">محاسبه قسط</a><a class="btn solid" id="mbAuth" href="#">ورود / عضویت</a></div>
@@ -200,7 +200,7 @@ $('#pmBtn').onclick=e=>{e.stopPropagation();const o=$('#pmPop').hidden;$('#pmPop
 document.addEventListener('click',e=>{if(!e.target.closest('.pm'))$('#pmPop').hidden=true;if(e.target.closest('.nv a')){hd.classList.remove('open');$('#burger').setAttribute('aria-expanded',false)}});
 /* ---------- calculator ---------- */
 const S={plan:'p6',amt:15000000,ti:1};
-function cardHtml(){return `<div class="vcard" id="vcard"><div class="t"><span>دیجی‌بایل پی</span><span class="vchip"></span></div><div class="vnum">۹۱۰۱ ۴۸۲۰ ۷۳۱۵ ۰۶۴۴</div><div class="vb"><div><small>سقف کارت</small><span class="vlim" id="vlim"></span></div><div><small>انقضا</small><b>۱۴۰۸/۰۸</b></div></div></div>`}
+function cardHtml(){return `<div class="vcard" id="vcard"><div class="t"><span>دیجی بال پی</span><span class="vchip"></span></div><div class="vnum">۹۱۰۱ ۴۸۲۰ ۷۳۱۵ ۰۶۴۴</div><div class="vb"><div><small>سقف کارت</small><span class="vlim" id="vlim"></span></div><div><small>انقضا</small><b>۱۴۰۸/۰۸</b></div></div></div>`}
 function tilt(el){if(!el||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const w=el.parentElement;
  w.onpointermove=e=>{const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;el.style.setProperty('--ry',((x-.5)*16).toFixed(1)+'deg');el.style.setProperty('--rx',((.5-y)*12).toFixed(1)+'deg');el.style.setProperty('--mx',(x*100)+'%');el.style.setProperty('--my',(y*100)+'%')};
  w.onpointerleave=()=>{el.style.setProperty('--ry','0deg');el.style.setProperty('--rx','0deg')}}
@@ -260,7 +260,7 @@ function home(){const A=act();
  <section class="s" id="trust"><h2 class="t">امنیت و شفافیت</h2><p class="sub">اطلاعات شما رمزنگاری می‌شود و هیچ هزینه‌ی پنهانی وجود ندارد.</p>
   <div class="trust"><div class="tc"><h3>رمزنگاری مدارک</h3><p>تصویر مدارک رمزنگاری‌شده نگهداری می‌شود و هر دسترسی ثبت می‌شود.</p></div><div class="tc"><h3>قرارداد با امضای پیامکی</h3><p>نسخه‌ی قرارداد و گزارش امضا در حساب شما می‌ماند.</p></div><div class="tc"><h3>کارت مجازی کنترل‌شده</h3><p>سقف کارت برابر وام شماست و هر زمان می‌توانید آن را مسدود کنید.</p></div><div class="tc"><h3>اقساط شفاف</h3><p>مبلغ و سررسید همه‌ی اقساط قبل از خرید دیده می‌شود.</p></div></div></section>
  <section class="s" id="faq"><h2 class="t">پرسش‌های متداول</h2>
-  <details><summary>کارت مجازی چیست و کجا استفاده می‌شود؟</summary><p>بعد از تأیید وام، یک کارت مجازی با سقف وام برای شما صادر می‌شود. با آن از فروشگاه‌های طرف قرارداد از طریق درگاه دیجی‌بایل پی خرید می‌کنید.</p></details>
+  <details><summary>کارت مجازی چیست و کجا استفاده می‌شود؟</summary><p>بعد از تأیید وام، یک کارت مجازی با سقف وام برای شما صادر می‌شود. با آن از فروشگاه‌های طرف قرارداد از طریق درگاه دیجی بال پی خرید می‌کنید.</p></details>
   <details><summary>برای دریافت اعتبار چه مدارکی لازم است؟</summary><p>فهرست مدارک هر طرح در صفحه‌ی همان طرح آمده است. هر مدرک را با عکس بارگذاری می‌کنید.</p></details>
   <details><summary>اگر قسطی را دیر پرداخت کنم چه می‌شود؟</summary><p>جریمه‌ی دیرکرد طبق قرارداد محاسبه می‌شود و قبل از سررسید پیامک یادآوری می‌گیرید.</p></details>
   <details><summary>چطور فروشگاه خودم را اضافه کنم؟</summary><p>از «پذیرنده شوید» درخواست بدهید. بعد از تأیید، لینک اختصاصی و درگاه برای شما فعال می‌شود.</p></details></section>
@@ -269,7 +269,7 @@ function home(){const A=act();
 function planPage(p){
  $('#app').innerHTML=`<div class="crumb"><a href="#home">خانه</a> / <a href="#plans">طرح‌ها</a> / ${p.name}</div>
  <div class="pp"><div class="stack"><div><h1>${p.name}</h1><p class="lead">${p.blurb}</p></div>
-  ${p.kind==='beta'?`<div class="card2"><h3>مراحل طرح</h3><ol class="ck" style="list-style:none">${p.steps.map(s=>`<li>${s}</li>`).join('')}</ol><p class="note">مبلغ و اقساط را بانک مشخص می‌کند. پرداخت اقساط به حساب دیجی‌بایل پی است و دیجی‌بایل پی سهم لیزینگ را طبق قرارداد منتقل می‌کند.</p></div>`:`<div class="card2"><h3>جدول اقساط نمونه</h3><div class="strip" id="strip" aria-hidden="true"></div><div class="tbl"><table><thead><tr><th>قسط</th><th>سررسید</th><th>مبلغ</th></tr></thead><tbody id="sch"></tbody></table></div></div>`}
+  ${p.kind==='beta'?`<div class="card2"><h3>مراحل طرح</h3><ol class="ck" style="list-style:none">${p.steps.map(s=>`<li>${s}</li>`).join('')}</ol><p class="note">مبلغ و اقساط را بانک مشخص می‌کند. پرداخت اقساط به حساب دیجی بال پی است و دیجی بال پی سهم لیزینگ را طبق قرارداد منتقل می‌کند.</p></div>`:`<div class="card2"><h3>جدول اقساط نمونه</h3><div class="strip" id="strip" aria-hidden="true"></div><div class="tbl"><table><thead><tr><th>قسط</th><th>سررسید</th><th>مبلغ</th></tr></thead><tbody id="sch"></tbody></table></div></div>`}
   <div class="card2"><h3>شرایط ثبت‌نام</h3><ul class="ck"><li>سن ${fa(p.cond.minAge)} تا ${fa(p.cond.maxAge)} سال</li>${p.cond.minIncome?`<li>درآمد ماهانه حداقل ${fa(p.cond.minIncome)} میلیون تومان</li>`:''}${p.cond.kyc?'<li>احراز هویت تأییدشده</li>':''}${p.cond.minScore?`<li>امتیاز اعتباری حداقل ${fa(p.cond.minScore)}</li>`:''}<li>حداکثر ${fa(p.cond.maxActive)} وام فعال هم‌زمان</li></ul></div>
   <div class="card2"><h3>مدارک لازم (با عکس)</h3><ul class="ck">${p.docs.map(d=>`<li class="${d[1]?'':'opt'}">${d[0]}${d[1]?'':' (اختیاری)'}</li>`).join('')}</ul><p class="note">اطلاعات هر مدرک از روی عکس به‌طور خودکار خوانده و در پرونده‌ی شما ثبت می‌شود.</p></div>
   <div class="card2"><h3>کارت مجازی این طرح</h3><p style="margin:0;color:var(--muted)">بعد از تأیید وام و امضای قرارداد، کارت مجازی با سقف مبلغ وام صادر می‌شود. می‌توانید آن را از حساب من مسدود یا باز کنید.</p></div></div>
@@ -289,7 +289,7 @@ function closeM(){$('#modal').hidden=true;$('#modal').innerHTML=''}
 addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
 const REF=(()=>{try{return new URLSearchParams(location.search).get('ref')||''}catch(e){return ''}})();
 function hint(el,msg,ok){const h=el.parentElement.querySelector('.h');h.textContent=msg;h.className='h '+(msg?(ok?'ok':'bad'):'')}
-function openAuth(mode,msg){if(!CFG.mock){location.href=mode==='login'?'/login.html':'/register.html';return}modal(`<button class="close" aria-label="بستن" onclick="closeM()">×</button><h2>${mode==='login'?'ورود به حساب':'عضویت در دیجی‌بایل پی'}</h2><p class="sub" style="margin:0">${msg||(mode==='login'?'شماره موبایل و رمز عبور را وارد کنید.':'در چند ثانیه عضو شوید و اعتبار بگیرید.')}</p>
+function openAuth(mode,msg){if(!CFG.mock){location.href=mode==='login'?'/login.html':'/register.html';return}modal(`<button class="close" aria-label="بستن" onclick="closeM()">×</button><h2>${mode==='login'?'ورود به حساب':'عضویت در دیجی بال پی'}</h2><p class="sub" style="margin:0">${msg||(mode==='login'?'شماره موبایل و رمز عبور را وارد کنید.':'در چند ثانیه عضو شوید و اعتبار بگیرید.')}</p>
  <div class="tabs" role="tablist"><button role="tab" aria-selected="${mode==='login'}" id="tL">ورود</button><button role="tab" aria-selected="${mode==='reg'}" id="tR">عضویت</button></div><form id="af" novalidate>
  ${mode==='reg'?`<div class="fld"><label for="fn">نام و نام خانوادگی</label><input id="fn" autocomplete="name"><div class="h"></div></div>`:''}
  <div class="fld"><label for="fm">شماره موبایل</label><input id="fm" inputmode="numeric" maxlength="11" placeholder="۰۹۱۲۳۴۵۶۷۸۹" autocomplete="tel"><div class="h"></div></div>
@@ -341,7 +341,7 @@ function normPlan(x){/* map API loan product to page plan; adjust field names to
  if(!x||x.isActive===false)return null;return{id:String(x.id||x.code),name:x.name||x.title,blurb:x.description||'',badge:'',min:(x.minAmount||1000000)/1e6,max:(x.maxAmount||20000000)/1e6,iv:x.intervalDays||30,tiers:(x.tiers||[{m:x.months||6,fee:x.feePercent||2.5,down:x.downPaymentPercent||0}]).map(t=>({m:t.months||t.m,fee:t.feePercent||t.fee,down:t.downPaymentPercent||t.down||0})),cond:x.conditions||{minAge:18,maxAge:70,minIncome:0,kyc:1,minScore:0,maxActive:3},docs:(x.documents||[]).map(d=>[d.name||d,d.required===false?0:1]),on:1,kind:(x.conditions&&x.conditions.kind)||x.kind||'',steps:x.steps||[],iv:x.intervalDays||30}}
 
 /* ---------- برند مستأجر (از دامنه‌ی فعلی) ---------- */
-(function(){const DEF='دیجی‌بایل پی';let cur=DEF;
+(function(){const DEF='دیجی بال پی';let cur=DEF;
  function sw(root){const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode())){if(cur!==DEF&&n.nodeValue.indexOf(DEF)>-1)n.nodeValue=n.nodeValue.split(DEF).join(cur)}}
  function apply(b){if(!b||!b.name)return;cur=b.name;const br=b.brand||{};document.title=document.title.split(DEF).join(cur);
   const s=document.documentElement.style;if(br.primary)s.setProperty('--brand',br.primary);if(br.accent)s.setProperty('--accent',br.accent);
