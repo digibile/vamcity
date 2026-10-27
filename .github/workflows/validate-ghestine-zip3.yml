@@ -111,7 +111,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'دیجی‌بایل پی' ghestine-platform/source/all3/web/template-v3.html
+          grep -q 'دیجی بال پی' ghestine-platform/source/all3/web/template-v3.html
           grep -q '/login.html' ghestine-platform/source/all3/web/template-v3.html
           grep -q '/register.html' ghestine-platform/source/all3/web/template-v3.html
           grep -q '/api/v1/security/login' ghestine-platform/source/all3/web/template-v3.html
