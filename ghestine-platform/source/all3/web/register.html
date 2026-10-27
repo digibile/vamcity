@@ -1,4 +1,4 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>ثبت‌نام در دیجی‌بایل پی</title>
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>ثبت‌نام در دیجی بال پی</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap">
 <style>
@@ -31,7 +31,7 @@ h1{font-size:1.2rem;margin:10px 0 2px}.sub{color:var(--muted);font-size:.88rem;m
 
 <main class="card">
  <nav class="authtabs" aria-label="ورود یا عضویت"><a id="tLogin" href="/login.html">ورود</a><a id="tReg" href="/register.html" aria-current="page">عضویت</a></nav>
- <div class="logo"><i>د</i>دیجی‌بایل پی</div><h1>ثبت‌نام</h1><p class="sub" id="stepT">ابتدا شماره موبایل خود را تأیید کنید.</p>
+ <div class="logo"><i>د</i>دیجی بال پی</div><h1>ثبت‌نام</h1><p class="sub" id="stepT">ابتدا شماره موبایل خود را تأیید کنید.</p>
  <div id="msg" class="msg" hidden role="alert"></div>
  <form id="f1" novalidate>
   <div class="fld"><label for="rm">شماره موبایل</label><div class="in"><input id="rm" class="ltr" inputmode="numeric" maxlength="11" placeholder="09123456789" autocomplete="tel"></div><div class="h"></div></div>
@@ -96,7 +96,7 @@ const ins=[...document.querySelectorAll('#otp input')];ins.forEach((el,i)=>{el.i
 loadCap('1');
 
 /* ---------- برند مستأجر (از دامنه‌ی فعلی) ---------- */
-(function(){const DEF='دیجی‌بایل پی';let cur=DEF;
+(function(){const DEF='دیجی بال پی';let cur=DEF;
  function sw(root){const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode())){if(cur!==DEF&&n.nodeValue.indexOf(DEF)>-1)n.nodeValue=n.nodeValue.split(DEF).join(cur)}}
  function apply(b){if(!b||!b.name)return;cur=b.name;const br=b.brand||{};document.title=document.title.split(DEF).join(cur);
   const s=document.documentElement.style;if(br.primary)s.setProperty('--brand',br.primary);if(br.accent)s.setProperty('--accent',br.accent);
