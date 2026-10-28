@@ -11,8 +11,8 @@ STAGE_DB="vamcity_stage"
 SOURCE_DB="vamcityc_vamcity_import_20261028"
 BLU_DB="vamcityc_bluvamdb_import_20261028"
 TRANSFER_DB="vamcityc_transferDb_import_20261028"
-RELEASE="/home/roofixo/domains/roofixo.ir/vamcity-app/releases/3d2d5546cd79fa77e3807eb5a1a5ea8379ecbbfe"
-UPLOADS="/home/roofixo/domains/roofixo.ir/vamcity-app/private/uploads"
+RELEASE="$(docker inspect "$APP" --format '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}')"
+UPLOADS="$(docker inspect "$APP" --format '{{range .Mounts}}{{if eq .Destination "/app/uploads"}}{{.Source}}{{end}}{{end}}')"
 NETWORK="vamcity-stage-net"
 STAMP="$(date +%Y%m%d_%H%M%S)"
 CANDIDATE_DB="vamcityc_vamcity_live_"$STAMP
@@ -53,8 +53,9 @@ date -Is
 docker inspect "$APP" >/dev/null
 docker inspect "$SQLC" >/dev/null
 docker network inspect "$NETWORK" >/dev/null
-[ -f "$RELEASE/LoanSystemAvizhe.Site.dll" ] || { echo "ERROR=active release DLL not found"; exit 12; }
-[ -d "$UPLOADS" ] || { echo "ERROR=uploads directory not found"; exit 13; }
+docker exec "$APP" test -f /app/LoanSystemAvizhe.Site.dll || { echo "ERROR=active release DLL not found inside app container"; exit 12; }
+docker exec "$APP" test -d /app/uploads || { echo "ERROR=uploads directory not found inside app container"; exit 13; }
+[ -n "$RELEASE" ] && [ -n "$UPLOADS" ] || { echo "ERROR=container mount paths could not be resolved"; exit 13; }
 for f in \
   "$ROOT/vamcityc_bluvamdb_2026-10-29_19-19-45.zip" \
   "$ROOT/vamcityc_transferDb_2026-10-29_19-19-51.zip" \
