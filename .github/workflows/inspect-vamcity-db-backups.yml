@@ -1,0 +1,71 @@
+name: Inspect VamCity database backups on server
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/inspect-vamcity-db-backups.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-server-backups:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate SSH configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing repository secret: $name"; exit 1; fi
+          done
+      - name: Inspect the three database archives without modifying them
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 10m
+          script: |
+            set -eu
+            ROOT="/home/digibail/domains/digebail.ir"
+            echo "=== SERVER ==="
+            hostname
+            date -Is
+            echo "=== ARCHIVE FILES ==="
+            for f in \
+              "$ROOT/vamcityc_bluvamdb_2026-10-29_19-19-45.zip" \
+              "$ROOT/vamcityc_transferDb_2026-10-29_19-19-51.zip" \
+              "$ROOT/vamcityc_vamcity_2026-10-29_19-20-04.zip"; do
+              if [ ! -f "$f" ]; then echo "MISSING=$f"; continue; fi
+              echo "FILE=$f"
+              stat -c 'SIZE_BYTES=%s MODIFIED=%y OWNER=%U:%G MODE=%a' "$f"
+              sha256sum "$f"
+              file "$f" || true
+              echo "-- ZIP CENTRAL DIRECTORY / LISTING --"
+              unzip -Z -v "$f" 2>&1 | head -n 24 || true
+              unzip -Z1 "$f" 2>&1 | head -n 35 || true
+              echo "-- 7ZIP INSPECTION --"
+              if command -v 7z >/dev/null 2>&1; then 7z l -slt "$f" 2>&1 | grep -E '^(Path|Size|Packed Size|Method|Physical Size|Type|Encrypted|ERROR):' | head -n 45 || true; else echo "7z=NOT_INSTALLED"; fi
+              echo "-- ARCHIVE TEST (READ ONLY) --"
+              unzip -t "$f" 2>&1 | tail -n 8 || true
+            done
+            echo "=== DOCKER CONTAINERS RELATED TO VAMCITY / SQL SERVER ==="
+            if command -v docker >/dev/null 2>&1; then
+              docker ps --format '{{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}' 2>/dev/null | grep -Ei 'vamcity|sql|mssql|transfer|bluvam' || true
+              echo "=== VAMCITY STAGE FILES ==="
+              for p in /opt/vamcity-github-stage /home/roofixo/domains/roofixo.ir; do
+                if [ -d "$p" ]; then
+                  echo "DIR=$p"
+                  find "$p" -maxdepth 2 -type f \( -name 'docker-compose.yml' -o -name 'compose.yml' -o -name 'compose.yaml' -o -name 'appsettings*.json' -o -name '.env' \) -printf '%p\n' 2>/dev/null | head -n 50
+                fi
+              done
+            else
+              echo "DOCKER=NOT_INSTALLED"
+            fi
+            echo "INSPECTION_COMPLETE=1"
