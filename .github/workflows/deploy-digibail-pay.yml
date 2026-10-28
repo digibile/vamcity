@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm_production_deploy:
-        description: "I have verified the API and approve updating digibail.ir"
+        description: "I have verified the API and approve updating digebail.ir"
         required: true
         type: boolean
         default: false
@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: digibail-pay-production
+  group: digebail-pay-production
   cancel-in-progress: false
 
 jobs:
@@ -37,11 +37,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          code="$(curl --location --silent --show-error --max-time 15 -o /dev/null -w '%{http_code}' https://digibail.ir/api/v1/security/captcha || true)"
+          code="$(curl --location --silent --show-error --max-time 15 -o /dev/null -w '%{http_code}' https://digebail.ir/api/v1/security/captcha || true)"
           echo "GET /api/v1/security/captcha -> HTTP ${code:-000}"
           test "$code" = "200" || { echo "::error::Security/captcha API is not installed. Production files were not changed."; exit 1; }
           for endpoint in /api/v1/security/login /api/v1/security/register /api/v1/security/otp/request /api/v1/security/otp/verify; do
-            code="$(curl --location --silent --show-error --max-time 15 -X POST -H 'Content-Type: application/json' -d '{}' -o /dev/null -w '%{http_code}' "https://digibail.ir$endpoint" || true)"
+            code="$(curl --location --silent --show-error --max-time 15 -X POST -H 'Content-Type: application/json' -d '{}' -o /dev/null -w '%{http_code}' "https://digebail.ir$endpoint" || true)"
             printf 'POST %-38s HTTP %s\n' "$endpoint" "${code:-000}"
             case "$code" in
               404|405|500|502|503|000) echo "::error::Security endpoint $endpoint is not ready. Production files were not changed."; exit 1 ;;
@@ -50,12 +50,12 @@ jobs:
       - name: Configure SSH
         shell: bash
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.DIGIBAIL_SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.DIGIBAIL_SSH_KNOWN_HOSTS }}
+          SSH_PRIVATE_KEY: ${{ secrets.DIGEBAIL_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DIGEBAIL_SSH_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
-          test -n "$SSH_PRIVATE_KEY" || { echo "::error::Missing DIGIBAIL_SSH_PRIVATE_KEY repository/environment secret."; exit 1; }
-          test -n "$SSH_KNOWN_HOSTS" || { echo "::error::Missing DIGIBAIL_SSH_KNOWN_HOSTS secret; host key verification is mandatory."; exit 1; }
+          test -n "$SSH_PRIVATE_KEY" || { echo "::error::Missing DIGEBAIL_SSH_PRIVATE_KEY repository/environment secret."; exit 1; }
+          test -n "$SSH_KNOWN_HOSTS" || { echo "::error::Missing DIGEBAIL_SSH_KNOWN_HOSTS secret; host key verification is mandatory."; exit 1; }
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
@@ -68,24 +68,24 @@ jobs:
       - name: Check deployment settings
         shell: bash
         env:
-          SSH_HOST: ${{ secrets.DIGIBAIL_SSH_HOST }}
-          SSH_USER: ${{ secrets.DIGIBAIL_SSH_USER }}
-          WEB_ROOT: ${{ secrets.DIGIBAIL_WEB_ROOT }}
+          SSH_HOST: ${{ secrets.DIGEBAIL_SSH_HOST }}
+          SSH_USER: ${{ secrets.DIGEBAIL_SSH_USER }}
+          WEB_ROOT: ${{ secrets.DIGEBAIL_WEB_ROOT }}
         run: |
           set -euo pipefail
-          test -n "$SSH_HOST" || { echo "::error::Missing DIGIBAIL_SSH_HOST secret."; exit 1; }
-          test -n "$SSH_USER" || { echo "::error::Missing DIGIBAIL_SSH_USER secret."; exit 1; }
-          test -n "$WEB_ROOT" || { echo "::error::Missing DIGIBAIL_WEB_ROOT secret."; exit 1; }
-          [[ "$WEB_ROOT" == /* ]] || { echo "::error::DIGIBAIL_WEB_ROOT must be an absolute path."; exit 1; }
+          test -n "$SSH_HOST" || { echo "::error::Missing DIGEBAIL_SSH_HOST secret."; exit 1; }
+          test -n "$SSH_USER" || { echo "::error::Missing DIGEBAIL_SSH_USER secret."; exit 1; }
+          test -n "$WEB_ROOT" || { echo "::error::Missing DIGEBAIL_WEB_ROOT secret."; exit 1; }
+          [[ "$WEB_ROOT" == /* ]] || { echo "::error::DIGEBAIL_WEB_ROOT must be an absolute path."; exit 1; }
           [[ "$WEB_ROOT" != *" "* ]] || { echo "::error::WEB_ROOT cannot contain spaces."; exit 1; }
           printf 'host=%s\nuser=%s\nroot=%s\n' "$SSH_HOST" "$SSH_USER" "$WEB_ROOT"
 
       - name: Stage release on server
         shell: bash
         env:
-          SSH_HOST: ${{ secrets.DIGIBAIL_SSH_HOST }}
-          SSH_USER: ${{ secrets.DIGIBAIL_SSH_USER }}
-          WEB_ROOT: ${{ secrets.DIGIBAIL_WEB_ROOT }}
+          SSH_HOST: ${{ secrets.DIGEBAIL_SSH_HOST }}
+          SSH_USER: ${{ secrets.DIGEBAIL_SSH_USER }}
+          WEB_ROOT: ${{ secrets.DIGEBAIL_WEB_ROOT }}
         run: |
           set -euo pipefail
           stage="/tmp/digibail-pay-${GITHUB_SHA}"
@@ -102,9 +102,9 @@ jobs:
         id: install
         shell: bash
         env:
-          SSH_HOST: ${{ secrets.DIGIBAIL_SSH_HOST }}
-          SSH_USER: ${{ secrets.DIGIBAIL_SSH_USER }}
-          WEB_ROOT: ${{ secrets.DIGIBAIL_WEB_ROOT }}
+          SSH_HOST: ${{ secrets.DIGEBAIL_SSH_HOST }}
+          SSH_USER: ${{ secrets.DIGEBAIL_SSH_USER }}
+          WEB_ROOT: ${{ secrets.DIGEBAIL_WEB_ROOT }}
         run: |
           set -euo pipefail
           ssh "$SSH_USER@$SSH_HOST" "bash -s -- '$WEB_ROOT' '$GITHUB_SHA'" <<'REMOTE'
@@ -132,7 +132,7 @@ jobs:
         run: |
           set -euo pipefail
           for route in / /login.html /register.html /profile.html /admin.html; do
-            code="$(curl --location --silent --show-error --max-time 20 -o /dev/null -w '%{http_code}' "https://digibail.ir$route" || true)"
+            code="$(curl --location --silent --show-error --max-time 20 -o /dev/null -w '%{http_code}' "https://digebail.ir$route" || true)"
             printf '%-20s HTTP %s\n' "$route" "${code:-000}"
             test "$code" = "200" || { echo "::error::Route $route did not return HTTP 200."; exit 1; }
           done
@@ -141,9 +141,9 @@ jobs:
         if: failure() && steps.install.outcome != 'skipped'
         shell: bash
         env:
-          SSH_HOST: ${{ secrets.DIGIBAIL_SSH_HOST }}
-          SSH_USER: ${{ secrets.DIGIBAIL_SSH_USER }}
-          WEB_ROOT: ${{ secrets.DIGIBAIL_WEB_ROOT }}
+          SSH_HOST: ${{ secrets.DIGEBAIL_SSH_HOST }}
+          SSH_USER: ${{ secrets.DIGEBAIL_SSH_USER }}
+          WEB_ROOT: ${{ secrets.DIGEBAIL_WEB_ROOT }}
         run: |
           set -euo pipefail
           ssh "$SSH_USER@$SSH_HOST" "bash -s -- '$WEB_ROOT' '$GITHUB_SHA'" <<'REMOTE'
