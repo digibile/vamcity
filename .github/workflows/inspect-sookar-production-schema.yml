@@ -1,0 +1,63 @@
+name: Read-only Sookar production schema inspection
+
+on:
+  push:
+    paths:
+      - .github/workflows/inspect-sookar-production-schema.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Inspect Sookar PostgreSQL without changing data
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 8m
+          script: |
+            set -euo pipefail
+            ROOT="/home/sookar/domains/sookar.ir/negar-platform"
+            COMPOSE="$ROOT/docker-compose.production.yml"
+            test -s "$COMPOSE"
+            cd "$ROOT"
+            echo "SOOKAR_COMPOSE_SERVICES"
+            docker compose -f "$COMPOSE" ps --format 'table {{.Service}}\t{{.State}}\t{{.Health}}'
+            echo "SOOKAR_DATABASE_METADATA"
+            docker compose -f "$COMPOSE" exec -T postgres sh -lc '
+              set -e
+              psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -AtF "|" -c "
+                SELECT current_database(), current_setting('''server_version''');
+                SELECT table_name, COALESCE(s.n_live_tup,0)::bigint
+                FROM information_schema.tables t
+                LEFT JOIN pg_stat_user_tables s ON s.schemaname=t.table_schema AND s.relname=t.table_name
+                WHERE t.table_schema='''public''' AND t.table_type='''BASE TABLE'''
+                ORDER BY t.table_name;
+              "
+              echo "SOOKAR_KEY_TABLE_EXACT_COUNTS"
+              for table in tenants users user_tenants user_contact_methods lendtech_applications lendtech_scores lendtech_decisions lendtech_facilities lendtech_contracts lendtech_installments lendtech_repayments lendtech_delinquencies lendtech_events accounting_documents ledger_accounts marketplace_orders products sellers stores; do
+                exists="$(psql -X -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT to_regclass('''public.''' || quote_ident('$table')) IS NOT NULL")"
+                if [ "$exists" = "t" ]; then
+                  count="$(psql -X -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT COUNT(*) FROM public.\"$table\"")"
+                  printf "%s|%s\\n" "$table" "$count"
+                fi
+              done
+              echo "SOOKAR_KEY_TABLE_COLUMNS"
+              psql -X -U "$POSTGRES_USER" -d "$POSTGRES_DB" -AtF "|" -c "
+                SELECT table_name,column_name,data_type,is_nullable
+                FROM information_schema.columns
+                WHERE table_schema='''public''' AND table_name IN (
+                  '''tenants''','''users''','''user_tenants''','''user_contact_methods''',
+                  '''lendtech_applications''','''lendtech_facilities''','''lendtech_contracts''',
+                  '''lendtech_installments''','''lendtech_repayments''','''lendtech_events'''
+                )
+                ORDER BY table_name,ordinal_position;
+              "
+            '
+            echo "SOOKAR_READ_ONLY_INSPECTION_COMPLETE=1"
