@@ -43,7 +43,7 @@ jobs:
             DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
             DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
             [ -n "$SQLIP" ] && [ -n "$PASS" ] && [ -n "$DBUSER" ] && [ -n "$DBPASS" ]
-            curl -fsSL https://raw.githubusercontent.com/digibile/vamcity/2d10227e71bb8e7c4b2ec9ab4a8f0e50b669f4a4/database/migration/sqlserver_to_mariadb.py -o "$DIR/sqlserver_to_mariadb.py"
+            curl -fsSL https://raw.githubusercontent.com/digibile/vamcity/1edbff5f13a5a86a9f2dd8f009b958278b84b015/database/migration/sqlserver_to_mariadb.py -o "$DIR/sqlserver_to_mariadb.py"
             chmod 600 "$DIR/sqlserver_to_mariadb.py"
             export VAMCITY_SQLSERVER_IP="$SQLIP"
             export VAMCITY_SQLSERVER_PASSWORD="$PASS"
