@@ -44,3 +44,22 @@ jobs:
               done
             '
             echo "SOOKAR_READ_ONLY_INSPECTION_COMPLETE=1"
+            echo "SOOKAR_TENANT_AND_ADMIN_ROLES"
+            docker exec naf-sookar-postgres-1 sh -lc 'psql -X -U "$POSTGRES_USER" -d "$POSTGRES_DB" -AtF "|" -c "SELECT code,name,status FROM tenants ORDER BY code; SELECT role,COUNT(*) FROM users GROUP BY role ORDER BY role;"'
+            echo "VAMCITY_MARIADB_LOOKUPS_AND_AGGREGATES"
+            CONF="/usr/local/directadmin/conf/mysql.conf"
+            DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            test -n "$DBUSER" && test -n "$DBPASS"
+            export MYSQL_PWD="$DBPASS"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'CUSTOMERS'; SELECT Id,Code,Name FROM Customers ORDER BY Code;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'LOAN_DEFINITIONS'; SELECT Id,Code,Title,ProfitPercent,MaxAmount,MaxMonthGap,AllowedInstallments,Disable,DisableText,HasSponsore,DefaultSponsoreCheckoutDays,LoanProfitType,LEFT(CostsJson,1000) FROM Loans ORDER BY Code;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'REQUEST_STATUS_DEFINITIONS'; SELECT CustomerId,Id,Title,StepCategory,`Order`,SystemRequestStatus,StatusGroup,SystemAgentRequestStatus,AllowNewRequest FROM LoanRequestStatuses ORDER BY CustomerId,`Order`;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'REQUEST_STATUS_AGGREGATES'; SELECT CustomerId,LoanId,StatusId,AgentStatusId,COUNT(*),MIN(RequestDate),MAX(RequestDate),SUM(Amount) FROM UserLoanRequests GROUP BY CustomerId,LoanId,StatusId,AgentStatusId ORDER BY CustomerId,LoanId,StatusId,AgentStatusId;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'USER_LOAN_AGGREGATES'; SELECT CustomerId,LoanId,Status,IsCanceled,COUNT(*),SUM(Amount),SUM(Paid),SUM(Remain),SUM(PayableAmount) FROM UserLoans GROUP BY CustomerId,LoanId,Status,IsCanceled ORDER BY CustomerId,LoanId,Status,IsCanceled;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'PAYMENT_AGGREGATES'; SELECT PaymentMethod,COUNT(*),SUM(Amount),SUM(InstallmentAmount),SUM(SumAmount),SUM(DelayPrice),SUM(Discount) FROM UserLoanPayments GROUP BY PaymentMethod ORDER BY PaymentMethod;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'PAYMENT_REQUEST_AGGREGATES'; SELECT Status,PaymentMethod,COUNT(*),SUM(Amount) FROM UserLoanPaymentRequests GROUP BY Status,PaymentMethod ORDER BY Status,PaymentMethod;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'ASSURANCE_AGGREGATES'; SELECT AssuranceType,COUNT(*),SUM(FileSize),SUM(ReturnFileSize) FROM Assurances GROUP BY AssuranceType ORDER BY AssuranceType;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'TICKET_AGGREGATES'; SELECT Status,Role,TargetRole,COUNT(*) FROM Tickets GROUP BY Status,Role,TargetRole ORDER BY Status,Role,TargetRole;"
+            unset MYSQL_PWD DBPASS
+            echo "VAMCITY_LOOKUP_RECONCILIATION_COMPLETE=1"
