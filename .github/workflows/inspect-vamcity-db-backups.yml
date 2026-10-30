@@ -24,7 +24,8 @@ jobs:
           for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
             if [[ -z "${!name}" ]]; then echo "::error::Missing repository secret: $name"; exit 1; fi
           done
-      - name: Inspect the three database archives without modifying them
+
+      - name: Inspect backups and target database read-only
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -37,36 +38,49 @@ jobs:
             echo "=== SERVER ==="
             hostname
             date -Is
-            echo "=== ARCHIVE FILES ==="
+
+            echo "=== ARCHIVE CONTENT AND SIGNATURES (READ ONLY) ==="
             for f in \
+              "$ROOT/vamcityc_vamcity_2026-10-29_19-20-04.zip" \
               "$ROOT/vamcityc_bluvamdb_2026-10-29_19-19-45.zip" \
-              "$ROOT/vamcityc_transferDb_2026-10-29_19-19-51.zip" \
-              "$ROOT/vamcityc_vamcity_2026-10-29_19-20-04.zip"; do
+              "$ROOT/vamcityc_transferDb_2026-10-29_19-19-51.zip"; do
               if [ ! -f "$f" ]; then echo "MISSING=$f"; continue; fi
               echo "FILE=$f"
               stat -c 'SIZE_BYTES=%s MODIFIED=%y OWNER=%U:%G MODE=%a' "$f"
               sha256sum "$f"
-              file "$f" || true
-              echo "-- ZIP CENTRAL DIRECTORY / LISTING --"
-              unzip -Z -v "$f" 2>&1 | head -n 24 || true
-              unzip -Z1 "$f" 2>&1 | head -n 35 || true
-              echo "-- 7ZIP INSPECTION --"
-              if command -v 7z >/dev/null 2>&1; then 7z l -slt "$f" 2>&1 | grep -E '^(Path|Size|Packed Size|Method|Physical Size|Type|Encrypted|ERROR):' | head -n 45 || true; else echo "7z=NOT_INSTALLED"; fi
-              echo "-- ARCHIVE TEST (READ ONLY) --"
-              unzip -t "$f" 2>&1 | tail -n 8 || true
+              echo "-- ZIP ENTRY DETAILS --"
+              unzip -l "$f" 2>&1 | tail -n 8
+              unzip -Z -v "$f" 2>&1 | grep -E 'compressed size|uncompressed size|file security status|compression method|file name:' | head -n 12 || true
+              echo "-- INNER FILE TYPE --"
+              unzip -p "$f" | file -
+              echo "-- FIRST 32 BYTES --"
+              unzip -p "$f" | dd bs=1 count=32 2>/dev/null | od -An -tx1c
+              echo "-- ARCHIVE INTEGRITY --"
+              unzip -t "$f" 2>&1 | tail -n 3
             done
-            echo "=== DOCKER CONTAINERS RELATED TO VAMCITY / SQL SERVER ==="
+
+            echo "=== HOST CAPACITY ==="
+            df -h "$ROOT" /var/lib/mysql 2>&1 || df -h
+            df -i "$ROOT" /var/lib/mysql 2>&1 || true
+            free -h
+
+            echo "=== MARIADB SERVICE AND VERSION ==="
+            if command -v mariadb >/dev/null 2>&1; then mariadb --version; elif command -v mysql >/dev/null 2>&1; then mysql --version; else echo "MARIADB_CLIENT=NOT_INSTALLED"; fi
+            for svc in mariadb mysql; do
+              if command -v systemctl >/dev/null 2>&1; then echo "$svc=$(systemctl is-active "$svc" 2>/dev/null || true)"; fi
+            done
+            if [ -S /var/lib/mysql/mysql.sock ]; then echo "MYSQL_SOCKET=present"; else echo "MYSQL_SOCKET=missing"; fi
+            echo "-- LOCAL ROOT SOCKET READ-ONLY CHECK --"
+            if command -v mariadb >/dev/null 2>&1; then
+              mariadb --protocol=socket -uroot --batch --skip-column-names -e "SELECT VERSION(); SHOW DATABASES;" 2>&1 | sed -E 's/(password|passwd)=([^ ]+)/\1=[REDACTED]/Ig' || true
+            elif command -v mysql >/dev/null 2>&1; then
+              mysql --protocol=socket -uroot --batch --skip-column-names -e "SELECT VERSION(); SHOW DATABASES;" 2>&1 || true
+            fi
+
+            echo "=== RELATED CONTAINERS ==="
             if command -v docker >/dev/null 2>&1; then
-              docker ps --format '{{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}' 2>/dev/null | grep -Ei 'vamcity|sql|mssql|transfer|bluvam' || true
-              echo "=== VAMCITY STAGE FILES ==="
-              for p in /opt/vamcity-github-stage /home/roofixo/domains/roofixo.ir; do
-                if [ -d "$p" ]; then
-                  echo "DIR=$p"
-                  find "$p" -maxdepth 2 -type f \( -name 'docker-compose.yml' -o -name 'compose.yml' -o -name 'compose.yaml' -o -name 'appsettings*.json' -o -name '.env' \) -printf '%p\n' 2>/dev/null | head -n 50
-                fi
-              done
+              docker ps --format '{{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}' | grep -Ei 'vamcity|sql|mssql|maria|mysql|transfer|bluvam' || true
             else
               echo "DOCKER=NOT_INSTALLED"
             fi
-            echo "INSPECTION_COMPLETE=1"
-# Read-only inspection rerun requested to validate current archive and server state.
+            echo "READ_ONLY_INSPECTION_COMPLETE=1"
