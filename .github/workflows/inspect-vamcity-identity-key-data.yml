@@ -57,12 +57,12 @@ jobs:
             keys=cur.fetchall()
             result=[]
             for k in keys:
-              q=f"SELECT COUNT_BIG(*) AS rows, MAX(LEN([{k['column_name']}])) AS max_chars, MAX(DATALENGTH([{k['column_name']}])) AS max_bytes, SUM(CASE WHEN [{k['column_name']}] COLLATE Latin1_General_100_BIN2 LIKE '%['+NCHAR(0xD800)+N'-'+NCHAR(0xDBFF)+']%' THEN 1 ELSE 0 END) AS surrogate_probe FROM [{k['schema_name']}].[{k['table_name']}]"
-              cur.execute(q); stats=cur.fetchone()
-              # Count supplementary Unicode characters without returning personal values.
-              cur.execute(f"SELECT COUNT_BIG(*) AS rows_with_supplementary FROM [{k['schema_name']}].[{k['table_name']}] WHERE [{k['column_name']}] COLLATE Latin1_General_100_BIN2 LIKE N'%'+NCHAR(0xD83D)+N'%'")
-              emoji_probe=cur.fetchone()["rows_with_supplementary"]
-              result.append({"table":k["table_name"],"pk":k["index_name"],"ordinal":k["key_ordinal"],"column":k["column_name"],"sql_type":k["type_name"],"declared_max_bytes":k["max_length"],"stats":stats,"emoji_probe_rows":emoji_probe})
+              if k["type_name"].lower() in ("nvarchar","nchar","varchar","char"):
+                q=f"SELECT COUNT_BIG(*) AS rows, MAX(LEN([{k['column_name']}])) AS max_chars, MAX(DATALENGTH([{k['column_name']}])) AS max_bytes FROM [{k['schema_name']}].[{k['table_name']}]"
+                cur.execute(q); stats=cur.fetchone()
+              else:
+                stats={"rows":None,"max_chars":None,"max_bytes":None}
+              result.append({"table":k["table_name"],"pk":k["index_name"],"ordinal":k["key_ordinal"],"column":k["column_name"],"sql_type":k["type_name"],"declared_max_bytes":k["max_length"],"stats":stats})
             print(json.dumps(result,ensure_ascii=False,default=str,indent=2))
             cur.close();c.close()
             PY
