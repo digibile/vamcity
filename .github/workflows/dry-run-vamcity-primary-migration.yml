@@ -67,7 +67,7 @@ jobs:
                     raise RuntimeError("Unsupported filtered index predicate remains")
                 with dst.cursor() as cur:
                     for t in ts:
-                        cur.execute(m.ddl_table(t,cs,ix).replace("CREATE TABLE ","CREATE TEMPORARY TABLE ",1))
+                        cur.execute(m.ddl_table(t,cs,plan["indexes"]).replace("CREATE TABLE ","CREATE TEMPORARY TABLE ",1))
                     dst.commit()
                 made=m.add_indexes(dst,plan["indexes"])
                 print("TEMPORARY_TABLE_DDL_VALIDATION=SUCCESS")
