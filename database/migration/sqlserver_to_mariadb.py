@@ -188,7 +188,7 @@ def ddl_table(t,cs,ix):
         if c.get("mysql_default") is not None and not c["is_identity"]:line+=" DEFAULT "+c["mysql_default"]
         parts.append(line)
     if pk:parts.append("PRIMARY KEY ("+",".join(qm(x["name"]) for x in pk["columns"])+")")
-    return "CREATE TABLE "+qm(name)+" (\\n  "+",\\n  ".join(parts)+"\\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC"
+    return "CREATE TABLE "+qm(name)+" (\n  "+",\n  ".join(parts)+"\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC"
 
 def select_expr(c):
     n=qs(c["column_name"]);t=c["type_name"].lower()
