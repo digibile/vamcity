@@ -69,3 +69,4 @@ jobs:
               echo "DOCKER=NOT_INSTALLED"
             fi
             echo "INSPECTION_COMPLETE=1"
+# Read-only inspection rerun requested to validate current archive and server state.
