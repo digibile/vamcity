@@ -63,13 +63,13 @@ jobs:
                 plan=m.build_plan(ts,cs,ix,fk)
                 if plan["summary"]["unsupported_types"] or plan["summary"]["unmapped_defaults"] or plan["summary"]["computed_columns"] or plan["summary"]["duplicate_table_names_case_insensitive"]:
                     raise RuntimeError("Unresolved schema mappings remain")
-                if any(i["filter"] and not m.filtered_index_supported(i) for i in ix):
+                if any(i["filter"] and not m.filtered_index_supported(i) for i in plan["indexes"]):
                     raise RuntimeError("Unsupported filtered index predicate remains")
                 with dst.cursor() as cur:
                     for t in ts:
                         cur.execute(m.ddl_table(t,cs,ix).replace("CREATE TABLE ","CREATE TEMPORARY TABLE ",1))
                     dst.commit()
-                made=m.add_indexes(dst,ix)
+                made=m.add_indexes(dst,plan["indexes"])
                 print("TEMPORARY_TABLE_DDL_VALIDATION=SUCCESS")
                 print("TEMPORARY_TABLES_VALIDATED="+str(len(ts)))
                 print("TEMPORARY_SECONDARY_INDEXES_VALIDATED="+str(made))
