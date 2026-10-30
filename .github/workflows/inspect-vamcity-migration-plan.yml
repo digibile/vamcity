@@ -1,0 +1,70 @@
+name: Inspect VamCity MariaDB mapping plan
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/inspect-vamcity-migration-plan.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate SSH configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing repository secret: $name"; exit 1; fi
+          done
+      - name: Inspect exact mapping edge cases (metadata only)
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 3m
+          script: |
+            set -eu
+            python3 - <<'PY'
+            import json
+            p=json.load(open("/home/digibail/.vamcity-migration/plan.json",encoding="utf-8"))
+            cols={(c["schema_name"],c["table_name"],c["column_name"]):c for c in p["columns"]}
+            filtered=[i["name"] for i in p["indexes"] if i["filter"]]
+            disabled_indexes=[i["name"] for i in p["indexes"] if i["disabled"]]
+            index_types={}
+            long_index_cols=[]
+            for i in p["indexes"]:
+                index_types[i["type"]]=index_types.get(i["type"],0)+1
+                for c in i["columns"]:
+                    x=cols.get((i["schema"],i["table"],c["name"]))
+                    if x and x["type_name"].lower() in ("nvarchar","nchar","varchar","char") and int(x["max_length"])>768:
+                        long_index_cols.append({"table":i["schema"]+"."+i["table"],"index":i["name"],"column":c["name"],"max_length_bytes":x["max_length"]})
+            disabled_fks=[f["name"] for f in p["foreign_keys"] if f["disabled"]]
+            actions={}
+            for f in p["foreign_keys"]:
+                k=f["delete"]+"/"+f["update"];actions[k]=actions.get(k,0)+1
+            scales={}
+            for c in p["columns"]:
+                if c["type_name"].lower() in ("datetime2","datetimeoffset","time"):
+                    k=c["type_name"].lower()+":"+str(c["scale"]);scales[k]=scales.get(k,0)+1
+            defaults={}
+            for c in p["columns"]:
+                if c.get("mysql_default") is not None:
+                    k=c["mysql_default"];defaults[k]=defaults.get(k,0)+1
+            print(json.dumps({
+              "source":p["source_database"],"target":p["target_database"],
+              "table_count":len(p["tables"]),"rows":sum(t["source_rows"] for t in p["tables"]),
+              "index_types":index_types,"filtered_indexes":filtered,"disabled_indexes":disabled_indexes,
+              "long_index_columns_over_768_bytes":long_index_cols,
+              "disabled_foreign_keys":disabled_fks,"foreign_key_actions":actions,
+              "datetime_time_scales":scales,"mapped_default_expressions":defaults
+            },ensure_ascii=False,indent=2))
+            PY
