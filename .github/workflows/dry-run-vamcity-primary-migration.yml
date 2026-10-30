@@ -1,0 +1,56 @@
+name: Dry-run VamCity primary database migration to MariaDB
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/dry-run-vamcity-primary-migration.yml
+      - database/migration/sqlserver_to_mariadb.py
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate SSH configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing repository secret: $name"; exit 1; fi
+          done
+      - name: Build exact migration plan without writing MariaDB
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 15m
+          script: |
+            set -eu
+            SQLC="vamcity-stage-sql"
+            CONF="/usr/local/directadmin/conf/mysql.conf"
+            DIR="/home/digibail/.vamcity-migration"
+            mkdir -m 700 -p "$DIR"
+            SQLIP="$(docker inspect "$SQLC" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"
+            PASS="$(docker inspect "$SQLC" --format '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^MSSQL_SA_PASSWORD=//p;s/^SA_PASSWORD=//p' | head -n 1)"
+            DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            [ -n "$SQLIP" ] && [ -n "$PASS" ] && [ -n "$DBUSER" ] && [ -n "$DBPASS" ]
+            curl -fsSL https://raw.githubusercontent.com/digibile/vamcity/main/database/migration/sqlserver_to_mariadb.py -o "$DIR/sqlserver_to_mariadb.py"
+            chmod 600 "$DIR/sqlserver_to_mariadb.py"
+            export VAMCITY_SQLSERVER_IP="$SQLIP"
+            export VAMCITY_SQLSERVER_PASSWORD="$PASS"
+            export VAMCITY_MARIADB_USER="$DBUSER"
+            export VAMCITY_MARIADB_PASSWORD="$DBPASS"
+            export VAMCITY_SOURCE_DB="vamcityc_vamcity"
+            export VAMCITY_TARGET_DB="vamcitydigibilepay"
+            python3 "$DIR/sqlserver_to_mariadb.py" --mode dry-run
+            unset PASS DBPASS VAMCITY_SQLSERVER_PASSWORD VAMCITY_MARIADB_PASSWORD
+            echo "PRIMARY_MIGRATION_DRY_RUN_SUCCESS=1"
