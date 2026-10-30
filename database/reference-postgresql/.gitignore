@@ -1,0 +1,5 @@
+.env
+*.dump
+*.bak
+*.sql.gz
+*.csv
