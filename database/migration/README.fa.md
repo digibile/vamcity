@@ -1,57 +1,99 @@
 # بسته مهاجرت VamCity
 
-این پوشه محل متمرکز ابزارهای انتقال دیتابیس SQL Server به MariaDB است.
+## مبنای قطعی این مرحله
+طبق تأیید کاربر، منبع اصلی و مبنای انتقال فقط دیتابیس **`vamcityc_vamcity`** است. مقصد لینوکسی یک دیتابیس MariaDB با نام **`vamcitydigibilepay`** خواهد بود. دو دیتابیس `vamcityc_bluvamdb` و `vamcityc_transferDb` در این مرحله وارد انتقال اصلی نمی‌شوند.
 
-## مقصد مصوب
-- موتور مقصد: MariaDB 10.6.17
-- دیتابیس مقصد واحد: `vamcitydigibilepay`
-- دیتابیس مقصد روی سرور ساخته شده و فعلاً خالی است.
-- کدگذاری پیش‌فرض: `utf8mb4`
-- Collation پیش‌فرض: `utf8mb4_unicode_ci`
+## مقصد
+- MariaDB 10.6.17
+- دیتابیس واحد: `vamcitydigibilepay`
+- charset: `utf8mb4`
+- collation: `utf8mb4_unicode_ci`
+- دیتابیس مقصد ساخته شده و در زمان ساخت خالی بوده است.
 
-## نام واقعی منابع در سربرگ بکاپ‌ها
-بررسی `RESTORE HEADERONLY` روی هر سه فایل، نام‌های داخلی زیر را تأیید کرده است:
-- دیتابیس اصلی: `vamcityc_vamcity`
-- منبع BlueVam: `vamcityc_bluvamdb`
-- منبع انتقال: `vamcityc_transferDb`
+## بکاپ اصلی و نتیجه آزمون
+فایل مبدأ:
+`vamcityc_vamcity_2026-10-29_19-20-04.zip`
 
-**مغایرت نیازمند تطبیق:** نامی که برای دیتابیس ویندوزی اعلام شده `vamcitydigibilepay` است، اما سربرگ بکاپ اصلی `vamcityc_vamcity` را ثبت می‌کند. مقصد لینوکسی همچنان `vamcitydigibilepay` می‌ماند. پیش از انتقال نهایی باید این تفاوت نام در مبدأ ویندوزی تأیید شود.
+مشخصات:
+- نام داخلی در سربرگ بکاپ: `vamcityc_vamcity`
+- نوع: Full database backup
+- تاریخ بکاپ: 2026-10-28
+- حجم ZIP: 65,432,316 bytes
+- حجم فایل BAK پس از استخراج: 358,735,360 bytes
+- SHA-256: `f7dab1ab7e4260b3937f01b94452f3bae25a2f6d9c6060bdb7e481370fbe82fc`
+- نام منطقی فایل داده: `vamciydb`
+- نام منطقی فایل لاگ: `vamciydb_log`
+- ZIP integrity: موفق
+- SQL Server `RESTORE VERIFYONLY`: موفق؛ پیام سرور: `The backup set on file 1 is valid.`
+- `DBCC CHECKDB` روی دیتابیس زنده `vamcityc_vamcity`: موفق، بدون خطای گزارش‌شده
+- backup checksum در فایل وجود ندارد؛ بنابراین VERIFYONLY قابلیت بررسی checksum ذخیره‌شده را نداشته است.
 
-## موجودی واقعی SQL Server
-| منبع | جدول | رکورد |
+گزارش اجرا: https://github.com/digibile/vamcity/actions/runs/40994766360
+
+## موجودی واقعی دیتابیس اصلی
+| شِما | جدول | رکورد |
 |---|---:|---:|
-| `vamcityc_vamcity` | 88 | 530,812 |
-| `vamcityc_bluvamdb` | 56 | 286,597 |
-| `vamcityc_transferDb` | 12 | 29 |
-| **مجموع** | **156** | **817,438** |
+| dbo | 77 | 527,540 |
+| HangFire | 11 | 3,272 |
+| **مجموع** | **88** | **530,812** |
 
-سه دیتابیس اصلی در SQL Server آنلاین هستند. نسخه‌های `*_import_20261028` نیز وجود دارند؛ نسخه import اصلی 360 رکورد بیشتر از دیتابیس اصلی فعلی دارد. تا تعیین نسخه مرجع، این دو نسخه نباید با هم ادغام شوند.
+- ستون‌ها: 959
+- ستون‌های کلید اصلی/Unique: 106
+- ستون‌های Foreign Key: 188
+- جدول خالی: 21
+- View / Procedure / Trigger / Check Constraint / Sequence: همگی صفر
 
-## تعارض ساختاری
-۵۵ نام جدول بین منابع تکراری است. جدول‌هایی مانند `AspNetUsers`، `AspNetUserRoles`، `Loans`، `UserLoanRequests` و `UserLoanPayments` در بیش از یک منبع وجود دارند. ادغام ساده این جدول‌ها می‌تواند شناسه‌ها و روابط را خراب کند. باید برای هر جدول، ساختار ستون‌ها، کلید اصلی، Identity، روابط و سیاست ادغام یا نام‌گذاری مستقل مشخص شود.
+### جدول‌های کلیدی
+| جدول | رکورد |
+|---|---:|
+| AspNetUsers | 54,621 |
+| AspNetUserRoles | 54,618 |
+| UserLoanRequests | 17,248 |
+| UserLoanRequestStatusHistories | 49,144 |
+| UserLoanRequestAuthorizationItems | 19,566 |
+| UserLoanRequestAuthorizationItemAttachments | 19,342 |
+| UserLoanPayments | 29,148 |
+| UserLoans | 1,404 |
+| Loans | 112 |
+| Tickets | 54,197 |
+| TicketResponses | 54,661 |
+| AppSms | 138,461 |
 
-## ابزارها
-- `sqlserver-inventory.sql`: استخراج متادیتای جداول، ستون‌ها، کلیدها، روابط، ایندکس‌ها و اشیای پایگاه داده.
-- `migration-manifest.json`: شواهد و وضعیت فعلی مهاجرت.
-- `../VAMCITY-SQLSERVER-TO-MARIADB-MIGRATION.md`: طرح مهاجرت و معیارهای پذیرش.
+## نگاشت نوع داده
+انواع مشاهده‌شده در 959 ستون:
+- nvarchar: 298
+- uniqueidentifier: 232
+- int: 108
+- datetime2: 64
+- decimal: 61
+- bigint: 49
+- bit: 84
+- float: 10
+- tinyint: 4
+- time: 3
+- datetimeoffset: 1
 
-## وضعیت اجرایی در 2026-10-30
-- اتصال SSH از GitHub Actions: موفق.
-- سلامت فشرده‌سازی هر سه ZIP: موفق.
-- سربرگ هر سه بکاپ SQL Server: خوانده شد؛ هر سه بکاپ Full و `IsDamaged=0` گزارش شدند.
-- دسترسی مدیریتی MariaDB از طریق تنظیمات DirectAdmin: موفق.
-- دیتابیس مقصد `vamcitydigibilepay`: ساخته شد و خالی بودن آن در زمان ایجاد تأیید شد.
-- import واقعی داده به MariaDB: هنوز اجرا نشده.
-- تغییر Connection String و Provider برنامه: هنوز انجام نشده.
+تبدیل نوع‌ها باید با حفظ مقدار، precision/scale، NULL، identity و مقادیر GUID انجام شود. برای GUIDها باید نمایش و مقایسه سازگار با برنامه حفظ شود. تاریخ‌ها باید با timezone/offset اصلی کنترل شوند.
 
-## گام‌های بعدی اجباری
-1. تأیید نام واقعی دیتابیس مبدأ ویندوزی و انتخاب نسخه مرجع بین دیتابیس اصلی و import alias.
-2. تهیه بکاپ مستقل از مقصد و کنترل دوباره فضای آزاد و RAM/Swap.
-3. استخراج ساختار کامل و تعیین سیاست 55 نام جدول مشترک، کلیدها و روابط.
-4. ساخت mapping قطعی SQL Server به MariaDB و اجرای dry-run روی داده واقعی.
-5. انتقال مرحله‌ای به همان دیتابیس واحد `vamcitydigibilepay`.
-6. تطبیق ردیف‌ها، شناسه‌ها، روابط، داده‌های مالی و تاریخ‌ها.
-7. تغییر Provider و Connection String برنامه به MariaDB و اجرای آزمون‌های ورود و عملیات وام.
+## برنامه انتقال
+1. کنترل محیط انتقال و ابزارهای اتصال SQL Server/MariaDB روی میزبان.
+2. تهیه snapshot/backup از مقصد خالی و recheck فضای دیسک.
+3. تولید DDL برای تمام 88 جدول، دو schema، کلیدها، identity و indexها.
+4. اجرای ساختار در دیتابیس واحد `vamcitydigibilepay`.
+5. انتقال داده‌ها با batch و حفظ NULL، Unicode، GUID، decimal و تاریخ.
+6. بازسازی FKها و indexها و بررسی HangFire schema.
+7. تطبیق تعداد رکورد هر جدول و کلیدها با مبدأ.
+8. تغییر provider و connection string برنامه فقط بعد از قبولی تطبیق داده‌ها و آزمون برنامه.
 
-## امنیت
-هیچ فایل بکاپ یا dump حاوی اطلاعات مشتریان نباید در مخزن عمومی قرار گیرد. رمزها فقط از Secret Store یا فایل تنظیمات خارج از مخزن خوانده شوند. قبل از import انبوه، حساب اختصاصی مهاجرت با حداقل دسترسی لازم استفاده شود.
+## وضعیت فعلی
+- منبع اصلی انتخاب شده: موفق.
+- ZIP و فایل BAK: سالم.
+- RESTORE VERIFYONLY: موفق.
+- DBCC CHECKDB دیتابیس زنده: موفق.
+- موجودی ساختار 88 جدول: استخراج شده.
+- مقصد MariaDB: ساخته شده و خالی است.
+- انتقال واقعی رکوردها: هنوز شروع نشده.
+- برنامه هنوز به MariaDB cutover نشده است.
+
+## محدودیت ایمنی
+تا زمانی که اتصال عملیاتی SQL Server به MariaDB، ابزار انتقال و فضای کافی تأیید نشده‌اند، import را شروع نمی‌کنیم. فایل خام بکاپ یا اطلاعات مشتریان به مخزن عمومی GitHub منتقل نمی‌شود.
