@@ -1,0 +1,25 @@
+services:
+  vamcity-reference-postgres:
+    image: postgres:16-alpine
+    container_name: vamcity-reference-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vamcity_reference}
+      POSTGRES_USER: ${POSTGRES_USER:-vamcity_migrator}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in database/reference-postgresql/.env}
+      TZ: UTC
+    ports:
+      - "127.0.0.1:55433:5432"
+    volumes:
+      - vamcity_reference_pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vamcity_migrator} -d ${POSTGRES_DB:-vamcity_reference}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  vamcity_reference_pgdata:
