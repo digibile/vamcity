@@ -49,7 +49,7 @@ jobs:
             export VAMCITY_SQLSERVER_PASSWORD="$PASS"
             export VAMCITY_MARIADB_USER="$DBUSER"
             export VAMCITY_MARIADB_PASSWORD="$DBPASS"
-            export VAMCITY_SOURCE_DB="vamcityc_vamcity"
+            export VAMCITY_SOURCE_DB="vamcityc_vamcity_import_20261028"
             export VAMCITY_TARGET_DB="vamcitydigibilepay"
             python3 "$DIR/sqlserver_to_mariadb.py" --mode dry-run
             python3 - <<'PY'
