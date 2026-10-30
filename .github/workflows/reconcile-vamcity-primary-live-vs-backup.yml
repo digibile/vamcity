@@ -66,6 +66,76 @@ jobs:
               out["table_differences"]=[{"table":k,"live_rows":a["tables"].get(k,0),"restored_backup_rows":b["tables"].get(k,0),"delta":a["tables"].get(k,0)-b["tables"].get(k,0)} for k in keys if a["tables"].get(k,0)!=b["tables"].get(k,0)]
               out["total_delta_live_minus_restored"]=a["total_rows"]-b["total_rows"]
             print(json.dumps(out,ensure_ascii=False,indent=2))
-            print("READ_ONLY_RECONCILIATION_COMPLETE=1")
+            print("READ_ONLY_ROWCOUNT_RECONCILIATION_COMPLETE=1")
+            PY
+            # Compare primary-key membership between live SQL Server and the restored
+            # backup. This is read-only and emits counts only, never customer values.
+            python3 - <<'PY'
+            import os,json,pymssql
+            live="vamcityc_vamcity"
+            backup="vamcityc_vamcity_import_20261028"
+            conn=pymssql.connect(server=os.environ["VAMCITY_SQLSERVER_IP"],port="1433",user="sa",
+              password=os.environ["VAMCITY_SQLSERVER_PASSWORD"],database="master",
+              login_timeout=15,timeout=300,charset="UTF-8")
+            cur=conn.cursor(as_dict=True)
+            def qi(value):
+              return "["+str(value).replace("]","]]" )+"]"
+            def inventory(db):
+              cur.execute("USE "+qi(db))
+              cur.execute("""
+                SELECT s.name AS schema_name,t.name AS table_name,c.name AS column_name,
+                       ic.key_ordinal
+                FROM sys.tables t
+                JOIN sys.schemas s ON s.schema_id=t.schema_id
+                JOIN sys.indexes i ON i.object_id=t.object_id AND i.is_primary_key=1 AND i.is_disabled=0
+                JOIN sys.index_columns ic ON ic.object_id=i.object_id AND ic.index_id=i.index_id AND ic.key_ordinal>0
+                JOIN sys.columns c ON c.object_id=t.object_id AND c.column_id=ic.column_id
+                ORDER BY s.name,t.name,ic.key_ordinal
+              """)
+              out={}
+              for row in cur.fetchall():
+                out.setdefault((row["schema_name"],row["table_name"]),[]).append(row["column_name"])
+              cur.execute("SELECT s.name AS schema_name,t.name AS table_name FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id")
+              tables={(x["schema_name"],x["table_name"]) for x in cur.fetchall()}
+              return tables,out
+            live_tables,live_pk=inventory(live)
+            backup_tables,backup_pk=inventory(backup)
+            common=sorted(live_tables & backup_tables)
+            differences=[]
+            no_pk=[]
+            for schema,table in common:
+              key=(schema,table)
+              a=live_pk.get(key); b=backup_pk.get(key)
+              if not a or not b:
+                no_pk.append(schema+"."+table); continue
+              if a!=b:
+                differences.append({"table":schema+"."+table,"kind":"primary_key_definition_mismatch"})
+                continue
+              cols=", ".join(qi(x) for x in a)
+              live_ref=qi(live)+"."+qi(schema)+"."+qi(table)
+              backup_ref=qi(backup)+"."+qi(schema)+"."+qi(table)
+              cur.execute("SELECT COUNT_BIG(*) AS n FROM (SELECT "+cols+" FROM "+backup_ref+" EXCEPT SELECT "+cols+" FROM "+live_ref+") AS d")
+              backup_only=int(cur.fetchone()["n"])
+              cur.execute("SELECT COUNT_BIG(*) AS n FROM (SELECT "+cols+" FROM "+live_ref+" EXCEPT SELECT "+cols+" FROM "+backup_ref+") AS d")
+              live_only=int(cur.fetchone()["n"])
+              if backup_only or live_only:
+                differences.append({"table":schema+"."+table,"backup_only_keys":backup_only,"live_only_keys":live_only})
+            result={
+              "live_table_count":len(live_tables),
+              "backup_table_count":len(backup_tables),
+              "common_tables_compared":len(common)-len(no_pk),
+              "tables_missing_from_live":sorted(".".join(x) for x in backup_tables-live_tables),
+              "tables_missing_from_backup":sorted(".".join(x) for x in live_tables-backup_tables),
+              "tables_without_comparable_primary_key":no_pk,
+              "tables_with_key_differences":differences,
+              "backup_only_key_total":sum(x.get("backup_only_keys",0) for x in differences),
+              "live_only_key_total":sum(x.get("live_only_keys",0) for x in differences),
+              "note":"Primary-key membership only; changed column values for matching keys are not compared."
+            }
+            print("PRIMARY_KEY_MEMBERSHIP_RECONCILIATION="+json.dumps(result,ensure_ascii=False,sort_keys=True))
+            conn.close()
+            if len(live_tables)!=88 or len(backup_tables)!=88 or no_pk or live_tables!=backup_tables:
+              raise SystemExit("PRIMARY_KEY_RECONCILIATION_SCHEMA_CHECK_FAILED")
+            print("READ_ONLY_PRIMARY_KEY_RECONCILIATION_COMPLETE=1")
             PY
             unset PASS DBPASS VAMCITY_SQLSERVER_PASSWORD VAMCITY_MARIADB_PASSWORD
