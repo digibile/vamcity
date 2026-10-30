@@ -1,0 +1,70 @@
+name: Inspect VamCity Identity key data safely
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/inspect-vamcity-identity-key-data.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate SSH configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing repository secret: $name"; exit 1; fi
+          done
+      - name: Inspect real key lengths and Unicode (read-only)
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 5m
+          script: |
+            set -eu
+            SQLC="vamcity-stage-sql"
+            SQLIP="$(docker inspect "$SQLC" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"
+            PASS="$(docker inspect "$SQLC" --format '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^MSSQL_SA_PASSWORD=//p;s/^SA_PASSWORD=//p' | head -n 1)"
+            [ -n "$SQLIP" ] && [ -n "$PASS" ]
+            export VAMCITY_SQLSERVER_IP="$SQLIP" VAMCITY_SQLSERVER_PASSWORD="$PASS"
+            python3 - <<'PY'
+            import os,json,pymssql
+            c=pymssql.connect(server=os.environ["VAMCITY_SQLSERVER_IP"],port="1433",user="sa",password=os.environ["VAMCITY_SQLSERVER_PASSWORD"],database="vamcityc_vamcity",login_timeout=15,timeout=180,charset="UTF-8")
+            cur=c.cursor(as_dict=True)
+            cur.execute("""
+            SELECT s.name schema_name,t.name table_name,i.name index_name,i.is_primary_key,
+                   ic.key_ordinal,col.name column_name,ty.name type_name,col.max_length
+            FROM sys.indexes i
+            JOIN sys.tables t ON t.object_id=i.object_id
+            JOIN sys.schemas s ON s.schema_id=t.schema_id
+            JOIN sys.index_columns ic ON ic.object_id=i.object_id AND ic.index_id=i.index_id
+            JOIN sys.columns col ON col.object_id=t.object_id AND col.column_id=ic.column_id
+            JOIN sys.types ty ON ty.user_type_id=col.user_type_id
+            WHERE i.is_primary_key=1 AND t.name IN ('AspNetUserLogins','AspNetUserTokens')
+            ORDER BY t.name,ic.key_ordinal
+            """)
+            keys=cur.fetchall()
+            result=[]
+            for k in keys:
+              q=f"SELECT COUNT_BIG(*) AS rows, MAX(LEN([{k['column_name']}])) AS max_chars, MAX(DATALENGTH([{k['column_name']}])) AS max_bytes, SUM(CASE WHEN [{k['column_name']}] COLLATE Latin1_General_100_BIN2 LIKE '%['+NCHAR(0xD800)+N'-'+NCHAR(0xDBFF)+']%' THEN 1 ELSE 0 END) AS surrogate_probe FROM [{k['schema_name']}].[{k['table_name']}]"
+              cur.execute(q); stats=cur.fetchone()
+              # Count supplementary Unicode characters without returning personal values.
+              cur.execute(f"SELECT COUNT_BIG(*) AS rows_with_supplementary FROM [{k['schema_name']}].[{k['table_name']}] WHERE [{k['column_name']}] COLLATE Latin1_General_100_BIN2 LIKE N'%'+NCHAR(0xD83D)+N'%'")
+              emoji_probe=cur.fetchone()["rows_with_supplementary"]
+              result.append({"table":k["table_name"],"pk":k["index_name"],"ordinal":k["key_ordinal"],"column":k["column_name"],"sql_type":k["type_name"],"declared_max_bytes":k["max_length"],"stats":stats,"emoji_probe_rows":emoji_probe})
+            print(json.dumps(result,ensure_ascii=False,default=str,indent=2))
+            cur.close();c.close()
+            PY
+            unset PASS VAMCITY_SQLSERVER_PASSWORD
+            echo "IDENTITY_KEY_DATA_INSPECTION_COMPLETE=1"
