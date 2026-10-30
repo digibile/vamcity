@@ -1,0 +1,73 @@
+name: Preflight VamCity primary to MariaDB transfer tools
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/preflight-vamcity-mariadb-transfer.yml
+
+permissions:
+  contents: read
+
+jobs:
+  transfer-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate SSH configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing repository secret: $name"; exit 1; fi
+          done
+
+      - name: Check transfer drivers and target without modifying data
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 5m
+          script: |
+            set -eu
+            ROOT="/home/digibail/domains/digebail.ir"
+            SQLC="vamcity-stage-sql"
+            CONF="/usr/local/directadmin/conf/mysql.conf"
+            echo "=== CAPACITY ==="
+            df -Pk "$ROOT" /var/lib/mysql
+            free -m
+            echo "=== HOST TRANSFER UTILITIES ==="
+            for c in python3 pip3 mariadb mysql mariadb-dump mysqldump bcp sqlcmd odbcinst isql; do
+              command -v "$c" 2>/dev/null || true
+            done
+            if command -v python3 >/dev/null 2>&1; then
+              python3 - <<'PY'
+            import importlib.util
+            for m in ["pyodbc","pymssql","pymysql","mariadb","mysql.connector"]:
+                try:
+                    print("PYMODULE",m,bool(importlib.util.find_spec(m)))
+                except (ImportError,ModuleNotFoundError,ValueError):
+                    print("PYMODULE",m,False)
+            PY
+            fi
+            if command -v odbcinst >/dev/null 2>&1; then odbcinst -q -d 2>&1 || true; fi
+            echo "=== SQL SERVER CONTAINER TOOLS AND PORTS ==="
+            docker inspect "$SQLC" --format 'CONTAINER={{.Name}} IMAGE={{.Config.Image}} NETWORK={{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}} PORTS={{json .NetworkSettings.Ports}}'
+            for c in bcp sqlcmd python3; do
+              docker exec "$SQLC" sh -lc "command -v $c || true"
+            done
+            echo "=== MARIADB CLIENT AND DIRECTADMIN AUTH ==="
+            mariadb --version 2>&1 || mysql --version 2>&1 || true
+            [ -r "$CONF" ] || { echo "DA_MYSQL_CONFIG=UNREADABLE"; exit 1; }
+            DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            [ -n "$DBUSER" ] && [ -n "$DBPASS" ] || { echo "DA_MYSQL_CREDENTIALS=MISSING"; exit 1; }
+            MYSQL_PWD="$DBPASS" mariadb --protocol=socket -u "$DBUSER" --batch --skip-column-names -e "SELECT VERSION(); SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='vamcitydigibilepay'; SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='vamcitydigibilepay' AND TABLE_TYPE='BASE TABLE'; SELECT @@max_allowed_packet,@@character_set_server,@@collation_server;"
+            echo "=== HOST CONNECTIVITY FROM SQL SERVER CONTAINER TO HOST ==="
+            docker exec "$SQLC" sh -lc 'for h in host.docker.internal 172.17.0.1; do echo "HOST=$h"; (timeout 2 sh -c ":</dev/tcp/$h/3306" >/dev/null 2>&1 && echo PORT_3306=OPEN) || echo PORT_3306=CLOSED; done' 2>&1 || true
+            unset DBPASS MYSQL_PWD
+            echo "TRANSFER_PREFLIGHT_COMPLETE=1"
