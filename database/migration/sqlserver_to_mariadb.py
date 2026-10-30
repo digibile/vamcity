@@ -43,7 +43,9 @@ def map_default(raw):
            "NEWSEQUENTIALID()":"UUID()","NULL":"NULL"}
     if u in known:
         return known[u],("NEWSEQUENTIALID approximated by UUID()" if u=="NEWSEQUENTIALID()" else None)
-    if re.fullmatch(r"[-+]?\d+(?:\.\d+)?",s): return s,None
+    if re.fullmatch(r"[-+]?\d+(?:\.\d+)?(?:e[-+]?\d+)?",s,re.I): return s,None
+    cv=re.fullmatch(r"CONVERT\(\[?(?:bit|tinyint|bigint|int|decimal|numeric|float|real)\]?,\s*\(?\s*([-+]?\d+(?:\.\d+)?(?:e[-+]?\d+)?)\s*\)?\)",s,re.I)
+    if cv: return cv.group(1),None
     m=re.fullmatch(r"N?'((?:''|[^'])*)'",s,re.S)
     if m: return "'"+m.group(1).replace("''","'").replace("\\","\\\\").replace("'","''")+"'",None
     return None,"unmapped default: "+raw[:160]
