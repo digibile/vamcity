@@ -37,7 +37,7 @@ jobs:
             import json
             p=json.load(open("/home/digibail/.vamcity-migration/plan.json",encoding="utf-8"))
             cols={(c["schema_name"],c["table_name"],c["column_name"]):c for c in p["columns"]}
-            filtered=[i["name"] for i in p["indexes"] if i["filter"]]
+            filtered=[{"schema":i["schema"],"table":i["table"],"name":i["name"],"filter":i["filter"],"columns":[c["name"] for c in i["columns"]]} for i in p["indexes"] if i["filter"]]
             disabled_indexes=[i["name"] for i in p["indexes"] if i["disabled"]]
             index_types={}
             long_index_cols=[]
