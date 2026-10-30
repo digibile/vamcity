@@ -67,7 +67,17 @@ jobs:
             DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
             [ -n "$DBUSER" ] && [ -n "$DBPASS" ] || { echo "DA_MYSQL_CREDENTIALS=MISSING"; exit 1; }
             MYSQL_PWD="$DBPASS" mariadb --protocol=socket -u "$DBUSER" --batch --skip-column-names -e "SELECT VERSION(); SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='vamcitydigibilepay'; SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='vamcitydigibilepay' AND TABLE_TYPE='BASE TABLE'; SELECT @@max_allowed_packet,@@character_set_server,@@collation_server;"
-            echo "=== HOST CONNECTIVITY FROM SQL SERVER CONTAINER TO HOST ==="
-            docker exec "$SQLC" sh -lc 'for h in host.docker.internal 172.17.0.1; do echo "HOST=$h"; (timeout 2 sh -c ":</dev/tcp/$h/3306" >/dev/null 2>&1 && echo PORT_3306=OPEN) || echo PORT_3306=CLOSED; done' 2>&1 || true
+            echo "=== HOST NETWORK AND SQL CONTAINER ADDRESS ==="
+            ip -4 -brief addr 2>&1 || true
+            ip route 2>&1 || true
+            docker network inspect vamcity-stage-net --format '{{json .IPAM.Config}}'
+            docker inspect "$SQLC" --format '{{range .NetworkSettings.Networks}}SQL_CONTAINER_IP={{.IPAddress}} GATEWAY={{.Gateway}}{{end}}'
+            echo "=== MARIADB LISTEN SOCKETS ==="
+            ss -lntp 2>&1 | grep -E '3306|1433' || true
+            echo "=== SQL SERVER CONTAINER TO HOST GATEWAY PORT TEST ==="
+            GATEWAY="$(docker inspect "$SQLC" --format '{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}')"
+            docker exec "$SQLC" sh -lc "echo HOST_GATEWAY=$GATEWAY; (timeout 3 sh -c ': >/dev/tcp/$GATEWAY/3306' >/dev/null 2>&1 && echo PORT_3306=OPEN) || echo PORT_3306=CLOSED" 2>&1 || true
+            echo "=== PYTHON PACKAGE WHEEL AVAILABILITY ==="
+            pip3 install --dry-run --disable-pip-version-check pymssql PyMySQL 2>&1 | tail -n 12 || true
             unset DBPASS MYSQL_PWD
             echo "TRANSFER_PREFLIGHT_COMPLETE=1"
