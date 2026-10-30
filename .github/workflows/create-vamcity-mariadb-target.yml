@@ -1,0 +1,65 @@
+name: Create VamCity single MariaDB target
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/create-vamcity-mariadb-target.yml
+
+permissions:
+  contents: read
+
+jobs:
+  create-empty-target:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate SSH configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing repository secret: $name"; exit 1; fi
+          done
+
+      - name: Create only the approved empty MariaDB target
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 3m
+          script: |
+            set -eu
+            ROOT="/home/digibail/domains/digebail.ir"
+            CONF="/usr/local/directadmin/conf/mysql.conf"
+            TARGET="vamcitydigibilepay"
+            [ -r "$CONF" ] || { echo "DIRECTADMIN_MYSQL_CONF_UNREADABLE"; exit 1; }
+            DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            [ -n "$DBUSER" ] && [ -n "$DBPASS" ] || { echo "DIRECTADMIN_DB_CREDENTIAL_FIELDS_MISSING"; exit 1; }
+            FREE_KB="$(df -Pk "$ROOT" | awk 'NR==2{print $4}')"
+            echo "TARGET_DATABASE=$TARGET"
+            echo "FREE_DISK_KB=$FREE_KB"
+            [ "$FREE_KB" -ge 4194304 ] || { echo "STOP: less than 4 GiB free; no database changes made"; exit 1; }
+            MYSQL_PWD="$DBPASS" mariadb --protocol=socket -u "$DBUSER" --batch --skip-column-names -e "SELECT VERSION(); SHOW COLLATION LIKE 'utf8mb4_unicode_ci'; SHOW GRANTS FOR CURRENT_USER();" 
+            EXISTS="$(MYSQL_PWD="$DBPASS" mariadb --protocol=socket -u "$DBUSER" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='$TARGET';")"
+            if [ "$EXISTS" = "1" ]; then
+              TABLES="$(MYSQL_PWD="$DBPASS" mariadb --protocol=socket -u "$DBUSER" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$TARGET' AND TABLE_TYPE='BASE TABLE';")"
+              echo "TARGET_ALREADY_EXISTS=1"
+              echo "TARGET_TABLE_COUNT=$TABLES"
+              if [ "$TABLES" -gt 0 ]; then
+                echo "STOP: target is non-empty; no changes made"
+                exit 1
+              fi
+              echo "TARGET_EMPTY=1"
+            else
+              MYSQL_PWD="$DBPASS" mariadb --protocol=socket -u "$DBUSER" -e "CREATE DATABASE \`$TARGET\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+              echo "TARGET_CREATED=1"
+            fi
+            MYSQL_PWD="$DBPASS" mariadb --protocol=socket -u "$DBUSER" --batch --skip-column-names -e "SELECT SCHEMA_NAME,DEFAULT_CHARACTER_SET_NAME,DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='$TARGET';"
+            unset DBPASS MYSQL_PWD
+            echo "TARGET_DATABASE_PREFLIGHT_COMPLETE=1"
