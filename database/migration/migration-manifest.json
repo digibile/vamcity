@@ -56,7 +56,10 @@
     "dry_run_completed": true,
     "real_mariadb_rows_imported": false,
     "per_table_reconciliation_completed": false,
-    "application_smoke_tests_completed": false
+    "application_smoke_tests_completed": false,
+    "github_actions_ssh_preflight": "failed",
+    "github_actions_ssh_preflight_reason": "Repository secret DEPLOY_HOST and DEPLOY_USER are empty; DEPLOY_SSH_KEY is configured. The SSH inspection step was skipped.",
+    "real_server_inventory_rerun": false
   },
   "known_risks": [
     "The restored database name is an analysis alias; it has not yet been proven to be the original SQL Server database named vamcitydigibilepay.",
@@ -71,5 +74,11 @@
     "raw_customer_data_or_backups_committed": false,
     "credentials_committed": false
   },
-  "acceptance_rule": "Do not mark migration complete until every source table has row-count and key reconciliation, foreign-key validation, critical financial/date-value checks, and application smoke tests."
+  "acceptance_rule": "Do not mark migration complete until every source table has row-count and key reconciliation, foreign-key validation, critical financial/date-value checks, and application smoke tests.",
+  "latest_execution": {
+    "workflow_run_id": 40992894723,
+    "workflow_run_url": "https://github.com/digibile/vamcity/actions/runs/40992894723",
+    "result": "failed_at_ssh_secret_validation",
+    "date": "2026-10-30"
+  }
 }
