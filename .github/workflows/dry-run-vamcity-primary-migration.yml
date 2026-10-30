@@ -52,7 +52,6 @@ jobs:
             export VAMCITY_SOURCE_DB="vamcityc_vamcity"
             export VAMCITY_TARGET_DB="vamcitydigibilepay"
             python3 "$DIR/sqlserver_to_mariadb.py" --mode dry-run
-            unset PASS DBPASS VAMCITY_SQLSERVER_PASSWORD VAMCITY_MARIADB_PASSWORD
             python3 - <<'PY'
             import importlib.util, os
             path="/home/digibail/.vamcity-migration/sqlserver_to_mariadb.py"
@@ -78,4 +77,5 @@ jobs:
             finally:
                 dst.close();src.close()
             PY
+            unset PASS DBPASS VAMCITY_SQLSERVER_PASSWORD VAMCITY_MARIADB_PASSWORD
             echo "PRIMARY_MIGRATION_DRY_RUN_SUCCESS=1"
