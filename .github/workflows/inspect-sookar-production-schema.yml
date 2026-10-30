@@ -45,7 +45,7 @@ jobs:
             '
             echo "SOOKAR_READ_ONLY_INSPECTION_COMPLETE=1"
             echo "SOOKAR_TENANT_AND_ADMIN_ROLES"
-            docker exec naf-sookar-postgres-1 sh -lc 'psql -X -U "$POSTGRES_USER" -d "$POSTGRES_DB" -AtF "|" -c "SELECT code,name,status FROM tenants ORDER BY code; SELECT role,COUNT(*) FROM users GROUP BY role ORDER BY role;"'
+            docker exec naf-sookar-postgres-1 sh -lc 'psql -X -U "$POSTGRES_USER" -d "$POSTGRES_DB" -AtF "|" -c "SELECT code,name,status,created_at FROM tenants ORDER BY created_at; SELECT hostname,t.code,verification_status FROM seller_domains d JOIN tenants t ON t.id=d.tenant_id ORDER BY hostname; SELECT role,COUNT(*) FROM users GROUP BY role ORDER BY role;"'
             echo "VAMCITY_MARIADB_LOOKUPS_AND_AGGREGATES"
             CONF="/usr/local/directadmin/conf/mysql.conf"
             DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
@@ -53,13 +53,17 @@ jobs:
             test -n "$DBUSER" && test -n "$DBPASS"
             export MYSQL_PWD="$DBPASS"
             mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'CUSTOMERS'; SELECT Id,Code,Name FROM Customers ORDER BY Code;"
-            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'LOAN_DEFINITIONS'; SELECT Id,Code,Title,ProfitPercent,MaxAmount,MaxMonthGap,AllowedInstallments,Disable,DisableText,HasSponsore,DefaultSponsoreCheckoutDays,LoanProfitType,LEFT(CostsJson,1000) FROM Loans ORDER BY Code;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'LOAN_DEFINITIONS_BY_CUSTOMER'; SELECT CustomerId,COUNT(*),SUM(Disable=0),SUM(Disable<>0) FROM Loans GROUP BY CustomerId ORDER BY CustomerId;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'LOAN_DEFINITIONS'; SELECT CustomerId,Code,Title,ProfitPercent,MaxAmount,MaxMonthGap,AllowedInstallments,Disable,HasSponsore,DefaultSponsoreCheckoutDays,LoanProfitType,LEFT(CostsJson,500) FROM Loans ORDER BY CustomerId,Code;"
             mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'REQUEST_STATUS_DEFINITIONS'; SELECT CustomerId,Id,Title,StepCategory,SystemRequestStatus,StatusGroup,SystemAgentRequestStatus,AllowNewRequest FROM LoanRequestStatuses ORDER BY CustomerId,Id;"
-            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'REQUEST_STATUS_AGGREGATES'; SELECT CustomerId,StatusId,AgentStatusId,COUNT(*),MIN(RequestDate),MAX(RequestDate),SUM(Amount) FROM UserLoanRequests GROUP BY CustomerId,StatusId,AgentStatusId ORDER BY CustomerId,StatusId,AgentStatusId;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'REQUEST_STATUS_BY_TITLE'; SELECT s.CustomerId,COALESCE(s.Title,'UNMAPPED'),s.SystemRequestStatus,s.StatusGroup,COUNT(*),SUM(r.Amount),MIN(r.RequestDate),MAX(r.RequestDate) FROM UserLoanRequests r LEFT JOIN LoanRequestStatuses s ON s.Id=r.StatusId GROUP BY s.CustomerId,s.Title,s.SystemRequestStatus,s.StatusGroup ORDER BY s.CustomerId,s.SystemRequestStatus,s.Title;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'REQUEST_USER_COUNTS'; SELECT CustomerId,COUNT(*),COUNT(DISTINCT UserId) FROM UserLoanRequests GROUP BY CustomerId;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'USER_COUNTS_BY_CUSTOMER'; SELECT CustomerId,COUNT(*),COUNT(DISTINCT Id) FROM AspNetUsers GROUP BY CustomerId ORDER BY CustomerId;"
             mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'USER_LOAN_AGGREGATES'; SELECT l.CustomerId,u.LoanId,u.IsCanceled,COUNT(*),SUM(u.Amount),SUM(u.Paid),SUM(u.Remain),SUM(u.PayableAmount) FROM UserLoans u JOIN Loans l ON l.Id=u.LoanId GROUP BY l.CustomerId,u.LoanId,u.IsCanceled ORDER BY l.CustomerId,u.LoanId,u.IsCanceled;"
-            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'PAYMENT_AGGREGATES'; SELECT PaymentMethod,COUNT(*),SUM(Amount),SUM(InstallmentAmount),SUM(SumAmount),SUM(DelayPrice),SUM(Discount) FROM UserLoanPayments GROUP BY PaymentMethod ORDER BY PaymentMethod;"
-            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'PAYMENT_REQUEST_AGGREGATES'; SELECT PaymentMethod,COUNT(*),SUM(Amount) FROM UserLoanPaymentRequests GROUP BY PaymentMethod ORDER BY PaymentMethod;"
-            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'ASSURANCE_AGGREGATES'; SELECT AssuranceType,COUNT(*),SUM(FileSize),SUM(ReturnFileSize) FROM Assurances GROUP BY AssuranceType ORDER BY AssuranceType;"
-            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'TICKET_AGGREGATES'; SELECT Role,TargetRole,COUNT(*) FROM Tickets GROUP BY Role,TargetRole ORDER BY Role,TargetRole;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'PAYMENT_AGGREGATES_BY_CUSTOMER'; SELECT l.CustomerId,COUNT(*),SUM(p.Amount),SUM(p.InstallmentAmount),SUM(p.SumAmount),SUM(p.DelayPrice),SUM(p.Discount) FROM UserLoanPayments p JOIN UserLoans u ON u.Id=p.UserLoanId JOIN Loans l ON l.Id=u.LoanId GROUP BY l.CustomerId;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'PAYMENT_REQUEST_AGGREGATES'; SELECT l.CustomerId,r.PaymentMethod,COUNT(*),SUM(r.Amount) FROM UserLoanPaymentRequests r JOIN UserLoanPayments p ON p.Id=r.UserLoanPaymentId JOIN UserLoans u ON u.Id=p.UserLoanId JOIN Loans l ON l.Id=u.LoanId GROUP BY l.CustomerId,r.PaymentMethod ORDER BY l.CustomerId,r.PaymentMethod;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'ASSURANCE_AGGREGATES'; SELECT l.CustomerId,a.AssuranceType,COUNT(*),SUM(a.FileSize),SUM(a.ReturnFileSize) FROM Assurances a JOIN UserLoans u ON u.Id=a.UserLoanId JOIN Loans l ON l.Id=u.LoanId GROUP BY l.CustomerId,a.AssuranceType ORDER BY l.CustomerId,a.AssuranceType;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'TICKET_AGGREGATES'; SELECT CustomerId,Role,TargetRole,COUNT(*) FROM Tickets GROUP BY CustomerId,Role,TargetRole ORDER BY CustomerId,Role,TargetRole;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'INSTALLMENT_SAMPLE'; SELECT InstallmentNumber,Amount,InstallmentAmount,SumAmount,TargetMonth,DelayDay,DelayPrice,PaymentMethod,Discount FROM UserLoanPayments ORDER BY TargetMonth LIMIT 5;"
             unset MYSQL_PWD DBPASS
             echo "VAMCITY_LOOKUP_RECONCILIATION_COMPLETE=1"
