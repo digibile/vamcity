@@ -24,18 +24,10 @@ jobs:
           capture_stdout: true
           script: |
             set -euo pipefail
-            ROOT="/home/sookar/domains/sookar.ir/negar-platform"
-            echo "ROOT_EXISTS=$(test -e "$ROOT" && echo yes || echo no)"
-            echo "ACTIVE_POSTGRES_COMPOSE_LABELS"
-            docker inspect naf-sookar-postgres-1 --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}|{{ index .Config.Labels "com.docker.compose.project.config_files" }}'
-            COMPOSE_PATH="$(docker inspect naf-sookar-postgres-1 --format '{{ index .Config.Labels "com.docker.compose.project.config_files" }}' | cut -d, -f1)"
-            test -s "$COMPOSE_PATH"
-            STACK_DIR="$(dirname "$COMPOSE_PATH")"
-            cd "$STACK_DIR"
-            echo "ACTIVE_COMPOSE_PATH=$COMPOSE_PATH"
-            docker compose -f "$COMPOSE_PATH" ps --format 'table {{.Service}}\t{{.State}}'
+            echo "SOOKAR_POSTGRES_CONTAINER"
+            docker inspect naf-sookar-postgres-1 --format '{{.State.Status}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}|{{index .Config.Labels "com.docker.compose.project"}}'
             echo "SOOKAR_DATABASE_METADATA"
-            docker compose -f "$COMPOSE_PATH" exec -T postgres sh -lc '
+            docker exec naf-sookar-postgres-1 sh -lc '
               set -e
               psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -AtF "|" -c "SELECT current_database(); SHOW server_version;"
               echo "SOOKAR_TABLE_ESTIMATES"
