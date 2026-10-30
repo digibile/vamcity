@@ -1,0 +1,71 @@
+name: Reconcile VamCity primary live database against restored backup
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/reconcile-vamcity-primary-live-vs-backup.yml
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read-only source and target preflight
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 10m
+          script: |
+            set -eu
+            SQLC="vamcity-stage-sql"
+            CONF="/usr/local/directadmin/conf/mysql.conf"
+            SQLIP="$(docker inspect "$SQLC" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"
+            PASS="$(docker inspect "$SQLC" --format '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^MSSQL_SA_PASSWORD=//p;s/^SA_PASSWORD=//p' | head -n 1)"
+            DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            [ -n "$SQLIP" ] && [ -n "$PASS" ] && [ -n "$DBUSER" ] && [ -n "$DBPASS" ]
+            export VAMCITY_SQLSERVER_IP="$SQLIP" VAMCITY_SQLSERVER_PASSWORD="$PASS"
+            export VAMCITY_MARIADB_USER="$DBUSER" VAMCITY_MARIADB_PASSWORD="$DBPASS"
+            python3 - <<'PY'
+            import os,json,pymssql,pymysql,shutil
+            host=os.environ["VAMCITY_SQLSERVER_IP"]; password=os.environ["VAMCITY_SQLSERVER_PASSWORD"]
+            source_names=["vamcityc_vamcity","vamcityc_vamcity_import_20261028"]
+            c=pymssql.connect(server=host,port="1433",user="sa",password=password,database="master",login_timeout=15,timeout=300,charset="UTF-8")
+            cur=c.cursor(as_dict=True)
+            report={}
+            for db in source_names:
+              cur.execute("SELECT DB_ID(%s) AS id",(db,))
+              if not cur.fetchone()["id"]:
+                report[db]={"exists":False};continue
+              cur.execute(f"USE [{db}]")
+              cur.execute("SELECT s.name schema_name,t.name table_name FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id ORDER BY s.name,t.name")
+              tables=cur.fetchall(); counts={}
+              for t in tables:
+                q=f"SELECT COUNT_BIG(*) AS n FROM [{t['schema_name']}].[{t['table_name']}]"
+                cur.execute(q); counts[t["schema_name"]+"."+t["table_name"]]=int(cur.fetchone()["n"])
+              report[db]={"exists":True,"table_count":len(tables),"total_rows":sum(counts.values()),"tables":counts}
+            c.close()
+            mc=pymysql.connect(unix_socket="/var/lib/mysql/mysql.sock",user=os.environ["VAMCITY_MARIADB_USER"],password=os.environ["VAMCITY_MARIADB_PASSWORD"],database="vamcitydigibilepay",connect_timeout=15,read_timeout=60)
+            with mc.cursor() as cur:
+              cur.execute("SELECT VERSION()"); version=cur.fetchone()[0]
+              cur.execute("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='vamcitydigibilepay' AND TABLE_TYPE='BASE TABLE'")
+              target_tables=int(cur.fetchone()[0])
+              cur.execute("SELECT COALESCE(SUM(TABLE_ROWS),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA='vamcitydigibilepay' AND TABLE_TYPE='BASE TABLE'")
+              approx_rows=int(cur.fetchone()[0])
+            mc.close()
+            disk=shutil.disk_usage("/")
+            out={"sources":report,"target":{"version":version,"persistent_tables":target_tables,"estimated_rows_information_schema":approx_rows},"disk":{"total_bytes":disk.total,"used_bytes":disk.used,"free_bytes":disk.free}}
+            a=report.get(source_names[0],{});b=report.get(source_names[1],{})
+            if a.get("exists") and b.get("exists"):
+              keys=sorted(set(a["tables"])|set(b["tables"]))
+              out["table_differences"]=[{"table":k,"live_rows":a["tables"].get(k,0),"restored_backup_rows":b["tables"].get(k,0),"delta":a["tables"].get(k,0)-b["tables"].get(k,0)} for k in keys if a["tables"].get(k,0)!=b["tables"].get(k,0)]
+              out["total_delta_live_minus_restored"]=a["total_rows"]-b["total_rows"]
+            print(json.dumps(out,ensure_ascii=False,indent=2))
+            print("READ_ONLY_RECONCILIATION_COMPLETE=1")
+            PY
+            unset PASS DBPASS VAMCITY_SQLSERVER_PASSWORD VAMCITY_MARIADB_PASSWORD
