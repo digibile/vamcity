@@ -1,0 +1,69 @@
+name: Install VamCity SQL Server and MariaDB transfer drivers
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/install-vamcity-transfer-drivers.yml
+
+permissions:
+  contents: read
+
+jobs:
+  install-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate SSH configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing repository secret: $name"; exit 1; fi
+          done
+      - name: Install distro drivers and verify both database connections
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 10m
+          script: |
+            set -eu
+            SQLC="vamcity-stage-sql"
+            CONF="/usr/local/directadmin/conf/mysql.conf"
+            SQLIP="$(docker inspect "$SQLC" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"
+            PASS="$(docker inspect "$SQLC" --format '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^MSSQL_SA_PASSWORD=//p;s/^SA_PASSWORD=//p' | head -n 1)"
+            DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            [ -n "$SQLIP" ] && [ -n "$PASS" ] && [ -n "$DBUSER" ] && [ -n "$DBPASS" ]
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get install -y --no-install-recommends python3-pymssql python3-pymysql
+            export VAMCITY_SQLSERVER_PASSWORD="$PASS"
+            export VAMCITY_MARIADB_USER="$DBUSER"
+            export VAMCITY_MARIADB_PASSWORD="$DBPASS"
+            export VAMCITY_SQLSERVER_IP="$SQLIP"
+            python3 - <<'PY'
+            import os, pymssql, pymysql
+            sql=pymssql.connect(server=os.environ["VAMCITY_SQLSERVER_IP"], user="sa", password=os.environ["VAMCITY_SQLSERVER_PASSWORD"], database="vamcityc_vamcity", login_timeout=10, timeout=30)
+            with sql.cursor() as c:
+                c.execute("SELECT DB_NAME(), COUNT(*) FROM sys.tables")
+                print("SQLSERVER_CONNECT=SUCCESS",c.fetchone())
+                c.execute("SELECT COUNT(*) FROM dbo.AspNetUsers")
+                print("SOURCE_AspNetUsers=",c.fetchone()[0])
+                c.execute("SELECT COUNT(*) FROM dbo.UserLoanRequests")
+                print("SOURCE_UserLoanRequests=",c.fetchone()[0])
+            sql.close()
+            my=pymysql.connect(unix_socket="/var/lib/mysql/mysql.sock", user=os.environ["VAMCITY_MARIADB_USER"], password=os.environ["VAMCITY_MARIADB_PASSWORD"], database="vamcitydigibilepay", charset="utf8mb4", connect_timeout=10)
+            with my.cursor() as c:
+                c.execute("SELECT VERSION(), DATABASE()")
+                print("MARIADB_CONNECT=SUCCESS",c.fetchone())
+                c.execute("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE'")
+                print("TARGET_TABLES=",c.fetchone()[0])
+            my.close()
+            PY
+            unset PASS DBPASS VAMCITY_SQLSERVER_PASSWORD VAMCITY_MARIADB_PASSWORD
+            echo "TRANSFER_DRIVERS_READY=1"
