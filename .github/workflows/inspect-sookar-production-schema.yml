@@ -44,6 +44,9 @@ jobs:
               done
             '
             echo "SOOKAR_READ_ONLY_INSPECTION_COMPLETE=1"
+            echo "Sookar tenant, finance catalog, DB size and disk"
+            df -h /home
+            docker exec naf-sookar-postgres-1 sh -lc 'psql -X -U "$POSTGRES_USER" -d "$POSTGRES_DB" -AtF "|" -c "SELECT id::text,code,name,created_at FROM tenants ORDER BY created_at; SELECT id::text,code,title,status,tenant_id::text FROM financing_brands ORDER BY code; SELECT id::text,code,display_name,status,tenant_id::text FROM commerce_suppliers ORDER BY code; SELECT pg_size_pretty(pg_database_size(current_database()));"'
             echo "SOOKAR_TENANT_AND_ADMIN_ROLES"
             docker exec naf-sookar-postgres-1 sh -lc 'psql -X -U "$POSTGRES_USER" -d "$POSTGRES_DB" -AtF "|" -c "SELECT code,name,status,created_at FROM tenants ORDER BY created_at; SELECT hostname,t.code,verification_status FROM seller_domains d JOIN tenants t ON t.id=d.tenant_id ORDER BY hostname; SELECT role,COUNT(*) FROM users GROUP BY role ORDER BY role;"'
             echo "VAMCITY_MARIADB_LOOKUPS_AND_AGGREGATES"
