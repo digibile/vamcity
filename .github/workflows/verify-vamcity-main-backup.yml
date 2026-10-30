@@ -1,0 +1,90 @@
+name: Verify VamCity primary SQL Server backup
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/verify-vamcity-main-backup.yml
+
+permissions:
+  contents: read
+
+jobs:
+  verify-primary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate SSH configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing repository secret: $name"; exit 1; fi
+          done
+
+      - name: Verify the primary backup and inspect the main source database
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 30m
+          script: |
+            set -eu
+            ROOT="/home/digibail/domains/digebail.ir"
+            ZIP="$ROOT/vamcityc_vamcity_2026-10-29_19-20-04.zip"
+            SQLC="vamcity-stage-sql"
+            DB="vamcityc_vamcity"
+            [ -f "$ZIP" ] || { echo "PRIMARY_BACKUP_MISSING=1"; exit 1; }
+            docker inspect "$SQLC" >/dev/null
+            PASS="$(docker inspect "$SQLC" --format '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^MSSQL_SA_PASSWORD=//p;s/^SA_PASSWORD=//p' | head -n 1)"
+            [ -n "$PASS" ] || { echo "SQLSERVER_CREDENTIAL_UNAVAILABLE=1"; exit 1; }
+            SQLCMD="$(docker exec "$SQLC" sh -lc 'command -v sqlcmd || true' 2>/dev/null | head -n 1)"
+            [ -n "$SQLCMD" ] || SQLCMD="/opt/mssql-tools18/bin/sqlcmd"
+            docker exec "$SQLC" test -x "$SQLCMD"
+            sql() { docker exec -e SQLCMDPASSWORD="$PASS" "$SQLC" "$SQLCMD" -S localhost -U sa -C -b -W -s '|' -Q "$1"; }
+
+            echo "=== PRIMARY BACKUP FILE ==="
+            stat -c 'FILE_SIZE_BYTES=%s MODIFIED=%y' "$ZIP"
+            sha256sum "$ZIP"
+            unzip -t "$ZIP" | tail -n 2
+
+            TMP="$(mktemp /tmp/vamcity-main-XXXXXX.bak)"
+            trap 'rm -f "$TMP"; docker exec -u 0 "$SQLC" rm -f /tmp/vamcity-main-verify.bak >/dev/null 2>&1 || true' EXIT
+            unzip -p "$ZIP" > "$TMP"
+            echo "UNCOMPRESSED_BACKUP_BYTES=$(stat -c %s "$TMP")"
+            file "$TMP"
+            docker cp "$TMP" "$SQLC:/tmp/vamcity-main-verify.bak" >/dev/null
+            docker exec -u 0 "$SQLC" chmod 600 /tmp/vamcity-main-verify.bak
+
+            echo "=== RESTORE HEADERONLY ==="
+            sql "RESTORE HEADERONLY FROM DISK=N'/tmp/vamcity-main-verify.bak'"
+
+            echo "=== RESTORE FILELISTONLY ==="
+            sql "RESTORE FILELISTONLY FROM DISK=N'/tmp/vamcity-main-verify.bak'"
+
+            echo "=== RESTORE VERIFYONLY ==="
+            sql "RESTORE VERIFYONLY FROM DISK=N'/tmp/vamcity-main-verify.bak' WITH STOP_ON_ERROR"
+            echo "PRIMARY_BACKUP_RESTORE_VERIFYONLY=SUCCESS"
+
+            echo "=== LIVE MAIN DATABASE IDENTITY ==="
+            sql "SET NOCOUNT ON; SELECT name,state_desc,collation_name,compatibility_level FROM sys.databases WHERE name=N'$DB';"
+            echo "=== LIVE MAIN DATABASE DBCC CHECKDB ==="
+            sql "DBCC CHECKDB (N'$DB') WITH NO_INFOMSGS, ALL_ERRORMSGS"
+            echo "PRIMARY_LIVE_DBCC_CHECKDB=SUCCESS"
+
+            echo "=== MAIN DATABASE TABLE AND ROW INVENTORY ==="
+            sql "SET NOCOUNT ON; SELECT s.name,t.name,SUM(p.rows) FROM [$DB].sys.tables t JOIN [$DB].sys.schemas s ON s.schema_id=t.schema_id LEFT JOIN [$DB].sys.partitions p ON p.object_id=t.object_id AND p.index_id IN (0,1) GROUP BY s.name,t.name ORDER BY s.name,t.name;"
+            echo "=== MAIN DATABASE COLUMN INVENTORY ==="
+            sql "SET NOCOUNT ON; SELECT s.name,t.name,c.column_id,c.name,ty.name,c.max_length,c.precision,c.scale,c.is_nullable,c.is_identity,c.is_computed,dc.definition FROM [$DB].sys.tables t JOIN [$DB].sys.schemas s ON s.schema_id=t.schema_id JOIN [$DB].sys.columns c ON c.object_id=t.object_id JOIN [$DB].sys.types ty ON ty.user_type_id=c.user_type_id LEFT JOIN [$DB].sys.default_constraints dc ON dc.object_id=c.default_object_id ORDER BY s.name,t.name,c.column_id;"
+            echo "=== MAIN DATABASE PRIMARY/UNIQUE KEYS ==="
+            sql "SET NOCOUNT ON; SELECT s.name,t.name,i.name,i.is_primary_key,i.is_unique,ic.key_ordinal,c.name FROM [$DB].sys.tables t JOIN [$DB].sys.schemas s ON s.schema_id=t.schema_id JOIN [$DB].sys.indexes i ON i.object_id=t.object_id AND (i.is_primary_key=1 OR i.is_unique=1) JOIN [$DB].sys.index_columns ic ON ic.object_id=i.object_id AND ic.index_id=i.index_id AND ic.key_ordinal>0 JOIN [$DB].sys.columns c ON c.object_id=ic.object_id AND c.column_id=ic.column_id ORDER BY s.name,t.name,i.name,ic.key_ordinal;"
+            echo "=== MAIN DATABASE FOREIGN KEYS ==="
+            sql "SET NOCOUNT ON; SELECT OBJECT_SCHEMA_NAME(fkc.parent_object_id),OBJECT_NAME(fkc.parent_object_id),pc.name,OBJECT_SCHEMA_NAME(fkc.referenced_object_id),OBJECT_NAME(fkc.referenced_object_id),rc.name,fk.name,fk.delete_referential_action_desc,fk.update_referential_action_desc FROM [$DB].sys.foreign_key_columns fkc JOIN [$DB].sys.foreign_keys fk ON fk.object_id=fkc.constraint_object_id JOIN [$DB].sys.columns pc ON pc.object_id=fkc.parent_object_id AND pc.column_id=fkc.parent_column_id JOIN [$DB].sys.columns rc ON rc.object_id=fkc.referenced_object_id AND rc.column_id=fkc.referenced_column_id ORDER BY 2,7,fkc.constraint_column_id;"
+            echo "=== MAIN DATABASE OTHER OBJECT COUNTS ==="
+            sql "SET NOCOUNT ON; SELECT (SELECT COUNT(*) FROM [$DB].sys.views) AS views,(SELECT COUNT(*) FROM [$DB].sys.procedures) AS procedures,(SELECT COUNT(*) FROM [$DB].sys.triggers) AS triggers,(SELECT COUNT(*) FROM [$DB].sys.check_constraints) AS check_constraints,(SELECT COUNT(*) FROM [$DB].sys.sequences) AS sequences;"
+            echo "PRIMARY_DATABASE_INSPECTION_COMPLETE=1"
+            unset PASS
