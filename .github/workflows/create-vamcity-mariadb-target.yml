@@ -45,7 +45,7 @@ jobs:
             echo "TARGET_DATABASE=$TARGET"
             echo "FREE_DISK_KB=$FREE_KB"
             [ "$FREE_KB" -ge 4194304 ] || { echo "STOP: less than 4 GiB free; no database changes made"; exit 1; }
-            MYSQL_PWD="$DBPASS" mariadb --protocol=socket -u "$DBUSER" --batch --skip-column-names -e "SELECT VERSION(); SHOW COLLATION LIKE 'utf8mb4_unicode_ci'; SHOW GRANTS FOR CURRENT_USER();" 
+            MYSQL_PWD="$DBPASS" mariadb --protocol=socket -u "$DBUSER" --batch --skip-column-names -e "SELECT VERSION(); SHOW COLLATION LIKE 'utf8mb4_unicode_ci'; SELECT CURRENT_USER();" 
             EXISTS="$(MYSQL_PWD="$DBPASS" mariadb --protocol=socket -u "$DBUSER" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='$TARGET';")"
             if [ "$EXISTS" = "1" ]; then
               TABLES="$(MYSQL_PWD="$DBPASS" mariadb --protocol=socket -u "$DBUSER" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$TARGET' AND TABLE_TYPE='BASE TABLE';")"
