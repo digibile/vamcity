@@ -124,9 +124,24 @@ jobs:
                     if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then S=/opt/mssql-tools18/bin/sqlcmd
                     elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then S=/opt/mssql-tools/bin/sqlcmd
                     else echo "SQLCMD=NOT_INSTALLED"; exit 0; fi
-                    "$S" -S localhost -U sa -P "$P" -C -W -s "|" -Q "RESTORE HEADERONLY FROM DISK = N''/tmp/vamcity-header-'$n'.bak'';"
-                  ' 2>&1 || true
+                    "$S" -S localhost -U sa -P "$P" -C -W -s "|" -Q "$1"
+
+                  ' _ "RESTORE HEADERONLY FROM DISK = N'/tmp/vamcity-header-$n.bak';" 2>&1 || true
                   rm -f "$T/$n.bak"
+                done
+                echo "=== EXISTING SQL SERVER SOURCE DATABASE TABLE INVENTORY ==="
+                for db in vamcityc_vamcity vamcityc_bluvamdb vamcityc_transferDb vamcityc_vamcity_import_20261028 vamcityc_bluvamdb_import_20261028 vamcityc_transferDb_import_20261028; do
+                  Q="USE [$db]; SET NOCOUNT ON; SELECT DB_NAME(), SCHEMA_NAME(t.schema_id), t.name, SUM(p.rows) FROM sys.tables t JOIN sys.partitions p ON p.object_id=t.object_id WHERE p.index_id IN (0,1) GROUP BY t.schema_id,t.name ORDER BY t.name;"
+                  echo "SOURCE_DATABASE=$db"
+                  docker exec "$C" bash -lc '
+                    set -eu
+                    P="${MSSQL_SA_PASSWORD:-${SA_PASSWORD:-}}"
+                    if [ -z "$P" ]; then echo "SQLCMD_AUTH=SA_PASSWORD_NOT_AVAILABLE"; exit 0; fi
+                    if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then S=/opt/mssql-tools18/bin/sqlcmd
+                    elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then S=/opt/mssql-tools/bin/sqlcmd
+                    else echo "SQLCMD=NOT_INSTALLED"; exit 0; fi
+                    "$S" -S localhost -U sa -P "$P" -C -W -s "|" -Q "$1"
+                  ' _ "$Q" 2>&1 || true
                 done
                 docker exec "$C" rm -f /tmp/vamcity-header-*.bak >/dev/null 2>&1 || true
                 rm -rf "$T"
