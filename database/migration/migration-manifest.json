@@ -1,0 +1,75 @@
+{
+  "project": "VamCity",
+  "source": {
+    "engine": "Microsoft SQL Server",
+    "database": "vamcitydigibilepay",
+    "identity_verified_against_backup": false
+  },
+  "target": {
+    "engine": "MariaDB",
+    "database": "vamcitydigibilepay",
+    "single_database": true,
+    "server_version_observed": "10.6.17-MariaDB"
+  },
+  "backup_inventory_observed_in_prior_isolated_analysis": [
+    {
+      "restored_name": "vamcityc_vamcity_import_20261028",
+      "tables": 88,
+      "rows": 531172
+    },
+    {
+      "restored_name": "vamcityc_bluvamdb",
+      "tables": 56,
+      "rows": 286597
+    },
+    {
+      "restored_name": "vamcityc_transferDb",
+      "tables": 12,
+      "rows": 29
+    }
+  ],
+  "totals": {
+    "tables": 156,
+    "rows": 817798
+  },
+  "main_restored_database_metadata": {
+    "columns": 957,
+    "primary_or_unique_constraint_names": 88,
+    "key_column_count": 100,
+    "foreign_key_constraint_names": 188,
+    "index_names": 283,
+    "indexed_column_rows": 297,
+    "views": 0,
+    "procedures": 0,
+    "functions": 0,
+    "triggers": 0,
+    "check_constraints": 0,
+    "sequences": 0,
+    "user_defined_types": 0
+  },
+  "migration_status": {
+    "source_backup_identity_confirmed": false,
+    "mariadb_credentials_verified": false,
+    "target_backup_verified": false,
+    "free_disk_rechecked": false,
+    "mapping_approved": false,
+    "dry_run_completed": true,
+    "real_mariadb_rows_imported": false,
+    "per_table_reconciliation_completed": false,
+    "application_smoke_tests_completed": false
+  },
+  "known_risks": [
+    "The restored database name is an analysis alias; it has not yet been proven to be the original SQL Server database named vamcitydigibilepay.",
+    "An earlier importer writes to PostgreSQL and is not proof of MariaDB migration.",
+    "The previous MariaDB dry run did not import rows.",
+    "The prior three-target design conflicts with the approved single-target design and must not be used unchanged.",
+    "The latest recorded free-space observation was approximately 2.1 GB; this is stale and must be rechecked.",
+    "SQL Server collation SQL_Latin1_General_CP1_CI_AS differs from the proposed MariaDB utf8mb4_unicode_ci."
+  ],
+  "security": {
+    "public_repository": true,
+    "raw_customer_data_or_backups_committed": false,
+    "credentials_committed": false
+  },
+  "acceptance_rule": "Do not mark migration complete until every source table has row-count and key reconciliation, foreign-key validation, critical financial/date-value checks, and application smoke tests."
+}
