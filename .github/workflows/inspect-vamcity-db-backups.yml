@@ -77,9 +77,63 @@ jobs:
               mysql --protocol=socket -uroot --batch --skip-column-names -e "SELECT VERSION(); SHOW DATABASES;" 2>&1 || true
             fi
 
-            echo "=== RELATED CONTAINERS ==="
+            echo "=== MARIADB PROCESS AND LISTENERS ==="
+            ps -eo pid,user,comm,args | grep -E '[m]ariadbd|[m]ysqld' | sed -E 's/(--password=)[^ ]+/\\1[REDACTED]/g' || true
+            if command -v ss >/dev/null 2>&1; then ss -lntp 2>/dev/null | grep -E ':3306\\b' || true; fi
+
+            echo "=== RELATED CONTAINERS AND MOUNTS ==="
             if command -v docker >/dev/null 2>&1; then
               docker ps --format '{{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}' | grep -Ei 'vamcity|sql|mssql|maria|mysql|transfer|bluvam' || true
+              for c in vamcity-stage-sql public_html-db-1; do
+                if docker inspect "$c" >/dev/null 2>&1; then
+                  echo "CONTAINER=$c"
+                  docker inspect --format '{{range .Mounts}}{{println .Source "=>" .Destination}}{{end}}' "$c"
+                  docker exec "$c" bash -lc '
+                    set -eu
+                    P="${MSSQL_SA_PASSWORD:-${SA_PASSWORD:-}}"
+                    if [ -z "$P" ]; then echo "SQLCMD_AUTH=SA_PASSWORD_NOT_AVAILABLE"; exit 0; fi
+                    if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then S=/opt/mssql-tools18/bin/sqlcmd
+                    elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then S=/opt/mssql-tools/bin/sqlcmd
+                    else echo "SQLCMD=NOT_INSTALLED"; exit 0; fi
+                    "$S" -S localhost -U sa -P "$P" -C -W -s "|" -Q "SET NOCOUNT ON; SELECT name,state_desc,compatibility_level FROM sys.databases ORDER BY name;"
+                  ' 2>&1 || true
+                fi
+              done
+
+              echo "=== SQL SERVER BACKUP HEADER METADATA (TEMPORARY COPY ONLY) ==="
+              C="vamcity-stage-sql"
+              if docker inspect "$C" >/dev/null 2>&1; then
+                T="$(mktemp -d /tmp/vamcity-header.XXXXXX)"
+                trap 'rm -rf "$T"; docker exec "$C" rm -f /tmp/vamcity-header-*.bak >/dev/null 2>&1 || true' EXIT
+                for pair in \
+                  "vamcityc_vamcity_2026-10-29_19-20-04.zip|vamcity-main" \
+                  "vamcityc_bluvamdb_2026-10-29_19-19-45.zip|vamcity-bluvamdb" \
+                  "vamcityc_transferDb_2026-10-29_19-19-51.zip|vamcity-transfer"; do
+                  z="${pair%%|*}"
+                  n="${pair##*|}"
+                  f="$ROOT/$z"
+                  [ -f "$f" ] || continue
+                  echo "BACKUP_HEADER=$n"
+                  unzip -p "$f" > "$T/$n.bak"
+                  docker cp "$T/$n.bak" "$C:/tmp/vamcity-header-$n.bak" >/dev/null
+                  docker exec -u 0 "$C" chmod 644 "/tmp/vamcity-header-$n.bak"
+                  docker exec "$C" bash -lc '
+                    set -eu
+                    P="${MSSQL_SA_PASSWORD:-${SA_PASSWORD:-}}"
+                    if [ -z "$P" ]; then echo "SQLCMD_AUTH=SA_PASSWORD_NOT_AVAILABLE"; exit 0; fi
+                    if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then S=/opt/mssql-tools18/bin/sqlcmd
+                    elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then S=/opt/mssql-tools/bin/sqlcmd
+                    else echo "SQLCMD=NOT_INSTALLED"; exit 0; fi
+                    "$S" -S localhost -U sa -P "$P" -C -W -s "|" -Q "RESTORE HEADERONLY FROM DISK = N''/tmp/vamcity-header-'$n'.bak'';"
+                  ' 2>&1 || true
+                  rm -f "$T/$n.bak"
+                done
+                docker exec "$C" rm -f /tmp/vamcity-header-*.bak >/dev/null 2>&1 || true
+                rm -rf "$T"
+                trap - EXIT
+              else
+                echo "VAMCITY_SQL_CONTAINER_NOT_FOUND"
+              fi
             else
               echo "DOCKER=NOT_INSTALLED"
             fi
