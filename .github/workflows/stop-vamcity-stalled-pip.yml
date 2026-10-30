@@ -1,0 +1,46 @@
+name: Stop stalled VamCity Python driver download
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/stop-vamcity-stalled-pip.yml
+
+permissions:
+  contents: read
+
+jobs:
+  stop-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate SSH configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing repository secret: $name"; exit 1; fi
+          done
+      - name: Stop only the stalled package installer and inspect cached OS packages
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 2m
+          script: |
+            set -eu
+            PID=1675623
+            if [ -r "/proc/$PID/cmdline" ] && tr '\0' ' ' < "/proc/$PID/cmdline" | grep -Fq 'pip install --disable-pip-version-check pymssql PyMySQL'; then
+              kill "$PID" || true
+              echo "STALLED_PIP_PROCESS_STOPPED=1"
+            else
+              echo "STALLED_PIP_PROCESS_NOT_FOUND=1"
+            fi
+            echo "=== OS PACKAGE CANDIDATES ==="
+            apt-cache policy python3-pymssql python3-pymysql python3-pyodbc python3-mysqldb 2>&1 || true
+            echo "=== INSTALLED ODBC LIBRARIES ==="
+            dpkg -l 2>/dev/null | grep -Ei 'freetds|odbc|pymssql|pymysql|mysqlclient' || true
