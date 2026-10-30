@@ -52,6 +52,13 @@ def map_default(raw):
 
 def mt(c):
     t=c["type_name"].lower(); n=int(c["max_length"]); p=int(c["precision"]); s=int(c["scale"])
+    if t=="nvarchar" and n==900 and (c["table_name"],c["column_name"]) in {
+        ("AspNetUserLogins","LoginProvider"),("AspNetUserLogins","ProviderKey"),
+        ("AspNetUserTokens","LoginProvider"),("AspNetUserTokens","Name")
+    }:
+        # These source PK columns are empty and declared NVARCHAR(450).
+        # utf8mb3 keeps the full 450-character BMP range within InnoDB's 3072-byte PK limit.
+        return "VARCHAR(450) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci"
     if t in ("nvarchar","nchar"):
         if n==-1:return "LONGTEXT"
         return ("CHAR" if t=="nchar" else "VARCHAR")+f"({max(1,n//2)})"
@@ -209,7 +216,7 @@ def filtered_index_supported(i):
     if not i.get("filter"): return True
     if len(i.get("columns",[])) != 1: return False
     col=re.escape(i["columns"][0]["name"])
-    return bool(re.fullmatch(r"\\s*\\(*\\s*\\[?"+col+r"\\]?\\s+IS\\s+NOT\\s+NULL\\s*\\)*\\s*",i["filter"],re.I))
+    return bool(re.fullmatch(r"\s*\(*\s*\[?"+col+r"\]?\s+IS\s+NOT\s+NULL\s*\)*\s*",i["filter"],re.I))
 
 def add_indexes(dst,ix):
     made=0
