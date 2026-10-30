@@ -1,0 +1,44 @@
+name: Check VamCity transfer runtime progress
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/check-vamcity-transfer-runtime-progress.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate SSH configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing repository secret: $name"; exit 1; fi
+          done
+      - name: Inspect package process and network reachability
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 2m
+          script: |
+            set -eu
+            echo "=== PYTHON INSTALL PROCESSES ==="
+            ps -eo pid,etime,stat,args | grep -E '[p]ip|[v]env|[p]ymssql' || true
+            echo "=== SQL CONTAINER REACHABILITY ==="
+            IP="$(docker inspect vamcity-stage-sql --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"
+            timeout 3 bash -c "</dev/tcp/$IP/1433" && echo "SQL_TCP=OPEN" || echo "SQL_TCP=CLOSED"
+            echo "=== VENV STATUS ==="
+            ls -la /home/digibail/.venvs/vamcity-migration/bin/python /home/digibail/.venvs/vamcity-migration/bin/pip 2>&1 || true
+            echo "=== DISK ==="
+            df -h /
