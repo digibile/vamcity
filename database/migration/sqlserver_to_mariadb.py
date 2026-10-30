@@ -204,11 +204,18 @@ def norm(v,c):
     if isinstance(v,bytearray):return bytes(v)
     return v
 
+def filtered_index_supported(i):
+    """SQL Server IS NOT NULL filters have equivalent NULL handling in MariaDB indexes."""
+    if not i.get("filter"): return True
+    if len(i.get("columns",[])) != 1: return False
+    col=re.escape(i["columns"][0]["name"])
+    return bool(re.fullmatch(r"\\s*\\(*\\s*\\[?"+col+r"\\]?\\s+IS\\s+NOT\\s+NULL\\s*\\)*\\s*",i["filter"],re.I))
+
 def add_indexes(dst,ix):
     made=0
     for i in ix:
         if i["disabled"] or i["primary"]:continue
-        if i["filter"]:raise RuntimeError("Filtered index needs manual mapping: "+i["name"])
+        if i["filter"] and not filtered_index_supported(i):raise RuntimeError("Unsupported filtered index predicate: "+i["name"]+" "+str(i["filter"]))
         if i["type"] not in ("CLUSTERED","NONCLUSTERED"):raise RuntimeError("Unsupported index type: "+i["name"])
         if not i["columns"]:continue
         name=safe_name(i["name"])
@@ -244,7 +251,7 @@ def apply(src,dst,p):
     summary=p["summary"]
     if summary["unsupported_types"] or summary["unmapped_defaults"] or summary["computed_columns"] or summary["duplicate_table_names_case_insensitive"]:
         raise RuntimeError("Plan has unresolved type/default/computed/table-name mappings; refusing apply.")
-    if any(i["filter"] for i in p["indexes"]):raise RuntimeError("Filtered indexes require explicit mapping.")
+    if any(i["filter"] and not filtered_index_supported(i) for i in p["indexes"]):raise RuntimeError("Unsupported filtered index predicate; refusing apply.")
     if any(i["disabled"] for i in p["foreign_keys"]):raise RuntimeError("Disabled foreign keys require explicit review.")
     names=target_names(dst);expected={t["table_name"] for t in p["tables"]}
     if STATE.exists():
