@@ -1,0 +1,80 @@
+name: Apply VamCity verified primary backup migration to MariaDB
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/apply-vamcity-primary-mariadb-migration.yml
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Validate secrets and migrate verified primary backup
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 150m
+          script: |
+            set -euo pipefail
+            SQLC="vamcity-stage-sql"
+            CONF="/usr/local/directadmin/conf/mysql.conf"
+            DIR="/home/digibail/.vamcity-migration"
+            mkdir -m 700 -p "$DIR"
+            SQLIP="$(docker inspect "$SQLC" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"
+            PASS="$(docker inspect "$SQLC" --format '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^MSSQL_SA_PASSWORD=//p;s/^SA_PASSWORD=//p' | head -n 1)"
+            DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            [ -n "$SQLIP" ] && [ -n "$PASS" ] && [ -n "$DBUSER" ] && [ -n "$DBPASS" ]
+            FREE_KB="$(df -Pk / | awk 'NR==2{print $4}')"
+            if [ "$FREE_KB" -lt 4194304 ]; then echo "::error::Less than 4 GiB free; migration stopped."; exit 1; fi
+            export MYSQL_PWD="$DBPASS"
+            TARGET_TABLES="$(mysql --protocol=socket -u"$DBUSER" -Nse "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='vamcitydigibilepay' AND TABLE_TYPE='BASE TABLE'")"
+            if [ "$TARGET_TABLES" != "0" ]; then echo "::error::Target is not empty; refusing initial migration."; exit 1; fi
+            if [ -e "$DIR/state.json" ]; then echo "::error::Migration state already exists; manual reconciliation required."; exit 1; fi
+            SOURCE_EXISTS="$(docker exec "$SQLC" /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$PASS" -h -1 -W -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE name='vamcityc_vamcity_import_20261028';" 2>/dev/null | tr -d '[:space:]' || true)"
+            if [ "$SOURCE_EXISTS" != "1" ]; then echo "::error::Verified restored source database is missing."; exit 1; fi
+            DUMP_BIN="$(command -v mariadb-dump || command -v mysqldump || true)"
+            if [ -z "$DUMP_BIN" ]; then echo "::error::No MariaDB dump utility available."; exit 1; fi
+            BACKUP="$DIR/target-before-import-$(date -u +%Y%m%dT%H%M%SZ).sql"
+            "$DUMP_BIN" --protocol=socket -u"$DBUSER" --no-tablespaces --databases vamcitydigibilepay > "$BACKUP"
+            chmod 600 "$BACKUP"
+            sha256sum "$BACKUP" | tee "$BACKUP.sha256"
+            echo "TARGET_EMPTY_BACKUP=$BACKUP"
+            echo "DISK_FREE_KB_BEFORE_IMPORT=$FREE_KB"
+            unset MYSQL_PWD
+            export VAMCITY_SQLSERVER_IP="$SQLIP"
+            export VAMCITY_SQLSERVER_PASSWORD="$PASS"
+            export VAMCITY_MARIADB_USER="$DBUSER"
+            export VAMCITY_MARIADB_PASSWORD="$DBPASS"
+            export VAMCITY_SOURCE_DB="vamcityc_vamcity_import_20261028"
+            export VAMCITY_TARGET_DB="vamcitydigibilepay"
+            curl -fsSL https://raw.githubusercontent.com/digibile/vamcity/1edbff5f13a5a86a9f2dd8f009b958278b84b015/database/migration/sqlserver_to_mariadb.py -o "$DIR/sqlserver_to_mariadb.py"
+            chmod 600 "$DIR/sqlserver_to_mariadb.py"
+            python3 "$DIR/sqlserver_to_mariadb.py" --mode apply
+            python3 - <<'PY'
+            import os,pymssql,pymysql,json
+            src=pymssql.connect(server=os.environ["VAMCITY_SQLSERVER_IP"],port="1433",user="sa",password=os.environ["VAMCITY_SQLSERVER_PASSWORD"],database=os.environ["VAMCITY_SOURCE_DB"],login_timeout=15,timeout=300,charset="UTF-8")
+            dst=pymysql.connect(unix_socket="/var/lib/mysql/mysql.sock",user=os.environ["VAMCITY_MARIADB_USER"],password=os.environ["VAMCITY_MARIADB_PASSWORD"],database=os.environ["VAMCITY_TARGET_DB"],connect_timeout=15,read_timeout=300)
+            sc=src.cursor(as_dict=True);dc=dst.cursor()
+            sc.execute("SELECT s.name schema_name,t.name table_name FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id")
+            tables=sc.fetchall(); rows=[]
+            for t in tables:
+              sc.execute(f"SELECT COUNT_BIG(*) AS n FROM [{t['schema_name']}].[{t['table_name']}]"); expected=int(sc.fetchone()["n"])
+              dc.execute(f"SELECT COUNT(*) FROM `{t['table_name']}`"); actual=int(dc.fetchone()[0])
+              rows.append({"table":t["schema_name"]+"."+t["table_name"],"source":expected,"target":actual,"match":expected==actual})
+            dc.execute("SELECT COUNT(*) FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=%s",(os.environ["VAMCITY_TARGET_DB"],)); fks=int(dc.fetchone()[0])
+            result={"tables":len(rows),"source_rows":sum(x["source"] for x in rows),"target_rows":sum(x["target"] for x in rows),"table_count_matches":all(x["match"] for x in rows),"foreign_keys_created":fks,"mismatches":[x for x in rows if not x["match"]]}
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+            src.close();dst.close()
+            if not result["table_count_matches"] or result["tables"]!=88 or fks!=188: raise SystemExit("POST_IMPORT_RECONCILIATION_FAILED")
+            print("POST_IMPORT_TABLE_AND_FOREIGN_KEY_RECONCILIATION=SUCCESS")
+            PY
+            unset PASS DBPASS VAMCITY_SQLSERVER_PASSWORD VAMCITY_MARIADB_PASSWORD
+            echo "VAMCITY_PRIMARY_DATA_IMPORT_COMPLETED=1"
