@@ -53,7 +53,7 @@ jobs:
             test -n "$DBUSER" && test -n "$DBPASS"
             export MYSQL_PWD="$DBPASS"
             mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'CUSTOMERS'; SELECT Id,Code,Name FROM Customers ORDER BY Code;"
-            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'SOURCE_USER_COUNTS'; SELECT CustomerId,COUNT(*),SUM(Email IS NULL OR Email=''''),SUM(Mobile IS NULL OR Mobile='''') FROM AspNetUsers GROUP BY CustomerId ORDER BY CustomerId;"
+            mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'SOURCE_USER_COUNTS'; SELECT CustomerId,COUNT(*),SUM(Email IS NULL OR Email='''),SUM(Mobile IS NULL OR Mobile=''') FROM AspNetUsers GROUP BY CustomerId ORDER BY CustomerId;"
             mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'SOURCE_REQUEST_COUNTS'; SELECT CustomerId,COUNT(*),COUNT(DISTINCT UserId),SUM(Amount),MIN(RequestDate),MAX(RequestDate) FROM UserLoanRequests GROUP BY CustomerId;"
             mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'SOURCE_LOAN_ACCOUNT_COUNTS'; SELECT l.CustomerId,COUNT(*),COUNT(DISTINCT u.UserId),SUM(u.Amount),SUM(u.Paid),SUM(u.Remain),SUM(u.PayableAmount) FROM UserLoans u JOIN Loans l ON l.Id=u.LoanId GROUP BY l.CustomerId;"
             mysql --protocol=socket -u"$DBUSER" -N -B vamcitydigibilepay -e "SELECT 'SOURCE_PAYMENT_COUNTS'; SELECT l.CustomerId,COUNT(*),SUM(p.Amount),SUM(p.InstallmentAmount),SUM(p.SumAmount),SUM(p.DelayPrice),SUM(p.Discount) FROM UserLoanPayments p JOIN UserLoans u ON u.Id=p.UserLoanId JOIN Loans l ON l.Id=u.LoanId GROUP BY l.CustomerId;"
