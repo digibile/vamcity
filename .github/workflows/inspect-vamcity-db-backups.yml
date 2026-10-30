@@ -77,6 +77,31 @@ jobs:
               mysql --protocol=socket -uroot --batch --skip-column-names -e "SELECT VERSION(); SHOW DATABASES;" 2>&1 || true
             fi
 
+            echo "=== DIRECTADMIN MYSQL CONFIG FIELDS (VALUES REDACTED) ==="
+            CONF="/usr/local/directadmin/conf/mysql.conf"
+            if [ -r "$CONF" ]; then
+              stat -c 'CONFIG_OWNER=%U:%G MODE=%a' "$CONF"
+              sed -nE 's/^[[:space:]]*([A-Za-z_]+)[[:space:]]*=.*/CONFIG_FIELD=\\1/p' "$CONF"
+              DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+              DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+              if [ -n "$DBUSER" ] && [ -n "$DBPASS" ]; then
+                echo "DIRECTADMIN_DB_AUTH=attempting"
+                MYSQL_PWD="$DBPASS" mariadb --protocol=socket -u "$DBUSER" --batch --skip-column-names -e "SELECT VERSION(); SHOW DATABASES;" 2>&1 || true
+              else
+                echo "DIRECTADMIN_DB_AUTH=credential_fields_missing"
+              fi
+              unset DBPASS MYSQL_PWD
+            else
+              echo "DIRECTADMIN_MYSQL_CONF=unreadable"
+            fi
+            MIGCFG="$ROOT/database/migration/config.php"
+            if [ -r "$MIGCFG" ] && command -v php >/dev/null 2>&1; then
+              echo "=== MIGRATION CONFIG STRUCTURE (VALUES REDACTED) ==="
+              php -r '$c=require $argv[1]; $walk=function($v,$p="") use (&$walk){if(is_array($v)){foreach($v as $k=>$x){$q=$p===""?(string)$k:$p.".".$k; if(is_array($x)){$walk($x,$q);} else {echo "CONFIG_KEY=".$q." TYPE=".gettype($x).PHP_EOL;}}}}; if(is_array($c))$walk($c); else echo "CONFIG_RETURN_TYPE=".gettype($c).PHP_EOL;' "$MIGCFG"
+            else
+              echo "MIGRATION_CONFIG=NOT_FOUND_OR_PHP_UNAVAILABLE"
+            fi
+
             echo "=== MARIADB PROCESS AND LISTENERS ==="
             ps -eo pid,user,comm,args | grep -E '[m]ariadbd|[m]ysqld' | sed -E 's/(--password=)[^ ]+/\\1[REDACTED]/g' || true
             if command -v ss >/dev/null 2>&1; then ss -lntp 2>/dev/null | grep -E ':3306\\b' || true; fi
