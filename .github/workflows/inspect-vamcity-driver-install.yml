@@ -1,0 +1,38 @@
+name: Inspect VamCity driver package installation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/inspect-vamcity-driver-install.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate SSH configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then echo "::error::Missing repository secret: $name"; exit 1; fi
+          done
+      - name: Inspect apt process and driver installation
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 2m
+          script: |
+            set -eu
+            ps -eo pid,etime,stat,args | grep -E '[a]pt-get|[d]pkg|[p]ymssql|[p]ymysql' || true
+            dpkg -l python3-pymssql python3-pymysql 2>&1 || true
+            df -h /
