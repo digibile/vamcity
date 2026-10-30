@@ -195,6 +195,13 @@ def ddl_table(t,cs,ix):
         if c.get("mysql_default") is not None and not c["is_identity"]:line+=" DEFAULT "+c["mysql_default"]
         parts.append(line)
     if pk:parts.append("PRIMARY KEY ("+",".join(qm(x["name"]) for x in pk["columns"])+")")
+    for c in cols:
+        if not c["is_identity"]: continue
+        identity_col=c["column_name"]
+        indexed_first=any(i["schema"]==schema and i["table"]==name and not i["disabled"] and i["columns"] and i["columns"][0]["name"]==identity_col for i in ix)
+        if not indexed_first:
+            idx_name=safe_name("idx_"+name+"_"+identity_col+"_auto")
+            parts.append("KEY "+qm(idx_name)+" ("+qm(identity_col)+")")
     return "CREATE TABLE "+qm(name)+" (\n  "+",\n  ".join(parts)+"\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC"
 
 def select_expr(c):
