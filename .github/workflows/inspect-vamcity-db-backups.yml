@@ -81,7 +81,7 @@ jobs:
             CONF="/usr/local/directadmin/conf/mysql.conf"
             if [ -r "$CONF" ]; then
               stat -c 'CONFIG_OWNER=%U:%G MODE=%a' "$CONF"
-              sed -nE 's/^[[:space:]]*([A-Za-z_]+)[[:space:]]*=.*/CONFIG_FIELD=\\1/p' "$CONF"
+              awk -F= '{print "CONFIG_FIELD=" $1}' "$CONF"
               DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
               DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
               if [ -n "$DBUSER" ] && [ -n "$DBPASS" ]; then
