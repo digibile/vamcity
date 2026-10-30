@@ -58,7 +58,7 @@ jobs:
             echo "UNCOMPRESSED_BACKUP_BYTES=$(stat -c %s "$TMP")"
             file "$TMP"
             docker cp "$TMP" "$SQLC:/tmp/vamcity-main-verify.bak" >/dev/null
-            docker exec -u 0 "$SQLC" chmod 600 /tmp/vamcity-main-verify.bak
+            docker exec -u 0 "$SQLC" chmod 644 /tmp/vamcity-main-verify.bak
 
             echo "=== RESTORE HEADERONLY ==="
             sql "RESTORE HEADERONLY FROM DISK=N'/tmp/vamcity-main-verify.bak'"
