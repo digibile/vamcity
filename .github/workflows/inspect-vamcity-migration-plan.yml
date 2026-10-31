@@ -117,7 +117,7 @@ jobs:
           script: |
             set -euo pipefail
             if sudo -n docker info >/dev/null 2>&1; then D="sudo -n docker"; elif docker info >/dev/null 2>&1; then D="docker"; else echo "BLOCKED: Docker unavailable"; exit 20; fi
-            SQLC="vamcity-stage-sql"
+            SQLC="public_html-db-1"
             SOURCE="vamcityc_vamcity_import_20261028"
             TARGET="vamcitydigibilepay"
             SQLCMD="$($D exec "$SQLC" sh -lc 'command -v /opt/mssql-tools18/bin/sqlcmd || command -v /opt/mssql-tools/bin/sqlcmd || command -v sqlcmd' 2>/dev/null | head -n 1)"
