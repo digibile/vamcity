@@ -95,7 +95,7 @@ jobs:
               while IFS= read -r T; do
                 [ -n "$T" ] || continue
                 Q="$(printf '%s' "$T" | sed 's/`/``/g')"
-                N="$(mysql --protocol=socket -u"$DBUSER" -Nse "SELECT COUNT(*) FROM `$DB`.`$Q`;")"
+                N="$(mysql --protocol=socket -u"$DBUSER" -Nse "SELECT COUNT(*) FROM \`$DB\`.\`$Q\`;")"
                 echo "TABLE_ROWS=$T|$N"
                 TOTAL=$((TOTAL+N))
               done <<EOF
