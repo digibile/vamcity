@@ -137,9 +137,9 @@ jobs:
               SRC="$($D exec -e SQLCMDPASSWORD="$PASS" "$SQLC" "$SQLCMD" -S localhost -U sa -C -b -h -1 -W -w 65535 -d "$SOURCE" -Q "SET NOCOUNT ON; SELECT COUNT_BIG(*) FROM [$SCHEMA].[$TABLE]" | tr -d '[:space:]\r')"
               DST="$(mysql --protocol=socket -u"$DBUSER" -Nse "SELECT COUNT(*) FROM $TARGET.$TABLE;" 2>/dev/null | tr -d '[:space:]' || true)"
               SOURCE_TABLES=$((SOURCE_TABLES+1))
-              if ! printf '%s' "$SRC" | grep -Eq '^[0-9][0-9]*' then echo "COMPARE_ERROR_SOURCE=$FULL"; MISMATCHES=$((MISMATCHES+1)); continue; fi
+              case "$SRC" in ''|*[!0-9]*) echo "COMPARE_ERROR_SOURCE=$FULL"; MISMATCHES=$((MISMATCHES+1)); continue;; esac
               SOURCE_TOTAL=$((SOURCE_TOTAL+SRC))
-              if ! printf '%s' "$DST" | grep -Eq '^[0-9][0-9]*' then echo "COMPARE_MISSING_TARGET_TABLE=$FULL"; MISMATCHES=$((MISMATCHES+1)); continue; fi
+              case "$DST" in ''|*[!0-9]*) echo "COMPARE_MISSING_TARGET_TABLE=$FULL"; MISMATCHES=$((MISMATCHES+1)); continue;; esac
               TARGET_TOTAL=$((TARGET_TOTAL+DST))
               if [ "$SRC" -ne "$DST" ]; then echo "ROW_COUNT_MISMATCH=$FULL|source=$SRC|target=$DST"; MISMATCHES=$((MISMATCHES+1)); fi
             done <<EOF
