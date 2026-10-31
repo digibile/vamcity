@@ -107,3 +107,47 @@ jobs:
             mysql --protocol=socket -u"$DBUSER" -Nse "SELECT 'indexes',COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='$DB'; SELECT 'columns',COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$DB'; SELECT 'primary_keys',COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA='$DB' AND CONSTRAINT_TYPE='PRIMARY KEY'; SELECT 'unique_constraints',COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA='$DB' AND CONSTRAINT_TYPE='UNIQUE';"
             unset MYSQL_PWD DBPASS
             echo "VAMCITYDIGIBILEPAY_READ_ONLY_INSPECTION_COMPLETE=1"
+      - name: Compare all MariaDB tables against restored SQL Server source (read-only)
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 25m
+          script: |
+            set -euo pipefail
+            if sudo -n docker info >/dev/null 2>&1; then D="sudo -n docker"; elif docker info >/dev/null 2>&1; then D="docker"; else echo "BLOCKED: Docker unavailable"; exit 20; fi
+            SQLC="vamcity-stage-sql"
+            SOURCE="vamcityc_vamcity_import_20261028"
+            TARGET="vamcitydigibilepay"
+            SQLCMD="$($D exec "$SQLC" sh -lc 'command -v /opt/mssql-tools18/bin/sqlcmd || command -v /opt/mssql-tools/bin/sqlcmd || command -v sqlcmd' 2>/dev/null | head -n 1)"
+            PASS="$($D exec "$SQLC" printenv MSSQL_SA_PASSWORD 2>/dev/null || true)"
+            [ -n "$SQLCMD" ] && [ -n "$PASS" ] || { echo "BLOCKED: restored SQL Server source unavailable"; exit 21; }
+            CONF="/usr/local/directadmin/conf/mysql.conf"
+            DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            [ -n "$DBUSER" ] && [ -n "$DBPASS" ] || { echo "BLOCKED: MariaDB credentials unavailable"; exit 22; }
+            export MYSQL_PWD="$DBPASS"
+            TABLES="$($D exec -e SQLCMDPASSWORD="$PASS" "$SQLC" "$SQLCMD" -S localhost -U sa -C -b -h -1 -W -w 65535 -d "$SOURCE" -Q "SET NOCOUNT ON; SELECT s.name + '.' + t.name FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id WHERE t.is_ms_shipped=0 ORDER BY s.name,t.name" | tr -d '\r' | sed '/^[[:space:]]*$/d')"
+            SOURCE_TABLES=0; MISMATCHES=0; SOURCE_TOTAL=0; TARGET_TOTAL=0
+            while IFS= read -r FULL; do
+              [ -n "$FULL" ] || continue
+              SCHEMA="$(printf '%s' "$FULL" | cut -d. -f1)"
+              TABLE="$(printf '%s' "$FULL" | cut -d. -f2-)"
+              SRC="$($D exec -e SQLCMDPASSWORD="$PASS" "$SQLC" "$SQLCMD" -S localhost -U sa -C -b -h -1 -W -w 65535 -d "$SOURCE" -Q "SET NOCOUNT ON; SELECT COUNT_BIG(*) FROM [$SCHEMA].[$TABLE]" | tr -d '[:space:]\r')"
+              DST="$(mysql --protocol=socket -u"$DBUSER" -Nse "SELECT COUNT(*) FROM $TARGET.$TABLE;" 2>/dev/null | tr -d '[:space:]' || true)"
+              SOURCE_TABLES=$((SOURCE_TABLES+1))
+              if ! printf '%s' "$SRC" | grep -Eq '^[0-9]+; then echo "COMPARE_ERROR_SOURCE=$FULL"; MISMATCHES=$((MISMATCHES+1)); continue; fi
+              SOURCE_TOTAL=$((SOURCE_TOTAL+SRC))
+              if ! printf '%s' "$DST" | grep -Eq '^[0-9]+; then echo "COMPARE_MISSING_TARGET_TABLE=$FULL"; MISMATCHES=$((MISMATCHES+1)); continue; fi
+              TARGET_TOTAL=$((TARGET_TOTAL+DST))
+              if [ "$SRC" -ne "$DST" ]; then echo "ROW_COUNT_MISMATCH=$FULL|source=$SRC|target=$DST"; MISMATCHES=$((MISMATCHES+1)); fi
+            done <<EOF
+            $TABLES
+            EOF
+            echo "SOURCE_TABLES_COMPARED=$SOURCE_TABLES"
+            echo "SOURCE_TOTAL_ROWS=$SOURCE_TOTAL"
+            echo "TARGET_TOTAL_ROWS_FOR_SOURCE_TABLES=$TARGET_TOTAL"
+            echo "ROW_COUNT_MISMATCHES=$MISMATCHES"
+            unset MYSQL_PWD DBPASS PASS
+            echo "VAMCITYDIGIBILEPAY_SOURCE_RECONCILIATION_COMPLETE=1"
