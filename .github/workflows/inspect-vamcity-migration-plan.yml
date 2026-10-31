@@ -68,3 +68,42 @@ jobs:
               "datetime_time_scales":scales,"mapped_default_expressions":defaults
             },ensure_ascii=False,indent=2))
             PY
+
+      - name: Inspect current vamcitydigibilepay MariaDB contents without changing data
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+            CONF="/usr/local/directadmin/conf/mysql.conf"
+            DBUSER="$(awk -F= '$1=="user"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            DBPASS="$(awk -F= '$1=="passwd" || $1=="password"{print substr($0,index($0,"=")+1); exit}' "$CONF")"
+            [ -n "$DBUSER" ] && [ -n "$DBPASS" ] || { echo "BLOCKED: DirectAdmin MariaDB credentials unavailable"; exit 20; }
+            export MYSQL_PWD="$DBPASS"
+            DB="vamcitydigibilepay"
+            echo "=== TARGET DATABASE EXISTENCE ==="
+            mysql --protocol=socket -u"$DBUSER" -Nse "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='$DB';"
+            echo "=== OBJECT COUNTS ==="
+            mysql --protocol=socket -u"$DBUSER" -Nse "SELECT 'base_tables',COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$DB' AND TABLE_TYPE='BASE TABLE'; SELECT 'views',COUNT(*) FROM information_schema.VIEWS WHERE TABLE_SCHEMA='$DB'; SELECT 'routines',COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA='$DB'; SELECT 'triggers',COUNT(*) FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA='$DB'; SELECT 'events',COUNT(*) FROM information_schema.EVENTS WHERE EVENT_SCHEMA='$DB'; SELECT 'foreign_keys',COUNT(*) FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA='$DB';"
+            echo "=== EXACT TABLE ROW COUNTS (NO ROW VALUES) ==="
+            TABLES="$(mysql --protocol=socket -u"$DBUSER" -Nse "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='$DB' AND TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME;")"
+            TOTAL=0
+            if [ -n "$TABLES" ]; then
+              while IFS= read -r T; do
+                [ -n "$T" ] || continue
+                Q="$(printf '%s' "$T" | sed 's/`/``/g')"
+                N="$(mysql --protocol=socket -u"$DBUSER" -Nse "SELECT COUNT(*) FROM `$DB`.`$Q`;")"
+                echo "TABLE_ROWS=$T|$N"
+                TOTAL=$((TOTAL+N))
+              done <<EOF
+            $TABLES
+            EOF
+            fi
+            echo "TOTAL_TARGET_ROWS=$TOTAL"
+            echo "=== INDEX AND CONSTRAINT COUNTS ==="
+            mysql --protocol=socket -u"$DBUSER" -Nse "SELECT 'indexes',COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='$DB'; SELECT 'columns',COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$DB'; SELECT 'primary_keys',COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA='$DB' AND CONSTRAINT_TYPE='PRIMARY KEY'; SELECT 'unique_constraints',COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA='$DB' AND CONSTRAINT_TYPE='UNIQUE';"
+            unset MYSQL_PWD DBPASS
+            echo "VAMCITYDIGIBILEPAY_READ_ONLY_INSPECTION_COMPLETE=1"
